@@ -1,0 +1,10 @@
+Pillow
+opencv-python
+numpy
+python3_xlib
+pyautogui
+pywin32
+ipython
+pytesseract
+coverage
+keyboard

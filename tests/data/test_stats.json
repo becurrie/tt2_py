@@ -1,0 +1,25 @@
+{
+    "game_statistics": {
+        "highest_stage_reached": "4.43K",
+        "total_pet_level": "323",
+        "gold_earned": "1.57e275",
+        "taps": "4.30M",
+        "titans_killed": "547.05K",
+        "bosses_killed": "137.15K",
+        "critical_hits": "110.86K",
+        "chestersons_killed": "61.06K",
+        "prestiges": "51",
+        "play_time": "9d 15:58:46",
+        "relics_earned": "19.26M",
+        "fairies_tapped": "2.23K",
+        "daily_achievements": "10",
+        "tournaments_points": 0
+    },
+    "bot_statistics": {
+        "premium_ads": "33",
+        "clan_ship_battles": "56",
+        "actions": "4543",
+        "updates": "20"
+    },
+    "sessions": {}
+}
