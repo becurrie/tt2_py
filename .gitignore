@@ -1,0 +1,5 @@
+.idea/
+logs/
+config.ini
+stats.json
+__pycache__
