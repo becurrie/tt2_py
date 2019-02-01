@@ -185,6 +185,7 @@ IMAGES = {
         "battle_available": IMAGE_DIR + "/clan_battle/battle_available.png",
         "diamond": IMAGE_DIR + "/clan_battle/diamond.png",
         "goal_complete": IMAGE_DIR + "/clan_battle/goal_complete.png",
+        "deal_110_next_attack": IMAGE_DIR + "/clan_battle/deal_110_next_attack.png",
     },
     "DAILY_REWARD": {
         "collect_reward": IMAGE_DIR + "/daily_reward/collect.png",
