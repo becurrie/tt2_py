@@ -6,11 +6,6 @@ for specific images present on the screen.
 """
 from tt2.core.maps import EMULATOR_PADDING_MAP
 from tt2.external.imagesearch import *
-from tt2.core.constants import LOGGER_NAME
-
-import logging
-
-logger = logging.getLogger(LOGGER_NAME)
 
 
 class Grabber:
@@ -18,8 +13,9 @@ class Grabber:
     Grabber class provides functionality to capture a portion of the screen, based on the height
     and width that the emulator should be set to.
     """
-    def __init__(self, emulator, height, width):
+    def __init__(self, emulator, height, width, logger):
         # Base height and width, resolution of game.
+        self.logger = logger
         self.height = height
         self.width = width
 
@@ -41,12 +37,12 @@ class Grabber:
         an explicit region is specified to use to take a screen-shot with.
         """
         if not region:
-            logger.debug("taking snapshot of game screen (X1: {x}, Y1: {x}, X2: {x2}, Y2: {y2})".format(
+            self.logger.debug("taking snapshot of game screen (X1: {x}, Y1: {x}, X2: {x2}, Y2: {y2})".format(
                 x=self.x, y=self.y, x2=self.x2, y2=self.y2
             ))
             self.current = region_grabber((self.x, self.y, self.x2, self.y2))
         else:
-            logger.debug("taking snapshot of region in game screen (X1: {x}, Y1: {y}, X2: {x2}, Y2: {y2}".format(
+            self.logger.debug("taking snapshot of region in game screen (X1: {x}, Y1: {y}, X2: {x2}, Y2: {y2}".format(
                 x=region[0], y=region[1], x2=region[2], y2=region[3]
             ))
             self.current = region_grabber(region)
@@ -61,16 +57,21 @@ class Grabber:
         of the actual screen.
         """
         if not testing:
-            logger.debug("searching for {image} in game and returning {bool_or_both}".format(
+            self.logger.debug("searching for {image} in game and returning {bool_or_both}".format(
                 image=image, bool_or_both="bool only" if bool_only else "bool and position of found image"
             ))
             self.snapshot()
 
         found = False
-        if region:
-            position = imagesearcharea(image, region[0], region[1], region[2], region[3], precision)
-        else:
-            position = imagesearcharea(image, self.x, self.y, self.x2, self.y2, precision, self.current)
+
+        try:
+            if region:
+                position = imagesearcharea(image, region[0], region[1], region[2], region[3], precision)
+            else:
+                position = imagesearcharea(image, self.x, self.y, self.x2, self.y2, precision, self.current)
+        except cv2.error:
+            self.logger.error("Error occurred during image search, does the file: {file} exist?".format(file=image))
+            raise ValueError()
 
         if position[0] != -1:
             found = True
