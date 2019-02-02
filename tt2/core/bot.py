@@ -30,16 +30,20 @@ class Bot:
     Main Bot class, generates the Window handler object, generated a configuration object used through
     the main game loop to determine how actions are performed within the game.
     """
-    def __init__(self, config=CONFIG_FILE, stats_file=STATS_FILE):
+    def __init__(self, config=CONFIG_FILE, stats_file=STATS_FILE, logger=None):
         self.config = Config(config)
-        self.logger = make_logger(self.config)
+
+        if logger:
+            self.logger = logger
+        else:
+            self.logger = make_logger(self.config.LOGGING_LEVEL)
 
         if not self.config.ENABLE_LOGGING:
             self.logger.disabled = True
 
         # Initialize miscellaneous classes here.
-        self.grabber = Grabber(self.config.EMULATOR, self.config.HEIGHT, self.config.WIDTH)
-        self.stats = Stats(self.grabber, self.config, stats_file)
+        self.grabber = Grabber(self.config.EMULATOR, self.config.HEIGHT, self.config.WIDTH, self.logger)
+        self.stats = Stats(self.grabber, self.config, stats_file, self.logger)
         self.images = Images(IMAGES)
         self.locs = Locs(GAME_LOCS[self.stats.key])
 
