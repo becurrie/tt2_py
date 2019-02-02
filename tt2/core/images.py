@@ -33,6 +33,7 @@ class Images:
         self.battle_available = None
         self.diamond = None
         self.goal_complete = None
+        self.deal_110_next_attack = None
 
         # DAILY_REWARD.
         self.collect_reward = None
