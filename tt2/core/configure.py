@@ -65,7 +65,7 @@ class Config:
 
         # ACTIONS_CLAN_QUEST.
         self.ENABLE_CLAN_QUEST = None
-        self.CLAN_QUEST_RUNS = None
+        self.ENABLE_EXTRA_FIGHT = None
 
         # ACTIONS_MASTER.
         self.ENABLE_MASTER = None
