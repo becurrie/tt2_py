@@ -4,10 +4,10 @@ stats.py
 The stats module will encapsulate all functionality related to the stats
 panel located inside of the heroes panel in game.
 """
-from settings import STATS_FILE, __VERSION__
-from tt2.core.maps import STATS_COORDS
+from settings import __VERSION__
+from tt2.core.maps import STATS_COORDS, ARTIFACT_TIER_MAP
 from tt2.core.constants import (
-    STATS_JSON_TEMPLATE, STATS_GAME_STAT_KEYS, STATS_BOT_STAT_KEYS, LOGGER_NAME, LOGGER_FILE_NAME,
+    STATS_JSON_TEMPLATE, STATS_GAME_STAT_KEYS, STATS_BOT_STAT_KEYS, LOGGER_FILE_NAME,
     STATS_DATE_FMT, STATS_UN_PARSABLE
 )
 from tt2.core.utilities import convert, diff
@@ -20,9 +20,6 @@ import cv2
 import numpy as np
 import uuid
 import json
-import logging
-
-logger = logging.getLogger(LOGGER_NAME)
 
 pytesseract.pytesseract.tesseract_cmd = "C:\\Program Files (x86)\\Tesseract-OCR\\tesseract.exe"
 
@@ -34,7 +31,8 @@ _KEY_MAP = {
 
 class Stats:
     """Stats class contains all possible stat values and can be updated dynamically."""
-    def __init__(self, grabber, config, stats_file):
+    def __init__(self, grabber, config, stats_file, logger):
+        self.logger = logger
         self._base()
 
         # Game statistics.
@@ -44,6 +42,16 @@ class Stats:
         # Bot statistics.
         for key in STATS_BOT_STAT_KEYS:
             setattr(self, key, 0)
+
+        # Artifacts objects initializing as empty.
+        self.artifact_statistics = {
+            "discovered": "0/90",
+            "artifacts": {}
+        }
+        for k, v in ARTIFACT_TIER_MAP.items():
+            self.artifact_statistics["artifacts"][k] = {}
+            for k1 in v:
+                self.artifact_statistics["artifacts"][k][k1] = False
 
         # Session statistics.
         self.started = datetime.datetime.now()
@@ -130,10 +138,9 @@ class Stats:
             for key in keys
         }
 
-    def as_json(self):
+    def as_json(self, update_artifacts=False):
         """Convert the stats instance into a JSON compliant dictionary."""
         sessions = self.content.get("sessions")
-
         if sessions.get(self.day):
             sessions[self.day][self.session] = {
                 "version": self.version,
@@ -157,12 +164,71 @@ class Stats:
                 }
             }
 
+        # If artifact update has been specified, update the artifacts on the stats instance.
+        # Any previous artifact data will be present and may speed up processing as more are
+        # unlocked.
+        if update_artifacts:
+            self.parse_artifacts()
+
+        # Create final dictionary of all of game statistics.
         stats = {
             "game_statistics": {key: getattr(self, key, "None") for key in STATS_GAME_STAT_KEYS},
             "bot_statistics": {key: getattr(self, key, "None") for key in STATS_BOT_STAT_KEYS},
+            "artifacts": self.artifact_statistics,
             "sessions": sessions
         }
         return stats
+
+    def parse_artifacts(self):
+        """
+        Parse artifacts in game through OCR, need to make use of mouse dragging here to make sure that all possible
+        artifacts have been set to found/not found. This is an expensive function through the image recognition.
+
+        Note that dragging will not be a full drag (all artifacts from last drag, now off of the screen). To make sure
+        that missed artifacts have a chance to go again.
+
+        Additionally, this method expects that the game screen is at the top of the expanded artifacts screen.
+        """
+        from tt2.core.maps import ARTIFACT_TIER_MAP, GAME_LOCS, IMAGES
+        from tt2.core.utilities import sleep
+        from tt2.core.utilities import drag_mouse
+
+        # Game locations based on current size of game.
+        locs = GAME_LOCS[self.key]["GAME_SCREEN"]
+        images = IMAGES["GENERIC"]
+
+        discovered = 0
+        # Loop twenty times, a mouse drag happens during each loop.
+        for i in range(20):
+            for tier, d in ARTIFACT_TIER_MAP.items():
+                for artifact, path in d.items():
+                    # Break early if the artifact has already been discovered.
+                    if self.artifact_statistics["artifacts"][tier][artifact]:
+                        continue
+
+                    try:
+                        # Do a quick check to ensure that the artifacts screen is still open (no transition state).
+                        while not self.grabber.search(images["artifacts_active"], bool_only=True):
+                            continue
+
+                        if self.grabber.search(path, bool_only=True):
+                            self.logger.info("artifact: {artifact} was successfully found, marking as owned".format(
+                                artifact=artifact)
+                            )
+                            self.artifact_statistics["artifacts"][tier][artifact] = True
+                            discovered += 1
+
+                    except ValueError:
+                        self.logger.error("artifact: {artifact} could not be searched for, leaving false".format(
+                            artifact=artifact)
+                        )
+
+            # Scroll down slightly and check for artifacts again.
+            drag_mouse(locs["scroll_start"], locs["scroll_bottom_end"], quick_stop=locs["scroll_quick_stop"])
+            sleep(1)
+
+            # Update the total discovered amount of artifacts.
+            self.artifact_statistics["discovered"] = "{discovered}/90".format(discovered=discovered)
 
     def update_from_content(self):
         """Update self based on the JSON content taken from stats file."""
@@ -175,6 +241,12 @@ class Stats:
         if bot_stats:
             for key, value in bot_stats.items():
                 setattr(self, key, value)
+
+        artifact_stats = self.content.get("artifact_statistics")
+        if artifact_stats:
+            for tier, d in artifact_stats["artifacts"].items():
+                for artifact, value in artifact_stats[tier].items():
+                    self.artifact_statistics["artifacts"][tier][artifact] = value
 
         sessions = self.content.get("sessions")
         if sessions:
@@ -196,7 +268,7 @@ class Stats:
                 image = self._process()
 
             text = pytesseract.image_to_string(image, config='--psm 7')
-            logger.info("{key}: OCR result: {text}".format(key=key, text=text))
+            self.logger.info("{key}: OCR result: {text}".format(key=key, text=text))
 
             # The images do not always parse correctly, so we can attempt to parse out our expected
             # value from the STATS_COORD tuple being used.
@@ -204,7 +276,7 @@ class Stats:
             # Firstly, confirm that a number is present in the text result, if no numbers are present
             # at all, safe to assume the OCR has failed wonderfully.
             if not any(char.isdigit() for char in text):
-                logger.warning("no digits found in OCR result, skipping key: {key}".format(key=key))
+                self.logger.warning("no digits found in OCR result, skipping key: {key}".format(key=key))
                 setattr(self, key, STATS_UN_PARSABLE)
                 continue
 
@@ -243,12 +315,12 @@ class Stats:
                                 setattr(self, key, STATS_UN_PARSABLE)
                                 continue
 
-                logger.info("{key}: parsed value: {value}".format(key=key, value=value))
+                self.logger.info("{key}: parsed value: {value}".format(key=key, value=value))
                 setattr(self, key, value)
 
             # Gracefully continuing loop if failure occurs.
             except ValueError:
-                logger.error("{key} was unable to be parsed (OCR: {text})".format(key=key, text=text))
+                self.logger.error("{key} was unable to be parsed (OCR: {text})".format(key=key, text=text))
                 return "Not parsable"
 
     def retrieve(self):
@@ -274,12 +346,12 @@ class Stats:
         with open(self.file, "w+") as file:
             json.dump(STATS_JSON_TEMPLATE, file, indent=4)
 
-    def write(self):
+    def write(self, update_artifacts=False):
         """Write the stats object to a JSON file, overwriting all old values in the process."""
         self.last_update = datetime.datetime.now()
-        logger.info("writing statistics to json file")
-        contents = self.as_json()
+        self.logger.info("writing statistics to json file")
+        contents = self.as_json(update_artifacts=update_artifacts)
         with open(self.file, "w+") as file:
             json.dump(contents, file, indent=4)
 
-        logger.info("stats were successfully written to {file}".format(file=self.file))
+        self.logger.info("stats were successfully written to {file}".format(file=self.file))
