@@ -226,12 +226,12 @@ def in_transition_func(*args, max_loops):
             break
 
 
-def make_logger(config):
+def make_logger(log_level="INFO", log_format=LOGGER_FORMAT, log_name=LOGGER_NAME, log_file=LOGGER_FILE_NAME):
     """Grab the logging instance that will be used throughout bot runtime."""
-    log_formatter = logging.Formatter(LOGGER_FORMAT)
-    _logger = logging.getLogger(LOGGER_NAME)
+    log_formatter = logging.Formatter(log_format)
+    _logger = logging.getLogger(log_name)
 
-    file_handler = logging.FileHandler(LOGGER_FILE_NAME)
+    file_handler = logging.FileHandler(log_file)
     file_handler.setFormatter(log_formatter)
     _logger.addHandler(file_handler)
 
@@ -239,6 +239,6 @@ def make_logger(config):
     console_handler.setFormatter(log_formatter)
     _logger.addHandler(console_handler)
 
-    _logger.setLevel(config.LOGGING_LEVEL)
+    _logger.setLevel(log_level)
 
     return _logger

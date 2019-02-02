@@ -37,6 +37,7 @@ STATS_BOT_STAT_KEYS = (
 STATS_JSON_TEMPLATE = {
     "game_statistics": {},
     "bot_statistics": {},
+    "artifact_statistics": {},
     "sessions": {}
 }
 
