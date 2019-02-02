@@ -63,6 +63,9 @@ class Bot:
         self.logger.debug("artifacts locations have been initialized: {0}".format(self.artifacts_locs))
         self.logger.debug("emulator locations have been initialized: {0}".format(self.emulator_locs))
 
+        # Additional image maps can be set here.
+        self.artifacts_images = ARTIFACT_MAP
+
         self.logger.info("bot instance has been initialized successfully")
         self.logger.info("uuid: {0}".format(self.stats.session))
 
@@ -370,7 +373,7 @@ class Bot:
                 click_on_point(self.artifacts_locs["buy_max"], pause=0.5)
 
             self.logger.info("searching for {artifact} on screen".format(artifact=self.config.UPGRADE_ARTIFACT))
-            while not self.grabber.search(getattr(self.images, self.config.UPGRADE_ARTIFACT), bool_only=True):
+            while not self.grabber.search(self.artifacts_images.get(self.config.UPGRADE_ARTIFACT), bool_only=True):
                 drag_mouse(self.locs.scroll_start, self.locs.scroll_bottom_end)
 
             self.logger.info("{artifact} has been found, upgrading now".format(artifact=self.config.UPGRADE_ARTIFACT))
@@ -380,6 +383,8 @@ class Bot:
             new_x = position[0] + self.artifacts_locs["artifact_push"]["x"]
             new_y = position[1] + self.artifacts_locs["artifact_push"]["y"]
 
+            # Currently just upgrading the artifact to it's max level. Future updates may include the ability
+            # to determine how much to upgrade an artifact by.
             click_on_point((new_x, new_y), pause=0.5)
 
     @not_in_transition
