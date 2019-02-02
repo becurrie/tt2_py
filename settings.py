@@ -28,6 +28,11 @@ TEST_DIR = os.path.join(ROOT_DIR, "tests")
 TEST_DATA_DIR = os.path.join(TEST_DIR, "data")
 TEST_IMAGE_DIR = os.path.join(TEST_DIR, "images")
 
+# Tool directory.
+TOOL_DIR = os.path.join(BOT_DIR, "tools")
+# Tool log directory.
+TOOL_LOG_DIR = os.path.join(TOOL_DIR, "logs")
+
 # Some hardcoded, expected files here.
 CONFIG_FILE = os.path.join(DATA_DIR, "config.ini")
 STATS_FILE = os.path.join(DATA_DIR, "stats.json")
@@ -39,4 +44,8 @@ TEST_STATS_FILE = os.path.join(TEST_DATA_DIR, "test_stats.json")
 # Make sure a "logs" directory actually exists.
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
+
+# Make sure a "logs" directory exists for bot tools.
+if not os.path.exists(TOOL_LOG_DIR):
+    os.makedirs(TOOL_LOG_DIR)
 
