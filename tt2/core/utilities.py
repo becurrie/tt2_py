@@ -114,14 +114,28 @@ def diff(old, new):
     return None
 
 
-def click_on_point(point, clicks=1, interval=0, button="left", pause=0.0):
+def gen_offset(point, amount):
+    """Add some offset to a given point."""
+    if amount == 0:
+        return point
+
+    rand_x = random.randint(-amount, amount)
+    rand_y = random.randint(-amount, amount)
+
+    return point[0] + rand_x, point[1] + rand_y
+
+
+def click_on_point(point, clicks=1, interval=0, button="left", pause=0.0, offset=5):
     """Click on the specified X, Y value based on the point passed along as a parameter."""
+    if offset != 0:
+        point = gen_offset(point, offset)
+
     logger.debug(
         "{button} clicking {point} on screen {clicks} time(s) with {interval} interval and {pause} pause".format(
             button=button, point=point, clicks=clicks, interval=interval, pause=pause
         )
     )
-    click(point[0], point[1], clicks=clicks, interval=interval, button=button, pause=pause)
+    click((point[0], point[1]), clicks=clicks, interval=interval, button=button, pause=pause)
 
 
 def click_on_image(image=None, pos=None, button="left", pause=0.0):
@@ -150,7 +164,7 @@ def drag_mouse(start, end, button="left", duration=0.3, pause=0.5, tween=linear,
     dragTo(end[0], end[1], duration=duration, button=button, pause=pause, tween=tween)
 
     if quick_stop:
-        click_on_point((quick_stop[0], quick_stop[1]), pause=0.5)
+        click_on_point((quick_stop[0], quick_stop[1]), pause=0.5, offset=0)
 
 
 def in_transition_func(*args, max_loops):

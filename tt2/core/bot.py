@@ -620,10 +620,10 @@ class Bot:
             # Ensure the panel is expanded/collapsed appropriately.
             if collapsed:
                 while not self.grabber.search(self.images.expand_panel, bool_only=True):
-                    click_on_point(self.locs.expand_collapse_top, pause=1)
+                    click_on_point(self.locs.expand_collapse_top, pause=1, offset=2)
             else:
                 while not self.grabber.search(self.images.collapse_panel, bool_only=True):
-                    click_on_point(self.locs.expand_collapse_bottom, pause=1)
+                    click_on_point(self.locs.expand_collapse_bottom, pause=1, offset=2)
 
     def goto_master(self, collapsed=True, top=True):
         """Instruct the bot to travel to the sword master panel."""
@@ -672,11 +672,11 @@ class Bot:
         """Instruct the bot to make sure no panels are currently open."""
         self.logger.info("attempting to close any open panels in game")
         while self.grabber.search(self.images.exit_panel, bool_only=True):
-            click_on_point(self.locs.close_bottom)
+            click_on_point(self.locs.close_bottom, offset=2)
             if not self.grabber.search(self.images.exit_panel, bool_only=True):
                 break
 
-            click_on_point(self.locs.close_top)
+            click_on_point(self.locs.close_top, offset=2)
             if not self.grabber.search(self.images.exit_panel, bool_only=True):
                 break
 
