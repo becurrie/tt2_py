@@ -233,6 +233,7 @@ IMAGES = {
         "prestige": IMAGE_DIR + "/master/prestige.png",
         "shadow_clone": IMAGE_DIR + "/master/shadow_clone.png",
         "skill_level_zero": IMAGE_DIR + "/master/skill_level_zero.png",
+        "skill_max_level": IMAGE_DIR + "/master/skill_max_level.png",
         "skill_tree": IMAGE_DIR + "/master/skill_tree.png",
         "unlock_at": IMAGE_DIR + "/master/unlock_at.png",
         "war_cry": IMAGE_DIR + "/master/war_cry.png",

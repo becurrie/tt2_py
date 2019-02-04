@@ -146,6 +146,23 @@ class Bot:
 
         return inactive
 
+    @not_in_transition
+    def _not_maxed(self, inactive):
+        """Given a list of inactive skill keys, determine which ones are not maxed out of those."""
+        not_maxed = []
+
+        for key, region in {k: r for k, r in self.master_coords["skills"].items() if k in inactive}.items():
+            if self.grabber.search(self.images.skill_max_level, region, bool_only=True):
+                continue
+
+            # Skills is not currently maxed, add it to the list.
+            not_maxed.append(key)
+
+        for n in not_maxed:
+            self.logger.info("{skill} is not currently maxed".format(skill=n))
+
+        return not_maxed
+
     def calculate_skill_execution(self):
         """Calculate the datetimes that are attached to each skill in game and when they should be activated."""
         now = datetime.datetime.now()
@@ -251,7 +268,7 @@ class Bot:
             self.goto_master(collapsed=False)
 
             # Looping through each skill coord, clicking to level up.
-            for skill in self._inactive_skills():
+            for skill in self._not_maxed(self._inactive_skills()):
                 self.logger.info("levelling up {skill} {clicks} time(s) now".format(
                     skill=skill, clicks=self.config.SKILL_LEVEL_INTENSITY)
                 )
