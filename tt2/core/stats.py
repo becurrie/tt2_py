@@ -174,7 +174,7 @@ class Stats:
         stats = {
             "game_statistics": {key: getattr(self, key, "None") for key in STATS_GAME_STAT_KEYS},
             "bot_statistics": {key: getattr(self, key, "None") for key in STATS_BOT_STAT_KEYS},
-            "artifacts": self.artifact_statistics,
+            "artifact_statistics": self.artifact_statistics,
             "sessions": sessions
         }
         return stats
@@ -245,8 +245,10 @@ class Stats:
         artifact_stats = self.content.get("artifact_statistics")
         if artifact_stats:
             for tier, d in artifact_stats["artifacts"].items():
-                for artifact, value in artifact_stats[tier].items():
+                for artifact, value in artifact_stats["artifacts"][tier].items():
                     self.artifact_statistics["artifacts"][tier][artifact] = value
+
+            self.artifact_statistics["discovered"] = artifact_stats["discovered"]
 
         sessions = self.content.get("sessions")
         if sessions:
