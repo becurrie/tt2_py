@@ -78,6 +78,7 @@ class Images:
         self.prestige = None
         self.shadow_clone = None
         self.skill_level_zero = None
+        self.skill_max_level = None
         self.skill_tree = None
         self.war_cry = None
 
