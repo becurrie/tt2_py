@@ -99,6 +99,9 @@ class Config:
         self.ENABLE_STATS = None
         self.STATS_UPDATE_INTERVAL_MINUTES = None
 
+        # ARTIFACT_PARSING.
+        self.BOTTOM_ARTIFACT = None
+
         # LOGGING.
         self.ENABLE_LOGGING = None
         self.LOGGING_LEVEL = None

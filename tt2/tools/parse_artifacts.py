@@ -29,7 +29,5 @@ def parse_artifacts():
     # Having access to the bot now, we can begin looking through artifacts and determining
     # which ones are present, and their levels.
     bot.goto_artifacts(collapsed=False)
-    bot.stats.parse_artifacts()
-
-    bot.stats.write()
+    bot.stats.write(update_artifacts=True)
     logger.info("artifacts have been parsed successfully, check your stats file for output")

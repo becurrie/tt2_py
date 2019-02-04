@@ -189,7 +189,7 @@ class Stats:
 
         Additionally, this method expects that the game screen is at the top of the expanded artifacts screen.
         """
-        from tt2.core.maps import ARTIFACT_TIER_MAP, GAME_LOCS, IMAGES
+        from tt2.core.maps import ARTIFACT_TIER_MAP, ARTIFACT_MAP, GAME_LOCS, IMAGES
         from tt2.core.utilities import sleep
         from tt2.core.utilities import drag_mouse
 
@@ -197,9 +197,12 @@ class Stats:
         locs = GAME_LOCS[self.key]["GAME_SCREEN"]
         images = IMAGES["GENERIC"]
 
-        discovered = 0
-        # Loop twenty times, a mouse drag happens during each loop.
-        for i in range(20):
+        # Region to search for the final artifact, taken from the configuration file.
+        last_artifact_region = GAME_LOCS[self.key]["ARTIFACTS"]["bottom_region"]
+
+        # Looping forever until the bottom artifact has been found.
+        break_next = False
+        while True:
             for tier, d in ARTIFACT_TIER_MAP.items():
                 for artifact, path in d.items():
                     # Break early if the artifact has already been discovered.
@@ -216,19 +219,35 @@ class Stats:
                                 artifact=artifact)
                             )
                             self.artifact_statistics["artifacts"][tier][artifact] = True
-                            discovered += 1
 
                     except ValueError:
                         self.logger.error("artifact: {artifact} could not be searched for, leaving false".format(
                             artifact=artifact)
                         )
 
+            if break_next:
+                self.logger.info("artifact: {artifact} was found at the bottom of the screen, exiting parse loop now".format(
+                    artifact=self.config.BOTTOM_ARTIFACT
+                ))
+                break
+
             # Scroll down slightly and check for artifacts again.
             drag_mouse(locs["scroll_start"], locs["scroll_bottom_end"], quick_stop=locs["scroll_quick_stop"])
             sleep(1)
 
-            # Update the total discovered amount of artifacts.
-            self.artifact_statistics["discovered"] = "{discovered}/90".format(discovered=discovered)
+            # Checking at the end of the loop to break, one more loop takes place before exit.
+            if self.grabber.search(ARTIFACT_MAP.get(self.config.BOTTOM_ARTIFACT), region=last_artifact_region,
+                                   bool_only=True):
+                break_next = True
+
+        # Do a loop to update the discovered artifacts in game.
+        discovered = 0
+        for tier, d in ARTIFACT_TIER_MAP.items():
+            for artifact, path in d.items():
+                if self.artifact_statistics["artifacts"][tier][artifact]:
+                    discovered += 1
+
+        self.artifact_statistics["discovered"] = "{discovered}/90".format(discovered=discovered)
 
     def update_from_content(self):
         """Update self based on the JSON content taken from stats file."""

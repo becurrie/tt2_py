@@ -109,6 +109,9 @@ GAME_LOCS = {
             "collect_ad": (365, 650),
             "no_thanks": (135, 650),
         },
+        "ARTIFACTS": {
+            "bottom_region": (2, 727, 475, 797),
+        },
     }
 }
 
