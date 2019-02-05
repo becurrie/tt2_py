@@ -69,7 +69,7 @@ class Locs:
         self.hatch_egg = None
 
         # CLAN_BATTLE.
-        self.clan_battle_ready = None
+        self.clan = None
         self.clan_quest = None
         self.clan_fight = None
         self.diamond_okay = None

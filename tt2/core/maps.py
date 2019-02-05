@@ -98,7 +98,7 @@ GAME_LOCS = {
             "hatch_egg": (35, 315),
         },
         "CLAN_BATTLE": {
-            "clan_battle_ready": (82, 59),
+            "clan": (82, 59),
             "clan_quest": (105, 755),
             "clan_fight": (310, 765),
             "diamond_okay": (330, 475),
@@ -185,10 +185,10 @@ IMAGES = {
         "spend_max": IMAGE_DIR + "/artifacts/spend_max.png",
     },
     "CLAN_BATTLE": {
-        "battle_available": IMAGE_DIR + "/clan_battle/battle_available.png",
         "diamond": IMAGE_DIR + "/clan_battle/diamond.png",
         "goal_complete": IMAGE_DIR + "/clan_battle/goal_complete.png",
         "deal_110_next_attack": IMAGE_DIR + "/clan_battle/deal_110_next_attack.png",
+        "fight": IMAGE_DIR + "/clan_battle/fight.png",
     },
     "DAILY_REWARD": {
         "collect_reward": IMAGE_DIR + "/daily_reward/collect.png",
