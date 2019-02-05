@@ -118,6 +118,7 @@ The configuration values all have some comments that describe the option slightl
 | config | Description | Default | Examples |
 |--------------------|------------------------------------------------------------------------------------------------------------------------------|---------|----------|
 | ENABLE_CLAN_QUEST | Enable the clicking/checking and fighting of the clan quest in game if ones available. | on | on, off |
+| CLAN_BATTLE_CHECK_INTERVAL_MINUTES | Determine the amount of time (in minutes) between each clan battle check in game. | 15 | 15, 20, 60 |
 | ENABLE_EXTRA_FIGHT | Enable the ability to perform an additional fight when battling in clan quest (only if second fight of battle (5 diamonds)). | on | on, off |
 
 ### Master Action Options
