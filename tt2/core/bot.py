@@ -87,6 +87,9 @@ class Bot:
         self.next_war_cry = None
         self.next_shadow_clone = None
 
+        # Additional in game intervals.
+        self.next_clan_battle_check = None
+
         # Create a list of the functions called in there proper order
         # when actions are performed by the bot.
         self.action_order = self._order_actions()
@@ -97,6 +100,7 @@ class Bot:
         self.calculate_skill_execution()
         self.calculate_next_prestige()
         self.calculate_next_stats_update()
+        self.calculate_next_clan_battle_check()
 
     def _order_actions(self):
         """Determine order of in game actions. Mapped to their respective functions."""
@@ -207,6 +211,15 @@ class Bot:
         self.logger.info("next stats update run will take place at: {date} ({time})".format(
             date=str(dt), time=strfdelta(dt - now))
         )
+
+    def calculate_next_clan_battle_check(self):
+        """Calculate when the next clan battle check should take place."""
+        now = datetime.datetime.now()
+        dt = now + datetime.timedelta(seconds=self.config.CLAN_BATTLE_CHECK_INTERVAL_MINUTES * 60)
+        self.next_clan_battle_check = dt
+        self.logger.info("next clan battle check will take place at: {date} ({time})".format(
+            date=str(dt), time=strfdelta(dt - now)
+        ))
 
     @not_in_transition
     def level_heroes(self):
@@ -368,7 +381,6 @@ class Bot:
                 self.artifacts()
                 self.daily_rewards()
                 self.hatch_eggs()
-                self.clan_battle()
 
                 # Re calculating the next prestige time now.
                 self.calculate_next_prestige()
@@ -483,52 +495,62 @@ class Bot:
         users config file, this will potentially spend diamonds.
         """
         if self.config.ENABLE_CLAN_QUEST:
-            self.logger.info("checking if a clan battle is ready")
-            self.goto_master()
+            now = datetime.datetime.now()
+            if now > self.next_clan_battle_check:
+                self.logger.info("checking if a clan battle is ready")
+                self.goto_master()
 
-            click_on_point(self.locs.clan_battle_ready, pause=5)
-            # Determine if a battle is active and available to run through.
-            if self.grabber.search(self.images.battle_available, bool_only=True):
-                self.logger.info("clan battle is ready, starting now")
+                # Clicking into the main clan page in game. Slight pause is also initiated in case
+                # any server lag is present and may cause the clan load to be longer.
+                click_on_point(self.locs.clan, pause=5)
+
+                # Click into the clan quest.
                 click_on_point(self.locs.clan_quest, pause=2)
 
-                # If the entry fee into the first clan quest is diamond blocked, it means the last
-                # clan quest probably hasn't reset since we last participated. Safe to exit here
-                # until the initial fight is free.
-                if self.grabber.search(self.images.diamond, bool_only=True):
-                    # Requires diamonds to fight, quit early.
-                    self.logger.info("diamonds are required to begin battle, skipping")
-                    return
+                # Is a clan quest battle available for us to participate in?
+                if self.grabber.search(self.images.fight, bool_only=True):
+                    # If the entry fee into the first clan quest is diamond blocked, it means the last
+                    # clan quest probably hasn't reset since we last participated. Exit here to ensure
+                    # diamonds are not spent on accident. This conditional is unlikely due to the image
+                    # check performed above, but worth having.
+                    if self.grabber.search(self.images.diamond, bool_only=True):
+                        self.logger.info("diamonds are required to begin battle, exiting clan quest")
+                        self.calculate_next_clan_battle_check()
+                        return
 
-                # Begin clan fight now.
-                click_on_point(self.locs.clan_fight, pause=2)
+                    self.logger.info("clan battle is ready and available, participating now")
 
-                # Create a datetime object used to determine when tapping should stop.
-                end = datetime.datetime.now() + datetime.timedelta(seconds=40)
+                    # Begin first clan quest, using a datetime to determine when to stop clicking. Datetime is
+                    # slightly above the normal time for a clan quest, just to provide enough of a threshold to
+                    # account for lag or a buggy clan fight.
+                    click_on_point(self.locs.clan_fight, pause=2)
+                    end = datetime.datetime.now() + datetime.timedelta(seconds=40)
+                    while datetime.datetime.now() < end:
+                        click_on_point(self.locs.game_middle, pause=0.07)
 
-                # Clicking the screen for forty seconds no matter what. This should provide us with enough
-                # time to ensure that all taps were used, and that even if the fight started later/earlier
-                # than expected, we can now check if another fight should take place.
-                while datetime.datetime.now() < end:
-                    click_on_point(self.locs.game_middle, pause=0.07)
+                    self.stats.clan_ship_battles += 1
 
-                self.stats.clan_ship_battles += 1
-                # Should an additional clan battle take place? This will cost five diamonds.
-                if self.config.ENABLE_EXTRA_FIGHT:
-                    # Make sure only five diamonds will be spent.
-                    if self.grabber.search(self.images.deal_110_next_attack, bool_only=True):
-                        self.logger.info("spending five diamonds to participate in clan battle again.")
-                        click_on_point(self.locs.clan_fight, pause=1)
-                        click_on_point(self.locs.diamond_okay, pause=5)
+                    # Perform check to determine if an additional fight should take place (5 diamonds).
+                    if self.config.ENABLE_EXTRA_FIGHT:
+                        if self.grabber.search(self.images.deal_110_next_attack, bool_only=True):
+                            self.logger.info("spending five diamonds to participate in clan battle again.")
+                            click_on_point(self.locs.clan_fight, pause=1)
+                            click_on_point(self.locs.diamond_okay, pause=5)
 
-                        end = datetime.datetime.now() + datetime.timedelta(seconds=40)
-                        while datetime.datetime.now() < end:
-                            click_on_point(self.locs.game_middle, pause=0.07)
+                            end = datetime.datetime.now() + datetime.timedelta(seconds=40)
+                            while datetime.datetime.now() < end:
+                                click_on_point(self.locs.game_middle, pause=0.07)
 
-                        self.stats.clan_ship_battles += 1
+                            self.stats.clan_ship_battles += 1
+                        else:
+                            self.logger.info("first fight was successful, the next one costs more than five diamonds, "
+                                             "exiting instead of fighting again")
 
                 # All clan quests should be finished now, safe to exit the panel and resume bot.
+                click_on_point(self.locs.clan_quest_exit, pause=1)
                 click_on_point(self.locs.clan_leave_screen, clicks=5, pause=1)
+
+                self.calculate_next_clan_battle_check()
 
     @not_in_transition
     def collect_ad(self):
@@ -766,6 +788,7 @@ class Bot:
                 self.tap()
                 self.collect_ad()
                 self.prestige()
+                self.clan_battle()
                 self.actions()
                 self.activate_skills()
                 self.update_stats()
