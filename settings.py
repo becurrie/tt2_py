@@ -5,7 +5,7 @@ Store all project specific settings here.
 """
 import os
 
-__VERSION__ = "0.0.2"
+__VERSION__ = "0.0.3"
 
 # Store the root directory of the project. May be used and appended to files in other directories without
 # the need for relative urls being generated to travel to the file.
