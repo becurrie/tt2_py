@@ -33,7 +33,8 @@ TapTitans2 Py is bot written in python that enables the mobile tap game Tap Tita
 - Fully configurable settings to gear the bot's functionality to match your playstyle/build.
 - Activate chosen in game skills on a specified cooldown, with the option to wait for one specific skill before activating others.
 - Automatically level up the sword master, skills and heroes in game with a specified amount of intensity (clicks).
-- Automatically prestige after a specified amount of minutes spent in a run.
+- Automatically prestige after a specified amount of minutes spent in a run or once a certain stage has been reached.
+- Prestige can also be configured to occur once a percentage of your max stage has been reached.
 - Upgrade your bos artifact after a prestige has been completed.
 - Participate in tournaments when they become available (enter/collect rewards).
 - Hatch and collect any eggs when they become available.
@@ -151,7 +152,10 @@ The configuration values all have some comments that describe the option slightl
 | config | Description | Default | Examples |
 |--------------------------|-------------------------------------------------------------|---------|-------------|
 | ENABLE_AUTO_PRESTIGE | Enable the auto prestige functionality in game. | on | on, off |
-| PRESTIGE_AFTER_X_MINUTES | Determine the amount of minutes between each auto prestige. | 90 | 30, 90, 200 |
+| PRESTIGE_AFTER_X_MINUTES | Determine the amount of minutes between each auto prestige. Note that will be used to set a hard limit on prestiges that take place relating to the stage prestige options (if they are enabled). | 90 | 30, 90, 200 |
+| PRESTIGE_AT_STAGE | Set this to something other than 0 to automatically initiate a prestige once you reach a certain stage. | 0 | 0, 1000, 10000, 55000 |
+| PRESTIGE_AT_MAX_STAGE | Turn this setting on to enable the auto prestige once you reach you current highest stage (max prestige). | off | off, on |
+| PRESTIGE_AT_MAX_STAGE_PERCENT | Specify a percentage that will be used to perform an auto prestige once your current stage reaches the percent chosen of your highest stage. | 0 | 0, 80, 90, 110 | 
 
 ### Artifacts Action Options
 | config | Description | Default | Examples |

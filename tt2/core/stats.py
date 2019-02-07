@@ -5,7 +5,7 @@ The stats module will encapsulate all functionality related to the stats
 panel located inside of the heroes panel in game.
 """
 from settings import __VERSION__
-from tt2.core.maps import STATS_COORDS, ARTIFACT_TIER_MAP
+from tt2.core.maps import STATS_COORDS, STAGE_COORDS, ARTIFACT_TIER_MAP
 from tt2.core.constants import (
     STATS_JSON_TEMPLATE, STATS_GAME_STAT_KEYS, STATS_BOT_STAT_KEYS, LOGGER_FILE_NAME,
     STATS_DATE_FMT, STATS_UN_PARSABLE
@@ -84,6 +84,15 @@ class Stats:
         # Update instance to reflect any available values in the content attr.
         self.update_from_content()
 
+    @property
+    def highest_stage(self):
+        """Retrieve the highest stage reached from game stats, returning None if it is un parsable."""
+        value = convert(getattr(self, "highest_stage_reached"))
+        try:
+            return int(value)
+        except ValueError:
+            return None
+
     def _base(self):
         """Manually set every expected value, allows for easier access later on."""
         self.premium_ads = None
@@ -91,20 +100,49 @@ class Stats:
         self.actions = None
         self.updates = None
 
-    def _process(self):
+    def _process(self, scale=3, iterations=1, image=None):
         """Process the grabbers current image before OCR extraction attempt."""
-        image = self.grabber.current
+        if image:
+            image = image
+        else:
+            image = self.grabber.current
+
         image = np.array(image)
 
         # Resize and desaturate.
-        image = cv2.resize(image, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+        image = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         # Apply dilation and erosion.
         kernel = np.ones((1, 1), np.uint8)
-        image = cv2.dilate(image, kernel, iterations=1)
-        image = cv2.erode(image, kernel, iterations=1)
+        image = cv2.dilate(image, kernel, iterations=iterations)
+        image = cv2.erode(image, kernel, iterations=iterations)
 
         return Image.fromarray(image)
+
+    def _process_stage(self, scale=5, threshold=100, image=None):
+        if image:
+            image = image
+        else:
+            image = self.grabber.current
+
+        image = np.array(image)
+
+        # Resize image.
+        image = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+        # Create gray scale.
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # Perform threshold on image.
+        retr, mask = cv2.threshold(image, 230, 255, cv2.THRESH_BINARY)
+
+        # Find contours.
+        contours, hier = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # Draw black over counters smaller than 200, removing un wanted blobs from stage image.
+        for contour in contours:
+            if cv2.contourArea(contour) < threshold:
+                cv2.drawContours(mask, [contour], 0, (0,), -1)
+
+        return Image.fromarray(mask)
 
     def stat_diff(self, ctx):
         """
@@ -343,6 +381,24 @@ class Stats:
             except ValueError:
                 self.logger.error("{key} was unable to be parsed (OCR: {text})".format(key=key, text=text))
                 return "Not parsable"
+
+    def stage_ocr(self, test_image=None):
+        """Attempt to parse out the current stage in game through an OCR check."""
+        self.logger.info("attempting to parse out the current stage from in game")
+        region = STAGE_COORDS[self.key]
+
+        if test_image:
+            image = self._process_stage(scale=3, image=test_image)
+        else:
+            self.grabber.snapshot(region=region)
+            image = self._process_stage(scale=3)
+
+        text = pytesseract.image_to_string(image, config='--psm 7 nobatch digits')
+        self.logger.info("parsed value: {text}".format(text=text))
+
+        # Do some light parse work here to make sure only digit like characters are present
+        # in the returned 'text' variable retrieved through tesseract.
+        return ''.join(filter(lambda x: x.isdigit(), text))
 
     def retrieve(self):
         """Attempt to retrieve the stats JSON file with all current data."""

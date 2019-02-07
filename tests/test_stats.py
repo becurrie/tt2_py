@@ -13,6 +13,8 @@ from tt2.core.bot import Bot
 from tt2.core.constants import STATS_GAME_STAT_KEYS, STATS_BOT_STAT_KEYS
 from tests.maps import IMAGES as TEST_IMAGES
 
+from PIL import Image
+
 import unittest
 
 
@@ -49,6 +51,18 @@ class TestStatsParser(unittest.TestCase):
 
         for key, value in expected.items():
             self.assertTrue(getattr(self.bot.stats, key) == value)
+
+    def test_stage_ocr(self):
+        """Test that the stage ocr checks are able to parse different expected stage values."""
+        expected = ("12493", "10651", "11289", "10411", "10920", "7111", "9840", "7284", "7180")
+        for i in range(9):
+            index = "0{index}".format(index=i + 1)
+            key = "test_stage_{image_index}".format(image_index=index)
+
+            image = Image.open(TEST_IMAGES["STAGE"][key])
+            value = self.bot.stats.stage_ocr(test_image=image)
+
+            self.assertEqual(expected[i], value)
 
     def test_stats_diff(self):
         """Test that the stats module can properly retrieve the differences between values."""

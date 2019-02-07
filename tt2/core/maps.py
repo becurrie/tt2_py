@@ -281,7 +281,7 @@ STATS_COORDS = {
 }
 
 STAGE_COORDS = {
-    "480x800": (205, 65, 265, 85),
+    "480x800": (214, 71, 268, 84),
 }
 
 # The regions for each skill present on the master screen if the panel
