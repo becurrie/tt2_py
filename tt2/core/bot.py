@@ -76,6 +76,8 @@ class Bot:
         # Bot termination flag. run() should exit if True.
         self.TERMINATE = False
 
+        self.current_stage = None
+
         self.next_action_run = None
         self.next_prestige = None
         self.next_stats_update = None
@@ -101,6 +103,25 @@ class Bot:
         self.calculate_next_prestige()
         self.calculate_next_stats_update()
         self.calculate_next_clan_battle_check()
+
+    def parse_current_stage(self):
+        """
+        Attempt to update the current stage attribute through an OCR check in game. The current_stage
+        attribute is initialized as None, and if the current stage parsed here is unable to be coerced into
+        an integer, it will be set back to None.
+
+        When using the attribute, a check should be performed to ensure it isn't None before running
+        numeric friendly conditionals.
+        """
+        stage_parsed = self.stats.stage_ocr()
+        try:
+            self.logger.info("attempting to coerce value: {stage} into a integer".format(stage=stage_parsed))
+            stage = int(stage_parsed)
+            self.current_stage = stage
+            self.logger.info("current stage was successfully parsed: {stage}".format(stage=stage))
+        except ValueError:
+            self.logger.info("unable to coerce text, setting current stage to None instead")
+            self.current_stage = None
 
     def _order_actions(self):
         """Determine order of in game actions. Mapped to their respective functions."""
@@ -193,6 +214,77 @@ class Bot:
         self.logger.info("next prestige will take place at: {date} ({time})".format(
             date=str(dt), time=strfdelta(dt - now))
         )
+
+    def should_prestige(self):
+        """
+        Determine if prestige will take place. This value is based off of the configuration
+        specified by the User.
+
+        - After specified amount of time during run.
+        - After a certain stage has been reached.
+        - After max stage has been reached.
+        - After a percent of max stage has been reached.
+        """
+        if self.config.PRESTIGE_AFTER_X_MINUTES != 0:
+            now = datetime.datetime.now()
+
+            # Is the hard time limit set? If it is, perform prestige no matter what,
+            # otherwise, look at the current stage conditionals present and prestige
+            # off of those instead.
+            if now > self.next_prestige:
+                return True
+
+            self.logger.info("timed prestige will occur at {date} ({time})".format(
+                date=str(now), time=strfdelta(self.next_prestige - now)
+            ))
+
+        # Current stage must not be None, using time gate before this check.
+        # stage == None is only possible when OCR checks are failing, this can
+        # happen when a stage change happens as the check takes place, causing
+        # the image recognition to fail.
+        if self.current_stage is None:
+            return False
+
+        # Any other conditionals will be using the current stage attribute of the bot.
+        elif self.config.PRESTIGE_AT_STAGE != 0:
+            if self.current_stage >= self.config.PRESTIGE_AT_STAGE:
+                self.logger.info("stage: {stage} has been reached, beginning prestige now".format(
+                    stage=self.config.PRESTIGE_AT_STAGE
+                ))
+                return True
+            else:
+                return False
+
+        # These conditionals are dependant on the highest stage reached, if one isn't available,
+        # (due to parsing error). We skip these until it is available, or the time limit is reached.
+        if not self.stats.highest_stage:
+            self.logger.info("it looks like your highest stage is being used as a prestige requirement but "
+                             "no highest stage is available, skipping for now")
+            return False
+
+        elif self.config.PRESTIGE_AT_MAX_STAGE:
+            if self.current_stage >= self.stats.highest_stage:
+                self.logger.info("max stage: {max_stage} has been reached, beginning prestige now".format(
+                    max_stage=self.stats.highest_stage
+                ))
+                return True
+            else:
+                return False
+
+        elif self.config.PRESTIGE_AT_MAX_STAGE_PERCENT != 0:
+            percent = self.config.PRESTIGE_AT_MAX_STAGE_PERCENT / 100
+            threshold = int(self.stats.highest_stage * percent)
+            if self.current_stage >= threshold:
+                self.logger.info("{percent}% of max stage: {max_stage} has been reached, beginning prestige now".format(
+                    percent=self.config.PRESTIGE_AT_MAX_STAGE_PERCENT, max_stage=self.stats.highest_stage
+                ))
+                return True
+            else:
+                return False
+
+        # Otherwise, only a time limit has been set for a prestige and it wasn't reached.
+        self.logger.info("no prestige requirements were met, prestige will not happen right now")
+        return False
 
     def calculate_next_action_run(self):
         """Calculate when the next set of actions will be ran."""
@@ -353,8 +445,7 @@ class Bot:
     def prestige(self):
         """Perform a prestige in game."""
         if self.config.ENABLE_AUTO_PRESTIGE:
-            now = datetime.datetime.now()
-            if now > self.next_prestige:
+            if self.should_prestige():
                 self.logger.info("beginning prestige process now.")
                 self.check_tournament()
                 self.goto_master(collapsed=False, top=False)
@@ -382,15 +473,14 @@ class Bot:
                 self.daily_rewards()
                 self.hatch_eggs()
 
-                # Re calculating the next prestige time now.
-                self.calculate_next_prestige()
-
                 # Ensure that next action run values are set properly after prestige.
                 # Always want to run through actions after a prestige, unlock skills/heroes as soon as possible.
+                now = datetime.datetime.now()
                 self.next_action_run = now - datetime.timedelta(seconds=1)
 
-            # How much time left until a prestige will take place?
-            self.logger.info("prestige will take place in {time}".format(time=strfdelta(self.next_prestige - now)))
+                # If a timer is used for prestige.
+                if self.config.PRESTIGE_AFTER_X_MINUTES != 0:
+                    self.calculate_next_prestige()
 
     @not_in_transition
     def artifacts(self):
@@ -787,6 +877,7 @@ class Bot:
                 self.fight_boss()
                 self.tap()
                 self.collect_ad()
+                self.parse_current_stage()
                 self.prestige()
                 self.clan_battle()
                 self.actions()
