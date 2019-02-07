@@ -100,20 +100,49 @@ class Stats:
         self.actions = None
         self.updates = None
 
-    def _process(self):
+    def _process(self, scale=3, iterations=1, image=None):
         """Process the grabbers current image before OCR extraction attempt."""
-        image = self.grabber.current
+        if image:
+            image = image
+        else:
+            image = self.grabber.current
+
         image = np.array(image)
 
         # Resize and desaturate.
-        image = cv2.resize(image, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+        image = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         # Apply dilation and erosion.
         kernel = np.ones((1, 1), np.uint8)
-        image = cv2.dilate(image, kernel, iterations=1)
-        image = cv2.erode(image, kernel, iterations=1)
+        image = cv2.dilate(image, kernel, iterations=iterations)
+        image = cv2.erode(image, kernel, iterations=iterations)
 
         return Image.fromarray(image)
+
+    def _process_stage(self, scale=5, threshold=100, image=None):
+        if image:
+            image = image
+        else:
+            image = self.grabber.current
+
+        image = np.array(image)
+
+        # Resize image.
+        image = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+        # Create gray scale.
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # Perform threshold on image.
+        retr, mask = cv2.threshold(image, 230, 255, cv2.THRESH_BINARY)
+
+        # Find contours.
+        contours, hier = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # Draw black over counters smaller than 200, removing un wanted blobs from stage image.
+        for contour in contours:
+            if cv2.contourArea(contour) < threshold:
+                cv2.drawContours(mask, [contour], 0, (0,), -1)
+
+        return Image.fromarray(mask)
 
     def stat_diff(self, ctx):
         """
