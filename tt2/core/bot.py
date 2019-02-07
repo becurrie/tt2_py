@@ -4,9 +4,10 @@ core.py
 Main bot initialization and script startup should take place here. All actions and main bot loops
 will be maintained from this location.
 """
-from settings import CONFIG_FILE, STATS_FILE
+from settings import CONFIG_FILE, STATS_FILE, STAGE_CAP
 
 from tt2.core.maps import *
+from tt2.core.constants import STAGE_PARSE_THRESHOLD
 from tt2.core.grabber import Grabber
 from tt2.core.configure import Config
 from tt2.core.stats import Stats
@@ -76,6 +77,7 @@ class Bot:
         # Bot termination flag. run() should exit if True.
         self.TERMINATE = False
 
+        self._last_stage = None
         self.current_stage = None
 
         self.next_action_run = None
@@ -117,10 +119,29 @@ class Bot:
         try:
             self.logger.info("attempting to coerce value: {stage} into a integer".format(stage=stage_parsed))
             stage = int(stage_parsed)
+            if stage > STAGE_CAP:
+                self.logger.warn("parsed stage is greater than highest possible stage, skipping this parse")
+                self._last_stage = None
+                self.current_stage = None
+                return
+
+            # Is the stage potentially way greater than the last check? Could mean the parse failed.
+            if isinstance(self._last_stage, int):
+                if stage - self._last_stage > STAGE_PARSE_THRESHOLD:
+                    self.logger.warn("parsed stage minus last parsed stage is greater than the threshold ({thresh}), "
+                                     "skipping this parse".format(thresh=STAGE_PARSE_THRESHOLD))
+                    self._last_stage = None
+                    self.current_stage = None
+                    return
+
+            self._last_stage = self.current_stage
             self.current_stage = stage
             self.logger.info("current stage was successfully parsed: {stage}".format(stage=stage))
+
+        # ValueError when the parsed stage isn't able to be coerced.
         except ValueError:
-            self.logger.info("unable to coerce text, setting current stage to None instead")
+            self.logger.warn("unable to coerce text, setting current stage to None instead")
+            self._last_stage = None
             self.current_stage = None
 
     def _order_actions(self):

@@ -73,3 +73,8 @@ LOGGER_FILE_NAME = "{log_dir}/{name}.log".format(log_dir=LOG_DIR, name=INIT_DATE
 LEFT_CLICK = "left"
 RIGHT_CLICK = "right"
 MIDDLE_CLICK = "middle"
+
+# Threshold used to determine if the value of the next parsed stage is obviously malformed.
+# This can be determined by looking at the new value, subtracting it from the old value and seeing
+# if it crosses the threshold, in which case we can skip the current parse attempt.
+STAGE_PARSE_THRESHOLD = 10000
