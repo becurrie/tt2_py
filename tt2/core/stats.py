@@ -5,7 +5,7 @@ The stats module will encapsulate all functionality related to the stats
 panel located inside of the heroes panel in game.
 """
 from settings import __VERSION__
-from tt2.core.maps import STATS_COORDS, ARTIFACT_TIER_MAP
+from tt2.core.maps import STATS_COORDS, STAGE_COORDS, ARTIFACT_TIER_MAP
 from tt2.core.constants import (
     STATS_JSON_TEMPLATE, STATS_GAME_STAT_KEYS, STATS_BOT_STAT_KEYS, LOGGER_FILE_NAME,
     STATS_DATE_FMT, STATS_UN_PARSABLE
@@ -381,6 +381,24 @@ class Stats:
             except ValueError:
                 self.logger.error("{key} was unable to be parsed (OCR: {text})".format(key=key, text=text))
                 return "Not parsable"
+
+    def stage_ocr(self, test_image=None):
+        """Attempt to parse out the current stage in game through an OCR check."""
+        self.logger.info("attempting to parse out the current stage from in game")
+        region = STAGE_COORDS[self.key]
+
+        if test_image:
+            image = self._process_stage(scale=3, image=test_image)
+        else:
+            self.grabber.snapshot(region=region)
+            image = self._process_stage(scale=3)
+
+        text = pytesseract.image_to_string(image, config='--psm 7 nobatch digits')
+        self.logger.info("parsed value: {text}".format(text=text))
+
+        # Do some light parse work here to make sure only digit like characters are present
+        # in the returned 'text' variable retrieved through tesseract.
+        return ''.join(filter(lambda x: x.isdigit(), text))
 
     def retrieve(self):
         """Attempt to retrieve the stats JSON file with all current data."""
