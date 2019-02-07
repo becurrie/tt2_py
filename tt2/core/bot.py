@@ -619,6 +619,8 @@ class Bot:
                         click_on_point(self.locs.game_middle, pause=0.07)
 
                     self.stats.clan_ship_battles += 1
+                    # Additional sleep in case post fight is lagging.
+                    sleep(8)
 
                     # Perform check to determine if an additional fight should take place (5 diamonds).
                     if self.config.ENABLE_EXTRA_FIGHT:
@@ -632,12 +634,14 @@ class Bot:
                                 click_on_point(self.locs.game_middle, pause=0.07)
 
                             self.stats.clan_ship_battles += 1
+                            # Additional sleep in case post fight is lagging again.
+                            sleep(5)
                         else:
                             self.logger.info("first fight was successful, the next one costs more than five diamonds, "
                                              "exiting instead of fighting again")
 
                 # All clan quests should be finished now, safe to exit the panel and resume bot.
-                click_on_point(self.locs.clan_quest_exit, pause=1)
+                click_on_point(self.locs.clan_quest_exit, pause=2)
                 click_on_point(self.locs.clan_leave_screen, clicks=5, pause=1)
 
                 self.calculate_next_clan_battle_check()
