@@ -84,6 +84,15 @@ class Stats:
         # Update instance to reflect any available values in the content attr.
         self.update_from_content()
 
+    @property
+    def highest_stage(self):
+        """Retrieve the highest stage reached from game stats, returning None if it is un parsable."""
+        value = convert(getattr(self, "highest_stage_reached"))
+        try:
+            return int(value)
+        except ValueError:
+            return None
+
     def _base(self):
         """Manually set every expected value, allows for easier access later on."""
         self.premium_ads = None
