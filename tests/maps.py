@@ -37,9 +37,15 @@ IMAGES = {
         "heroes_stats_bottom": TEST_IMAGE_DIR + "/stats/heroes_stats_bottom.png",
     },
     "STAGE": {
-        "stage_crop_01": TEST_IMAGE_DIR + "/stats/stage_crop_01.png",
-        "stage_crop_02": TEST_IMAGE_DIR + "/stats/stage_crop_02.png",
-        "stage_crop_03": TEST_IMAGE_DIR + "/stats/stage_crop_03.png",
+        "test_stage_01": TEST_IMAGE_DIR + "/stats/test_stage_01.png",
+        "test_stage_02": TEST_IMAGE_DIR + "/stats/test_stage_02.png",
+        "test_stage_03": TEST_IMAGE_DIR + "/stats/test_stage_03.png",
+        "test_stage_04": TEST_IMAGE_DIR + "/stats/test_stage_04.png",
+        "test_stage_05": TEST_IMAGE_DIR + "/stats/test_stage_05.png",
+        "test_stage_06": TEST_IMAGE_DIR + "/stats/test_stage_06.png",
+        "test_stage_07": TEST_IMAGE_DIR + "/stats/test_stage_07.png",
+        "test_stage_08": TEST_IMAGE_DIR + "/stats/test_stage_08.png",
+        "test_stage_09": TEST_IMAGE_DIR + "/stats/test_stage_09.png",
     },
     "STATS_TEST": {
         "highest_stage_reached": TEST_IMAGE_DIR + "/stats/test_set/highest_stage_reached.png",
