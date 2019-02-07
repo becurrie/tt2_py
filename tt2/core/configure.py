@@ -91,6 +91,9 @@ class Config:
         # ACTIONS_PRESTIGE.
         self.ENABLE_AUTO_PRESTIGE = None
         self.PRESTIGE_AFTER_X_MINUTES = None
+        self.PRESTIGE_AT_STAGE = None
+        self.PRESTIGE_AT_MAX_STAGE = None
+        self.PRESTIGE_AT_MAX_STAGE_PERCENT = None
 
         # ACTIONS_ARTIFACTS.
         self.ENABLE_ARTIFACT_PURCHASE = None
