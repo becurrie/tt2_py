@@ -671,14 +671,14 @@ class Bot:
     def collect_ad(self):
         """Collect ad if one is available on the screen."""
         self.logger.info("collecting any ads available on the screen")
-        if self.grabber.search(self.images.collect_ad, bool_only=True):
+        while self.grabber.search(self.images.collect_ad, bool_only=True):
             if self.config.ENABLE_PREMIUM_AD_COLLECT:
                 self.logger.info("accepting premium ad")
                 self.stats.premium_ads += 1
-                click_on_point(self.locs.collect_ad, pause=1)
+                click_on_point(self.locs.collect_ad, pause=1, offset=1)
             else:
                 self.logger.info("declining premium ad")
-                click_on_point(self.locs.no_thanks, pause=1)
+                click_on_point(self.locs.no_thanks, pause=1, offset=1)
 
     @not_in_transition
     def fight_boss(self):

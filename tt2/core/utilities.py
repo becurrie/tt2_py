@@ -178,10 +178,10 @@ def in_transition_func(*args, max_loops):
         if ad:
             if _self.config.ENABLE_PREMIUM_AD_COLLECT:
                 _self.logger.info("accepting premium ad through transition check")
-                click_on_point(_self.locs.collect_ad)
+                click_on_point(_self.locs.collect_ad, offset=1)
             else:
                 _self.logger.info("declining premium ad through transition check")
-                click_on_point(_self.locs.no_thanks)
+                click_on_point(_self.locs.no_thank, offset=1)
             break
 
         exit_panel = _self.grabber.search(_self.images.exit_panel, bool_only=True)
