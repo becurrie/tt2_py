@@ -91,8 +91,13 @@ class Bot:
         self.next_war_cry = None
         self.next_shadow_clone = None
 
-        # Additional in game intervals.
+        # Clan battle check should control when and if the bot knows that a clan quest is currently on cooldown,
+        # if a clan quest is currently active, this can remain None. Only checked every X minutes based on config.
         self.next_clan_battle_check = None
+
+        # Clan battle ready at datetime attribute. This is set when a clan check determines that the clan
+        # quest is currently on cooldown, This datetime is checked on each game loop.
+        self.clan_battle_ready_at = None
 
         # Create a list of the functions called in there proper order
         # when actions are performed by the bot.
@@ -600,72 +605,139 @@ class Bot:
                 click_on_point(self.locs.game_middle, 5, interval=0.5, pause=1)
 
     @not_in_transition
-    def clan_battle(self):
+    def clan_battle(self, force_ready=False, force_check=False):
         """
-        Participant in a clan battle if one is available. Based on the amount of clan quests configured in the
-        users config file, this will potentially spend diamonds.
+        Perform all clan quest related functionality here. The clan battle should function and encapsulate
+        the two following use cases.
+
+        1. Every x amount of minutes, a check will occur that checks to see if a clan battle is on cooldown, if it is,
+           the time remaining until that battle starts is parsed and the date is set to a instance attribute that is
+           also checked here. If during this check, a fight is already in progress, a fight will take place right away
+           using the normal clan quest fight logic.
+
+        2. Every game loop also comes into here, and checks that the current datetime is greater than the new instance
+           attribute that controls when the clan quest should be available. If the attribute isn't set (likely meaning
+           that the bot has been initialized and no check has occurred yet), then the fight is skipped until it is set.
+           If the current datetime is greater, normal clan quest fight logic should take place.
         """
+        def fight(seconds=40):
+            """
+            Main quest fight logic, deals with clicking for X amount of seconds.
+
+            Some overkill is specified as a default for the fight, fights only last thirty seconds,
+            but we want to click longer so that we click while the fight is active, and ensure that
+            the fight finished ui is clicked on to bring us back to the clan quest panel.
+            """
+            stop_at = datetime.datetime.now() + datetime.timedelta(seconds=seconds)
+            self.logger.info("starting clan quest fight, clicking will end at: {date} ({time})".format(
+                date=stop_at, time=strfdelta(stop_at - datetime.datetime.now())
+            ))
+
+            # Clicking continuously until stop_at date is reached with now().
+            while datetime.datetime.now() < stop_at:
+                click_on_point(self.locs.game_middle, pause=0.07)
+
+            self.logger.info("clan quest clicking has concluded")
+
+        # Are clan quests enabled at all?
         if self.config.ENABLE_CLAN_QUEST:
+            # Firstly, determine if the bot knows whether or not a clan quest is currently pending
+            # start based on a cooldown that has been previously recorded.
             now = datetime.datetime.now()
-            if now > self.next_clan_battle_check:
-                self.logger.info("checking if a clan battle is ready")
-                self.goto_master()
+            if self.clan_battle_ready_at or force_ready:
+                # We now know that there's a datetime available to determine when the clan quest will be ready.
+                if now > self.clan_battle_ready_at:
+                    # Clan battle should be ready now. Let's begin the clan battle logic here.
+                    # First, ensure we start with no panels open.
+                    self.no_panel()
 
-                # Clicking into the main clan page in game. Slight pause is also initiated in case
-                # any server lag is present and may cause the clan load to be longer.
-                click_on_point(self.locs.clan, pause=5)
+                    # Open the clan quest panel.
+                    click_on_point(self.locs.clan, pause=5)
+                    click_on_point(self.locs.clan_quest, pause=5)
 
-                # Click into the clan quest.
-                click_on_point(self.locs.clan_quest, pause=2)
-
-                # Is a clan quest battle available for us to participate in?
-                if self.grabber.search(self.images.fight, bool_only=True):
-                    # If the entry fee into the first clan quest is diamond blocked, it means the last
-                    # clan quest probably hasn't reset since we last participated. Exit here to ensure
-                    # diamonds are not spent on accident. This conditional is unlikely due to the image
-                    # check performed above, but worth having.
-                    if self.grabber.search(self.images.diamond, bool_only=True):
-                        self.logger.info("diamonds are required to begin battle, exiting clan quest")
-                        self.calculate_next_clan_battle_check()
-                        return
-
-                    self.logger.info("clan battle is ready and available, participating now")
-
-                    # Begin first clan quest, using a datetime to determine when to stop clicking. Datetime is
-                    # slightly above the normal time for a clan quest, just to provide enough of a threshold to
-                    # account for lag or a buggy clan fight.
-                    click_on_point(self.locs.clan_fight, pause=2)
-                    end = datetime.datetime.now() + datetime.timedelta(seconds=40)
-                    while datetime.datetime.now() < end:
-                        click_on_point(self.locs.game_middle, pause=0.07)
-
-                    self.stats.clan_ship_battles += 1
-                    # Additional sleep in case post fight is lagging.
-                    sleep(8)
-
-                    # Perform check to determine if an additional fight should take place (5 diamonds).
+                    # Determine whether or not the initial fight we go into will cost diamonds or not, this may
+                    # happen due to configuration changes and restarting bot. Although rare, still worth dealing with.
                     if self.config.ENABLE_EXTRA_FIGHT:
-                        if self.grabber.search(self.images.deal_110_next_attack, bool_only=True):
-                            self.logger.info("spending five diamonds to participate in clan battle again.")
-                            click_on_point(self.locs.clan_fight, pause=1)
-                            click_on_point(self.locs.diamond_okay, pause=5)
+                        if self.grabber.search(self.images.diamond, bool_only=True):
+                            if self.grabber.search(self.images.deal_110_next_attack, bool_only=True):
+                                # Only ever fighting an additional fight if it costs five diamonds.
+                                # Spending more is un-realistic and unsupported at the moment.
+                                click_on_point(self.locs.clan_fight, pause=2)
+                                click_on_point(self.locs.diamond_okay, pause=5)
 
-                            end = datetime.datetime.now() + datetime.timedelta(seconds=40)
-                            while datetime.datetime.now() < end:
-                                click_on_point(self.locs.game_middle, pause=0.07)
+                                fight()
+                                self.stats.clan_ship_battles += 1
+                                sleep(8)
 
-                            self.stats.clan_ship_battles += 1
-                            # Additional sleep in case post fight is lagging again.
-                            sleep(5)
-                        else:
-                            self.logger.info("first fight was successful, the next one costs more than five diamonds, "
-                                             "exiting instead of fighting again")
+                                # Leave the clan quest and default page.
+                                click_on_point(self.locs.clan_quest_exit, pause=2)
+                                click_on_point(self.locs.clan_leave_screen, clicks=3, pause=2)
 
-                # All clan quests should be finished now, safe to exit the panel and resume bot.
-                click_on_point(self.locs.clan_quest_exit, pause=2)
-                click_on_point(self.locs.clan_leave_screen, clicks=5, pause=1)
+                    # If the initial fight is a normal clan quest (no diamond cost), start by fighting like normal
+                    # and performing the check to determine if diamonds will be spent during the second fight.
+                    if self.grabber.search(self.images.fight, bool_only=True):
+                        # A diamond costing fight could potentially come up here, the check happens later on,
+                        # which means we should return early if one comes up at this point.
+                        if self.grabber.search(self.images.diamond, bool_only=True):
+                            self.calculate_next_clan_battle_check()
+                            click_on_point(self.locs.clan_quest_exit, pause=2)
+                            click_on_point(self.locs.clan_leave_screen, clicks=3, pause=2)
+                            return
 
-                self.calculate_next_clan_battle_check()
+                        # Otherwise, a normal clan quest is available to participate in.
+                        click_on_point(self.locs.clan_fight, pause=5)
+
+                        fight()
+                        self.stats.clan_ship_battles += 1
+                        sleep(8)
+
+                        if self.config.ENABLE_EXTRA_FIGHT:
+                            if self.grabber.search(self.images.diamond, bool_only=True):
+                                if self.grabber.search(self.images.deal_110_next_attack, bool_only=True):
+                                    # Begin an additional fight by spending diamonds.
+                                    click_on_point(self.locs.clan_fight, pause=2)
+                                    click_on_point(self.locs.diamond_okay, pause=5)
+
+                                    fight()
+                                    self.stats.clan_ship_battles += 1
+                                    sleep(8)
+
+                        # All clan quest fights have been completed now, leave the clan quest pages.
+                        click_on_point(self.locs.clan_quest_exit, pause=2)
+                        click_on_point(self.locs.clan_leave_screen, clicks=3, pause=2)
+
+                    # Additionally, the clan battle ready at attribute should be set back to None, so that
+                    # only once the clan battle check takes place again to determine if a quest is active,
+                    # or on cooldown, will a fight take place.
+                    self.clan_battle_ready_at = None
+
+            # If the clan_battle_ready_at attribute isn't set, perform a check to set the value.
+            else:
+                if now > self.next_clan_battle_check or force_check:
+                    # Travel to the clan quest page, checking to see if a clan quest is currently in progress.
+                    # OR, that a clan quest is on cooldown, using this information to determine when the next
+                    # fight should take place.
+                    self.no_panel()
+                    click_on_point(self.locs.clan, pause=5)
+                    click_on_point(self.locs.clan_quest, pause=5)
+
+                    # Is the clan quest currently active, or on cooldown?
+                    if self.grabber.search(self.images.goal_complete, bool_only=True):
+                        # Perform an OCR check on the clan quest page, this will determine the datetime
+                        # at which the clan quest will be ready to participate in.
+                        self.clan_battle_ready_at = self.stats.play_again_ocr()
+
+                    # Clan quest in progress, lets set the clan battle ready at to the current datetime.
+                    # Next game loop will then begin a clan quest.
+                    else:
+                        self.clan_battle_ready_at = now
+
+                    # Exit out of the clan quest screen.
+                    click_on_point(self.locs.clan_quest_exit, pause=2)
+                    click_on_point(self.locs.clan_leave_screen, clicks=3, pause=2)
+
+                    # Calculate the next clan battle check.
+                    self.calculate_next_clan_battle_check()
 
     @not_in_transition
     def collect_ad(self):
@@ -890,6 +962,9 @@ class Bot:
                 self.actions(force=True)
             else:
                 self.calculate_next_action_run()
+
+            if self.config.CLAN_BATTLE_CHECK_ON_START:
+                self.clan_battle(force_check=True)
 
             # Main game loop.
             while True:
