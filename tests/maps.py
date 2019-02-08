@@ -47,6 +47,11 @@ IMAGES = {
         "test_stage_08": TEST_IMAGE_DIR + "/stats/test_stage_08.png",
         "test_stage_09": TEST_IMAGE_DIR + "/stats/test_stage_09.png",
     },
+    "CLAN_PLAY_AGAIN": {
+        "test_play_again_01": TEST_IMAGE_DIR + "/stats/test_play_again_01.png",
+        "test_play_again_02": TEST_IMAGE_DIR + "/stats/test_play_again_02.png",
+        "test_play_again_03": TEST_IMAGE_DIR + "/stats/test_play_again_03.png",
+    },
     "STATS_TEST": {
         "highest_stage_reached": TEST_IMAGE_DIR + "/stats/test_set/highest_stage_reached.png",
         "total_pet_level": TEST_IMAGE_DIR + "/stats/test_set/total_pet_level.png",
