@@ -284,6 +284,12 @@ STAGE_COORDS = {
     "480x800": (214, 71, 268, 84),
 }
 
+CLAN_COORDS = {
+    "480x800": {
+        "play_again": (70, 768, 172, 787),
+    },
+}
+
 # The regions for each skill present on the master screen if the panel
 # is expanded and scrolled all the way to the top.
 MASTER_COORDS = {
