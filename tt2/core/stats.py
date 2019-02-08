@@ -87,7 +87,10 @@ class Stats:
     @property
     def highest_stage(self):
         """Retrieve the highest stage reached from game stats, returning None if it is un parsable."""
+        stat = getattr(self, "highest_stage_reached")
         value = convert(getattr(self, "highest_stage_reached"))
+        self.logger.debug("Highest stage parsed: {before} -> {after}".format(before=stat, after=value))
+
         try:
             return int(value)
         except ValueError:
@@ -253,20 +256,17 @@ class Stats:
                             continue
 
                         if self.grabber.search(path, bool_only=True):
-                            self.logger.info("artifact: {artifact} was successfully found, marking as owned".format(
-                                artifact=artifact)
-                            )
+                            self.logger.info("Artifact: {artifact} was successfully found, marking as owned".format(
+                                artifact=artifact))
                             self.artifact_statistics["artifacts"][tier][artifact] = True
 
                     except ValueError:
-                        self.logger.error("artifact: {artifact} could not be searched for, leaving false".format(
-                            artifact=artifact)
-                        )
+                        self.logger.error("Artifact: {artifact} could not be searched for, leaving false".format(
+                            artifact=artifact))
 
             if break_next:
-                self.logger.info("artifact: {artifact} was found at the bottom of the screen, exiting parse loop now".format(
-                    artifact=self.config.BOTTOM_ARTIFACT
-                ))
+                self.logger.info("Artifact: {artifact} was found at the bottom of the screen, exiting parse loop "
+                                 "now".format(artifact=self.config.BOTTOM_ARTIFACT))
                 break
 
             # Scroll down slightly and check for artifacts again.
@@ -293,24 +293,27 @@ class Stats:
         if game_stats:
             for key, value in game_stats.items():
                 setattr(self, key, value)
+                self.logger.debug("Stats.{attr}: {value}".format(attr=key, value=value))
 
         bot_stats = self.content.get("bot_statistics")
         if bot_stats:
             for key, value in bot_stats.items():
                 setattr(self, key, value)
+                self.logger.debug("Stats.{attr}: {value}".format(attr=key, value=value))
 
         artifact_stats = self.content.get("artifact_statistics")
         if artifact_stats:
             for tier, d in artifact_stats["artifacts"].items():
                 for artifact, value in artifact_stats["artifacts"][tier].items():
                     self.artifact_statistics["artifacts"][tier][artifact] = value
-
             self.artifact_statistics["discovered"] = artifact_stats["discovered"]
+            self.logger.debug("Artifacts: {artifact_stats}".format(artifact_stats=artifact_stats))
 
         sessions = self.content.get("sessions")
         if sessions:
             if self.session in sessions:
                 self.session_data = sessions[self.session]
+            self.logger.debug("Sessions: {sessions}".format(sessions=sessions))
 
     def update_ocr(self, test_set=None):
         """
@@ -327,7 +330,7 @@ class Stats:
                 image = self._process()
 
             text = pytesseract.image_to_string(image, config='--psm 7')
-            self.logger.info("{key}: OCR result: {text}".format(key=key, text=text))
+            self.logger.debug("OCR result: {key} -> {text}".format(key=key, text=text))
 
             # The images do not always parse correctly, so we can attempt to parse out our expected
             # value from the STATS_COORD tuple being used.
@@ -335,7 +338,7 @@ class Stats:
             # Firstly, confirm that a number is present in the text result, if no numbers are present
             # at all, safe to assume the OCR has failed wonderfully.
             if not any(char.isdigit() for char in text):
-                self.logger.warning("no digits found in OCR result, skipping key: {key}".format(key=key))
+                self.logger.warning("No digits found in OCR result, skipping key: {key}".format(key=key))
                 setattr(self, key, STATS_UN_PARSABLE)
                 continue
 
@@ -374,17 +377,17 @@ class Stats:
                                 setattr(self, key, STATS_UN_PARSABLE)
                                 continue
 
-                self.logger.info("{key}: parsed value: {value}".format(key=key, value=value))
+                self.logger.debug("Parsed value: {key} -> {value}".format(key=key, value=value))
                 setattr(self, key, value)
 
             # Gracefully continuing loop if failure occurs.
             except ValueError:
-                self.logger.error("{key} was unable to be parsed (OCR: {text})".format(key=key, text=text))
-                return "Not parsable"
+                self.logger.error("Could not parse {key}: (OCR Result: {text})".format(key=key, text=text))
+                return "NOT PARSABLE"
 
     def stage_ocr(self, test_image=None):
         """Attempt to parse out the current stage in game through an OCR check."""
-        self.logger.info("attempting to parse out the current stage from in game")
+        self.logger.debug("Attempting to parse out the current stage from in game")
         region = STAGE_COORDS[self.key]
 
         if test_image:
@@ -394,7 +397,7 @@ class Stats:
             image = self._process_stage(scale=3)
 
         text = pytesseract.image_to_string(image, config='--psm 7 nobatch digits')
-        self.logger.info("parsed value: {text}".format(text=text))
+        self.logger.debug("Parsed value: {text}".format(text=text))
 
         # Do some light parse work here to make sure only digit like characters are present
         # in the returned 'text' variable retrieved through tesseract.
@@ -402,7 +405,7 @@ class Stats:
 
     def play_again_ocr(self, test_image=None):
         """Attempt to parse out the datetime from now that a clan battle will start at."""
-        self.logger.info("attempting to parse out the current play again datetime from in game")
+        self.logger.debug("Attempting to parse out the current play again datetime from in game.")
         region = CLAN_COORDS[self.key]["play_again"]
 
         if test_image:
@@ -412,6 +415,8 @@ class Stats:
             image = self._process()
 
         text = pytesseract.image_to_string(image, config="--psm 7")
+        self.logger.debug("Parsed value: {text}".format(text=text))
+
         if len(text) == 8:
             hours, minutes, seconds = text.split(":")
         else:
@@ -425,9 +430,15 @@ class Stats:
         except ValueError:
             return None
 
+        self.logger.debug("Successfully parsed out datetime values from play again time remaining.")
+        self.logger.debug("Hours: {hours}".format(hours=hours))
+        self.logger.debug("Minutes: {minutes}".format(minutes=minutes))
+        self.logger.debug("Seconds: {seconds}".format(seconds=seconds))
+
         # Calculate total seconds until a clan battle is available, also adding an additional
         # ten seconds here to ensure that the clan quest has begun.
         total_seconds = (hours * 3600) + (minutes * 60) + seconds + 10
+        self.logger.debug("Total Seconds: {total_seconds}".format(total_seconds=total_seconds))
 
         # Testing can return total seconds only, allowing us to test that proper values are parsed.
         if test_image:
@@ -461,9 +472,9 @@ class Stats:
     def write(self, update_artifacts=False):
         """Write the stats object to a JSON file, overwriting all old values in the process."""
         self.last_update = datetime.datetime.now()
-        self.logger.info("writing statistics to json file")
+        self.logger.info("Writing statistics to json file")
         contents = self.as_json(update_artifacts=update_artifacts)
         with open(self.file, "w+") as file:
             json.dump(contents, file, indent=4)
 
-        self.logger.info("stats were successfully written to {file}".format(file=self.file))
+        self.logger.info("Stats were successfully written to {file}".format(file=self.file))

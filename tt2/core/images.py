@@ -12,11 +12,14 @@ class Images:
 
     Giving bot access to more readable versions of every single image used to parse information.
     """
-    def __init__(self, images):
+    def __init__(self, images, logger):
         self._base()
+        self.logger = logger
+
         for group, d in images.items():
             for key, value in d.items():
                 setattr(self, key, value)
+                self.logger.debug("Images.{attr}: {value}".format(attr=key, value=value))
 
     def _base(self):
         """Manually set every expected value, allows for easier access later on."""
@@ -52,6 +55,7 @@ class Images:
         self.exit_panel = None
         self.expand_panel = None
         self.heroes_active = None
+        self.large_exit_panel = None
         self.master_active = None
         self.max = None
         self.pets_active = None

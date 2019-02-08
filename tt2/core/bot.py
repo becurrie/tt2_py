@@ -4,7 +4,9 @@ core.py
 Main bot initialization and script startup should take place here. All actions and main bot loops
 will be maintained from this location.
 """
-from settings import CONFIG_FILE, STATS_FILE, STAGE_CAP
+from settings import (
+    ROOT_DIR, CONFIG_FILE, STATS_FILE, STAGE_CAP, GAME_VERSION, __VERSION__,
+)
 
 from tt2.core.maps import *
 from tt2.core.constants import STAGE_PARSE_THRESHOLD
@@ -20,6 +22,7 @@ from pyautogui import easeOutQuad, FailSafeException
 
 import datetime
 import keyboard
+import git
 
 
 class BotException(Exception):
@@ -32,6 +35,7 @@ class Bot:
     the main game loop to determine how actions are performed within the game.
     """
     def __init__(self, config=CONFIG_FILE, stats_file=STATS_FILE, logger=None):
+        self.TERMINATE = False
         self.config = Config(config)
 
         if logger:
@@ -42,40 +46,16 @@ class Bot:
         if not self.config.ENABLE_LOGGING:
             self.logger.disabled = True
 
-        # Initialize miscellaneous classes here.
         self.grabber = Grabber(self.config.EMULATOR, self.config.HEIGHT, self.config.WIDTH, self.logger)
         self.stats = Stats(self.grabber, self.config, stats_file, self.logger)
-        self.images = Images(IMAGES)
-        self.locs = Locs(GAME_LOCS[self.stats.key])
-
-        # Debug some information about this bot instantiation.
-        self.logger.debug("config instance has been initialized: {0}".format(vars(self.config)))
-        self.logger.debug("grabber instance has been initialized: {0}".format(vars(self.grabber)))
-        self.logger.debug("stats instance has been initialized: {0}".format(self.stats.as_json()))
-        self.logger.debug("images instance has been initialized: {0}".format(vars(self.images)))
-        self.logger.debug("locs instance has been initialized: {0}".format(vars(self.locs)))
-
-        # Additional locations and coords can be set here.
+        self.images = Images(IMAGES, self.logger)
+        self.locs = Locs(GAME_LOCS[self.stats.key], self.logger)
         self.master_locs = MASTER_LOCS[self.stats.key]
         self.master_coords = MASTER_COORDS[self.stats.key]
         self.heroes_locs = HEROES_LOCS[self.stats.key]
         self.artifacts_locs = ARTIFACTS_LOCS[self.stats.key]
         self.emulator_locs = EMULATOR_LOCS[self.stats.key][self.config.EMULATOR]
-
-        self.logger.debug("master locations have been initialized: {0}".format(self.master_locs))
-        self.logger.debug("master coordinates have been initialized: {0}".format(self.master_coords))
-        self.logger.debug("heroes locations have been initialized: {0}".format(self.heroes_locs))
-        self.logger.debug("artifacts locations have been initialized: {0}".format(self.artifacts_locs))
-        self.logger.debug("emulator locations have been initialized: {0}".format(self.emulator_locs))
-
-        # Additional image maps can be set here.
         self.artifacts_images = ARTIFACT_MAP
-
-        self.logger.info("bot instance has been initialized successfully")
-        self.logger.info("uuid: {0}".format(self.stats.session))
-
-        # Bot termination flag. run() should exit if True.
-        self.TERMINATE = False
 
         self._last_stage = None
         self.current_stage = None
@@ -99,6 +79,11 @@ class Bot:
         # quest is currently on cooldown, This datetime is checked on each game loop.
         self.clan_battle_ready_at = None
 
+        self.logger.info("Bot (v{version}) (v{game_version}) [{commit}] has been initialized.".format(
+            version=__VERSION__, game_version=GAME_VERSION, commit=git.Repo(ROOT_DIR).head.commit.hexsha))
+        self.logger.info("SESSION: [{session}]".format(session=self.stats.session))
+        self.logger.info("=======================================================")
+
         # Create a list of the functions called in there proper order
         # when actions are performed by the bot.
         self.action_order = self._order_actions()
@@ -110,6 +95,7 @@ class Bot:
         self.calculate_next_prestige()
         self.calculate_next_stats_update()
         self.calculate_next_clan_battle_check()
+        self.calculate_next_action_run()
 
     def parse_current_stage(self):
         """
@@ -122,32 +108,36 @@ class Bot:
         """
         stage_parsed = self.stats.stage_ocr()
         try:
-            self.logger.info("attempting to coerce value: {stage} into a integer".format(stage=stage_parsed))
             stage = int(stage_parsed)
+            self.logger.debug("Stage '{stage_text}' successfully coerced into an integer: {stage}.".format(
+                stage_text=stage_parsed, stage=stage))
             if stage > STAGE_CAP:
-                self.logger.warn("parsed stage is greater than highest possible stage, skipping this parse")
-                self._last_stage = None
-                self.current_stage = None
+                self.logger.debug("Stage {stage} is > the STAGE_CAP: {stage_cap}, resetting stage variables.".format(
+                    stage=stage, stage_cap=STAGE_CAP))
+                self._last_stage, self.current_stage = None, None
                 return
 
             # Is the stage potentially way greater than the last check? Could mean the parse failed.
             if isinstance(self._last_stage, int):
-                if stage - self._last_stage > STAGE_PARSE_THRESHOLD:
-                    self.logger.warn("parsed stage minus last parsed stage is greater than the threshold ({thresh}), "
-                                     "skipping this parse".format(thresh=STAGE_PARSE_THRESHOLD))
-                    self._last_stage = None
-                    self.current_stage = None
+                diff = stage - self._last_stage
+                if diff > STAGE_PARSE_THRESHOLD:
+                    self.logger.debug(
+                        "Difference between current stage and last stage passes the stage change threshold: "
+                        "{stage_thresh} ({stage} - {last_stage} = {diff}), resetting stage variables.".format(
+                            stage_thresh=STAGE_PARSE_THRESHOLD, stage=stage, last_stage=self._last_stage, diff=diff))
+                    self._last_stage, self.current_stage = None, None
                     return
 
+            self.logger.debug("Current stage in game was successfully parsed: {stage}".format(stage=stage))
             self._last_stage = self.current_stage
+            self.logger.debug("Last stage has been set to the previous current stage in game: {last_stage}".format(
+                last_stage=self._last_stage))
             self.current_stage = stage
-            self.logger.info("current stage was successfully parsed: {stage}".format(stage=stage))
 
         # ValueError when the parsed stage isn't able to be coerced.
         except ValueError:
-            self.logger.warn("unable to coerce text, setting current stage to None instead")
-            self._last_stage = None
-            self.current_stage = None
+            self.logger.debug("OCR check could not parse out a proper string from image, resetting stage variables.")
+            self._last_stage, self.current_stage = None, None
 
     def _order_actions(self):
         """Determine order of in game actions. Mapped to their respective functions."""
@@ -157,9 +147,9 @@ class Bot:
             (self.config.ORDER_LEVEL_SKILLS, self.level_skills, "level_skills"),
         ], key=lambda x: x[0])
 
-        self.logger.info("actions in game will run in the following order")
-        for i, action in enumerate(sort, start=1):
-            self.logger.info("{index}: {func_name}".format(index=i, func_name=action[2]))
+        self.logger.debug("Actions in game have been ordered successfully.")
+        for action in sort:
+            self.logger.debug("{order} : {action_key}.".format(order=action[0], action_key=action[2]))
 
         return sort
 
@@ -174,10 +164,9 @@ class Bot:
             (self.config.INTERVAL_SHADOW_CLONE, "shadow_clone"),
         ], key=lambda x: x[0], reverse=True)
 
-        self.logger.info("skills have been ordered successfully")
-        for i, skill in enumerate(sort, start=1):
-            if skill[1] is not None:
-                self.logger.info("{index}: {key} - {interval}".format(index=i, key=skill[1], interval=skill[0]))
+        self.logger.debug("Skill intervals have been ordered successfully.")
+        for index, skill in enumerate(sort, start=1):
+            self.logger.debug("{index}: {key} ({interval})".format(index=index, key=skill[1], interval=skill[0]))
 
         return sort
 
@@ -188,12 +177,10 @@ class Bot:
         for key, region in self.master_coords["skills"].items():
             if self.grabber.search(self.images.cancel_active_skill, region, bool_only=True):
                 continue
-
-            # Skill is not currently active, add it to the list.
             inactive.append(key)
 
-        for i in inactive:
-            self.logger.info("{skill} is currently inactive".format(skill=i))
+        for key in inactive:
+            self.logger.debug("{key} is not currently activated.".format(key=key))
 
         return inactive
 
@@ -201,24 +188,19 @@ class Bot:
     def _not_maxed(self, inactive):
         """Given a list of inactive skill keys, determine which ones are not maxed out of those."""
         not_maxed = []
-
         for key, region in {k: r for k, r in self.master_coords["skills"].items() if k in inactive}.items():
             if self.grabber.search(self.images.skill_max_level, region, bool_only=True):
                 continue
-
-            # Skills is not currently maxed, add it to the list.
             not_maxed.append(key)
 
-        for n in not_maxed:
-            self.logger.info("{skill} is not currently maxed".format(skill=n))
+        for key in not_maxed:
+            self.logger.debug("{key} is not currently max level.".format(key=key))
 
         return not_maxed
 
     def calculate_skill_execution(self):
         """Calculate the datetimes that are attached to each skill in game and when they should be activated."""
         now = datetime.datetime.now()
-        self.logger.info("attempting to calculate next skill execution times")
-
         for key in SKILLS:
             interval_key = "INTERVAL_{0}".format(key.upper())
             next_key = "next_{0}".format(key)
@@ -226,20 +208,16 @@ class Bot:
             if interval != 0:
                 dt = now + datetime.timedelta(seconds=interval)
                 setattr(self, next_key, dt)
-                self.logger.info("next {key} will be activated at: {date} ({time})".format(
-                    key=key, date=str(dt), time=strfdelta(dt - now))
-                )
+                self.logger.debug("{skill} will be activated in {time}.".format(skill=key, time=strfdelta(dt - now)))
             else:
-                self.logger.debug("{key} will not be activated".format(key=key))
+                self.logger.debug("{skill} has interval set to zero, will not be activated.".format(skill=key))
 
     def calculate_next_prestige(self):
-        """Calculate when the next prestige will take place."""
+        """Calculate when the next timed prestige will take place."""
         now = datetime.datetime.now()
         dt = now + datetime.timedelta(seconds=self.config.PRESTIGE_AFTER_X_MINUTES * 60)
         self.next_prestige = dt
-        self.logger.info("next prestige will take place at: {date} ({time})".format(
-            date=str(dt), time=strfdelta(dt - now))
-        )
+        self.logger.debug("The next timed prestige will take place in {time}".format(time=strfdelta(dt - now)))
 
     def should_prestige(self):
         """
@@ -253,30 +231,30 @@ class Bot:
         """
         if self.config.PRESTIGE_AFTER_X_MINUTES != 0:
             now = datetime.datetime.now()
+            self.logger.debug("Timed prestige is enabled, and should take place in {time}".format(
+                time=strfdelta(self.next_prestige - now)))
 
             # Is the hard time limit set? If it is, perform prestige no matter what,
             # otherwise, look at the current stage conditionals present and prestige
             # off of those instead.
             if now > self.next_prestige:
+                self.logger.debug("Timed prestige will happen now.")
                 return True
 
-            self.logger.info("timed prestige will occur at {date} ({time})".format(
-                date=str(now), time=strfdelta(self.next_prestige - now)
-            ))
-
-        # Current stage must not be None, using time gate before this check.
-        # stage == None is only possible when OCR checks are failing, this can
-        # happen when a stage change happens as the check takes place, causing
-        # the image recognition to fail.
+        # Current stage must not be None, using time gate before this check. stage == None is only possible when
+        # OCR checks are failing, this can happen when a stage change happens as the check takes place, causing
+        # the image recognition to fail. OR if the parsed text doesn't pass the validation checks when parse is
+        # malformed.
         if self.current_stage is None:
+            self.logger.debug("Current stage is currently None, no stage conditionals can be checked currently.")
             return False
 
         # Any other conditionals will be using the current stage attribute of the bot.
         elif self.config.PRESTIGE_AT_STAGE != 0:
+            self.logger.debug("Prestige at specific stage: {current}/{needed}.".format(
+                current=self.current_stage, needed=self.config.PRESTIGE_AT_STAGE))
             if self.current_stage >= self.config.PRESTIGE_AT_STAGE:
-                self.logger.info("stage: {stage} has been reached, beginning prestige now".format(
-                    stage=self.config.PRESTIGE_AT_STAGE
-                ))
+                self.logger.debug("Prestige stage has been reached, prestige will happen now.")
                 return True
             else:
                 return False
@@ -284,15 +262,15 @@ class Bot:
         # These conditionals are dependant on the highest stage reached, if one isn't available,
         # (due to parsing error). We skip these until it is available, or the time limit is reached.
         if not self.stats.highest_stage:
-            self.logger.info("it looks like your highest stage is being used as a prestige requirement but "
-                             "no highest stage is available, skipping for now")
+            self.logger.debug("The highest stage statistic ({highest_stage}) seems to be set to an invalid value. "
+                              "No prestige conditionals that rely on this statistic can currently be checked.")
             return False
 
         elif self.config.PRESTIGE_AT_MAX_STAGE:
+            self.logger.debug("Prestige at max stage: {current}/{needed}.".format(
+                current=self.current_stage, needed=self.stats.highest_stage))
             if self.current_stage >= self.stats.highest_stage:
-                self.logger.info("max stage: {max_stage} has been reached, beginning prestige now".format(
-                    max_stage=self.stats.highest_stage
-                ))
+                self.logger.debug("Max stage has been reached, prestige will happen now.")
                 return True
             else:
                 return False
@@ -300,16 +278,15 @@ class Bot:
         elif self.config.PRESTIGE_AT_MAX_STAGE_PERCENT != 0:
             percent = self.config.PRESTIGE_AT_MAX_STAGE_PERCENT / 100
             threshold = int(self.stats.highest_stage * percent)
+            self.logger.debug("Prestige at max stage percent ({percent}): {current}/{needed}".format(
+                percent=percent, current=self.current_stage, needed=threshold))
             if self.current_stage >= threshold:
-                self.logger.info("{percent}% of max stage: {max_stage} has been reached, beginning prestige now".format(
-                    percent=self.config.PRESTIGE_AT_MAX_STAGE_PERCENT, max_stage=self.stats.highest_stage
-                ))
+                self.logger.debug("Percent of max stage has been reached, prestige will happen now.")
                 return True
             else:
                 return False
 
         # Otherwise, only a time limit has been set for a prestige and it wasn't reached.
-        self.logger.info("no prestige requirements were met, prestige will not happen right now")
         return False
 
     def calculate_next_action_run(self):
@@ -317,33 +294,27 @@ class Bot:
         now = datetime.datetime.now()
         dt = now + datetime.timedelta(seconds=self.config.RUN_ACTIONS_EVERY_X_SECONDS)
         self.next_action_run = dt
-        self.logger.info("next action run will take place at: {date} ({time})".format(
-            date=str(dt), time=strfdelta(dt - now))
-        )
+        self.logger.debug("Actions in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     def calculate_next_stats_update(self):
         """Calculate when the next stats update should take place."""
         now = datetime.datetime.now()
         dt = now + datetime.timedelta(seconds=self.config.STATS_UPDATE_INTERVAL_MINUTES * 60)
         self.next_stats_update = dt
-        self.logger.info("next stats update run will take place at: {date} ({time})".format(
-            date=str(dt), time=strfdelta(dt - now))
-        )
+        self.logger.debug("Statistics update in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     def calculate_next_clan_battle_check(self):
         """Calculate when the next clan battle check should take place."""
         now = datetime.datetime.now()
         dt = now + datetime.timedelta(seconds=self.config.CLAN_BATTLE_CHECK_INTERVAL_MINUTES * 60)
         self.next_clan_battle_check = dt
-        self.logger.info("next clan battle check will take place at: {date} ({time})".format(
-            date=str(dt), time=strfdelta(dt - now)
-        ))
+        self.logger.debug("Clan battle check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @not_in_transition
     def level_heroes(self):
         """Perform all actions related to the levelling of all heroes in game."""
         if self.config.ENABLE_HEROES:
-            self.logger.info("beginning hero levelling process")
+            self.logger.info("Hero levelling process is beginning now.")
             self.goto_heroes(collapsed=False)
 
             # A quick check can be performed to see if the top of the heroes panel contains
@@ -351,8 +322,8 @@ class Bot:
             # that all heroes below have been maxed out. Instead of scrolling and levelling
             # all heroes, just level the top heroes.
             if self.grabber.search(self.images.max_level, bool_only=True):
-                self.logger.info("max level hero found at top of panel, skipping normal hero level process")
-                self.logger.info("levelling top heroes only")
+                self.logger.debug("A max levelled hero has been found on the top portion of the hero panel.")
+                self.logger.debug("Only the first set of heroes will be levelled.")
                 for point in self.heroes_locs["level_heroes"][::-1][1:9]:
                     click_on_point(point, self.config.HERO_LEVEL_INTENSITY, interval=0.07)
 
@@ -360,6 +331,7 @@ class Bot:
                 return
 
             # Always level the first 5 heroes in the list.
+            self.logger.debug("Levelling first five heroes in list.")
             for point in self.heroes_locs["level_heroes"][::-1][1:6]:
                 click_on_point(point, self.config.HERO_LEVEL_INTENSITY, interval=0.07)
 
@@ -372,99 +344,78 @@ class Bot:
 
             # Begin level and scrolling process. An assumption is made that all heroes
             # are unlocked, meaning that some un-necessary scrolls may take place.
+            self.logger.debug("Scrolling and levelling all heroes.")
             for i in range(4):
                 for point in self.heroes_locs["level_heroes"]:
                     click_on_point(point, clicks=self.config.HERO_LEVEL_INTENSITY, interval=0.07)
 
                 # Skip the last drag since it's un-needed.
                 if i != 3:
-                    drag_mouse(
-                        drag_start, drag_end, duration=1, pause=1, tween=easeOutQuad,
-                        quick_stop=self.locs.scroll_quick_stop
-                    )
+                    drag_mouse(drag_start, drag_end, duration=1, pause=1, tween=easeOutQuad,
+                               quick_stop=self.locs.scroll_quick_stop)
 
     @not_in_transition
     def level_master(self):
         """Perform all actions related to the levelling of the sword master in game."""
         if self.config.ENABLE_MASTER:
-            self.logger.info("beginning master levelling process")
+            clicks = self.config.MASTER_LEVEL_INTENSITY
+            self.logger.info("Levelling the sword master {clicks} time(s)".format(clicks=clicks))
+
+            # Travel to the sword master panel, and level up specified amount of clicks.
             self.goto_master(collapsed=False)
-            click_on_point(self.master_locs["master_level"], clicks=self.config.MASTER_LEVEL_INTENSITY)
+            click_on_point(self.master_locs["master_level"], clicks=clicks)
 
     @not_in_transition
     def level_skills(self):
         """Perform all actions related to the levelling of skills in game."""
         if self.config.ENABLE_SKILLS:
-            self.logger.info("beginning skills levelling process")
+            self.logger.info("Levelling up skills in game if they are inactive and not maxed.")
             self.goto_master(collapsed=False)
 
             # Looping through each skill coord, clicking to level up.
             for skill in self._not_maxed(self._inactive_skills()):
-                self.logger.info("levelling up {skill} {clicks} time(s) now".format(
-                    skill=skill, clicks=self.config.SKILL_LEVEL_INTENSITY)
-                )
                 click_on_point(self.master_locs["skills"].get(skill), clicks=self.config.SKILL_LEVEL_INTENSITY)
 
     def actions(self, force=False):
         """Perform bot actions in game."""
         now = datetime.datetime.now()
-
-        # Force will ensure that the next_action_run is less than the now datetime.
-        # Causing all actions to be ran no matter what.
-        if force:
-            self.logger.info("forcing actions to run now instead of later")
-            self.next_action_run = now - datetime.timedelta(seconds=1)
-
-        if now > self.next_action_run:
-            self.logger.info("beginning in game actions now")
-            # Ensure that the game is currently on the sword master panel (expanded).
+        if force or now > self.next_action_run:
+            self.logger.info("{force_or_initiate} in game actions now.".format(
+                force_or_initiate="Forcing" if force else "Beginning"))
             self.goto_master(collapsed=False)
-
-            # Looping through ordered actions and executing callable attached.
             for action in self.action_order:
                 action[1]()
 
                 # The end of each action should send the game back to the expanded
-                # sword master panel, regardless of the order of actions.
+                # sword master panel, regardless of the order of actions to ensure
+                # normalized instructions each time an action ends.
                 self.goto_master(collapsed=False)
 
             # Recalculate the time for the next set of actions to take place.
             self.calculate_next_action_run()
             self.stats.actions += 1
 
-        # How much time left until actions will take place?
-        self.logger.debug("actions will take place in {date} ({time})".format(
-            date=self.next_action_run, time=strfdelta(self.next_action_run - now)
-        ))
-
     @not_in_transition
     def update_stats(self, force=False):
         """Update the bot stats by travelling to the stats page in the heroes panel and performing OCR update."""
         if self.config.ENABLE_STATS:
             now = datetime.datetime.now()
-
-            # Allow the ability to force a stats update by modifying the
-            if force:
-                now = self.next_stats_update + datetime.timedelta(seconds=1)
-
-            if now > self.next_stats_update:
-                self.logger.info("performing{force_no_force} stats update now".format(
-                    force_no_force=" a forced" if force else ""
-                ))
-                self.stats.updates += 1
+            if force or now > self.next_stats_update:
+                self.logger.info("{force_or_initiate} in game statistics update now.".format(
+                    force_or_initiate="Forcing" if force else "Beginning"))
                 self.goto_heroes()
 
+                # Opening the stats panel within the heroes panel in game.
+                # Scrolling to the bottom of this page, which contains all needed game stats info.
                 click_on_point(self.heroes_locs["stats_collapsed"], pause=0.5)
-
-                # Scroll to the bottom of the heroes stats popup.
                 for i in range(3):
                     drag_mouse(self.locs.scroll_start, self.locs.scroll_bottom_end)
 
-                # Update stats instance through OCR update.
                 self.stats.update_ocr()
+                self.stats.updates += 1
                 self.stats.write()
-                self.calculate_next_stats_update()
 
+                self.calculate_next_stats_update()
                 click_on_point(self.master_locs["screen_top"], clicks=3)
 
     @not_in_transition
@@ -472,60 +423,48 @@ class Bot:
         """Perform a prestige in game."""
         if self.config.ENABLE_AUTO_PRESTIGE:
             if self.should_prestige():
-                self.logger.info("beginning prestige process now.")
+                self.logger.info("Beginning prestige in game now.")
                 self.check_tournament()
                 self.goto_master(collapsed=False, top=False)
 
                 # Click on the prestige button, and check for the prompt confirmation being present. Sleeping
                 # slightly here to ensure that connections issues do not cause the prestige to be misfire.
-                click_on_point(self.master_locs["prestige"], pause=1)
-
+                click_on_point(self.master_locs["prestige"], pause=3)
                 prestige_found, prestige_position = self.grabber.search(self.images.confirm_prestige)
                 if prestige_found:
                     click_on_point(self.master_locs["prestige_confirm"], pause=1)
                     click_on_point(self.master_locs["prestige_final"], pause=10)
-                else:
-                    # In case of an error during prompt confirmations, click out of any potential
-                    # prompts before attempting to continue running.
-                    click_on_point(self.master_locs["screen_top"], pause=1)
-                    self.goto_master()
 
-                    # Returning here, next prestige hasn't been modified, next loop will
-                    # attempt to prestige again.
-                    return
+                    # If a timer is used for prestige. Reset this timer to the next timed prestige value.
+                    if self.config.PRESTIGE_AFTER_X_MINUTES != 0:
+                        self.calculate_next_prestige()
 
-                # Additional checks can take place during a prestige.
-                self.artifacts()
-                self.daily_rewards()
-                self.hatch_eggs()
+                    # Additional checks can take place during a prestige.
+                    self.artifacts()
+                    self.daily_rewards()
+                    self.hatch_eggs()
 
-                # Ensure that next action run values are set properly after prestige.
-                # Always want to run through actions after a prestige, unlock skills/heroes as soon as possible.
-                now = datetime.datetime.now()
-                self.next_action_run = now - datetime.timedelta(seconds=1)
-
-                # If a timer is used for prestige.
-                if self.config.PRESTIGE_AFTER_X_MINUTES != 0:
-                    self.calculate_next_prestige()
+                    # After a prestige, run all actions instantly to ensure that initial levels are gained.
+                    # Also attempt to activate skills afterwards.
+                    self.actions(force=True)
+                    self.activate_skills(force=True)
 
     @not_in_transition
     def artifacts(self):
         """Determine whether or not any artifacts should be purchased, and purchase them."""
         if self.config.ENABLE_ARTIFACT_PURCHASE:
-            self.logger.info("checking if any artifacts should be upgraded")
-            # for now, just click where it likely is.
+            self.logger.info("Attempting to upgrade artifact: {artifact} now.".format(
+                artifact=self.config.UPGRADE_ARTIFACT))
             self.goto_artifacts(collapsed=False)
 
+            # Make sure that the proper spend max multiplier is used to fully upgrade an artifact.
             while not self.grabber.search(self.images.spend_max, bool_only=True):
-                self.logger.info("changing buy multiplier to spend max")
                 click_on_point(self.artifacts_locs["buy_multiplier"], pause=0.5)
                 click_on_point(self.artifacts_locs["buy_max"], pause=0.5)
 
-            self.logger.info("searching for {artifact} on screen".format(artifact=self.config.UPGRADE_ARTIFACT))
+            # Looking for the artifact to upgrade here, dragging until it is finally found.
             while not self.grabber.search(self.artifacts_images.get(self.config.UPGRADE_ARTIFACT), bool_only=True):
                 drag_mouse(self.locs.scroll_start, self.locs.scroll_bottom_end)
-
-            self.logger.info("{artifact} has been found, upgrading now".format(artifact=self.config.UPGRADE_ARTIFACT))
 
             # Making it here means the artifact in question has been found.
             found, position = self.grabber.search(getattr(self.images, self.config.UPGRADE_ARTIFACT))
@@ -534,13 +473,13 @@ class Bot:
 
             # Currently just upgrading the artifact to it's max level. Future updates may include the ability
             # to determine how much to upgrade an artifact by.
-            click_on_point((new_x, new_y), pause=0.5)
+            click_on_point((new_x, new_y), pause=1)
 
     @not_in_transition
     def check_tournament(self):
         """Check that a tournament is available/active. Tournament will be joined if a new possible."""
         if self.config.ENABLE_TOURNAMENTS:
-            self.logger.info("beginning tournament check now")
+            self.logger.info("Checking for tournament ready to join/in progress.")
             self.goto_master()
 
             # Looping to find tournament here, since there's a chance that the tournament is finished, which
@@ -555,11 +494,10 @@ class Bot:
                 sleep(0.2)
 
             if tournament_found:
-                self.logger.info("tournament is available, checking status")
                 click_on_point(self.locs.tournament, pause=2)
                 found, position = self.grabber.search(self.images.join)
                 if found:
-                    self.logger.info("joining new tournament and performing prestige now")
+                    self.logger.info("Joining new tournament now.")
                     click_on_point(self.locs.join, pause=2)
                     click_on_point(self.locs.tournament_prestige, pause=10)
 
@@ -567,25 +505,18 @@ class Bot:
                 else:
                     collect_found, collect_position = self.grabber.search(self.images.collect_prize)
                     if collect_found:
-                        self.logger.info("tournament has ended, collecting prize")
+                        self.logger.info("Tournament is over, attempting to collect reward now.")
                         click_on_point(self.locs.collect_prize, pause=2)
                         click_on_point(self.locs.game_middle, clicks=10, interval=0.5)
-
-                    # Exit tournament screen, and ensure master panel is open.
-                    else:
-                        self.logger.info("tournament is still in process, exiting now")
-                        click_on_point(self.master_locs["screen_top"], pause=1)
-                        self.goto_master()
 
     @not_in_transition
     def daily_rewards(self):
         """Collect any daily gifts if they're available."""
-        self.logger.info("checking if any daily rewards are available")
+        self.logger.info("Checking if any daily rewards are currently available to collect.")
         self.goto_master()
-
         reward_found = self.grabber.search(self.images.daily_reward, bool_only=True)
         if reward_found:
-            self.logger.info("rewards are available, collecting now")
+            self.logger.info("Daily rewards are available, collecting now.")
             click_on_point(self.locs.open_rewards, pause=1)
             click_on_point(self.locs.collect_rewards, pause=1)
             click_on_point(self.locs.game_middle, 5, interval=0.5, pause=1)
@@ -595,12 +526,11 @@ class Bot:
     def hatch_eggs(self):
         """Hatch any eggs if they're available."""
         if self.config.ENABLE_EGG_COLLECT:
-            self.logger.info("checking if any eggs are ready to hatch")
+            self.logger.info("Checking if any eggs are available to be hatched in game.")
             self.goto_master()
-
             egg_found = self.grabber.search(self.images.hatch_egg, bool_only=True)
             if egg_found:
-                self.logger.info("eggs are available, hatching now")
+                self.logger.info("Egg(s) are available, collecting now.")
                 click_on_point(self.locs.hatch_egg, pause=1)
                 click_on_point(self.locs.game_middle, 5, interval=0.5, pause=1)
 
@@ -629,24 +559,24 @@ class Bot:
             the fight finished ui is clicked on to bring us back to the clan quest panel.
             """
             stop_at = datetime.datetime.now() + datetime.timedelta(seconds=seconds)
-            self.logger.info("starting clan quest fight, clicking will end at: {date} ({time})".format(
-                date=stop_at, time=strfdelta(stop_at - datetime.datetime.now())
-            ))
+            self.logger.info("Starting clan quest fight, clicking will stop in {time}".format(
+                time=strfdelta(stop_at - datetime.datetime.now())))
 
             # Clicking continuously until stop_at date is reached with now().
             while datetime.datetime.now() < stop_at:
                 click_on_point(self.locs.game_middle, pause=0.07)
-
-            self.logger.info("clan quest clicking has concluded")
 
         # Are clan quests enabled at all?
         if self.config.ENABLE_CLAN_QUEST:
             # Firstly, determine if the bot knows whether or not a clan quest is currently pending
             # start based on a cooldown that has been previously recorded.
             now = datetime.datetime.now()
-            if self.clan_battle_ready_at or force_ready:
+            if force_ready or self.clan_battle_ready_at:
                 # We now know that there's a datetime available to determine when the clan quest will be ready.
-                if now > self.clan_battle_ready_at:
+                if force_ready or now > self.clan_battle_ready_at:
+                    self.logger.info("{force_or_initiate} clan quest fight process now.".format(
+                        force_or_initiate="Forcing" if force_ready else "Beginning"))
+
                     # Clan battle should be ready now. Let's begin the clan battle logic here.
                     # First, ensure we start with no panels open.
                     self.no_panel()
@@ -676,15 +606,18 @@ class Bot:
                     # If the initial fight is a normal clan quest (no diamond cost), start by fighting like normal
                     # and performing the check to determine if diamonds will be spent during the second fight.
                     if self.grabber.search(self.images.fight, bool_only=True):
+                        self.logger.info("Clan quest is available to participate in.")
                         # A diamond costing fight could potentially come up here, the check happens later on,
                         # which means we should return early if one comes up at this point.
                         if self.grabber.search(self.images.diamond, bool_only=True):
+                            self.logger.info("Diamonds are required to participate, exiting now.")
                             self.calculate_next_clan_battle_check()
                             click_on_point(self.locs.clan_quest_exit, pause=2)
                             click_on_point(self.locs.clan_leave_screen, clicks=3, pause=2)
                             return
 
                         # Otherwise, a normal clan quest is available to participate in.
+                        self.logger.info("Attempting to participate in clan quest now.")
                         click_on_point(self.locs.clan_fight, pause=5)
 
                         fight()
@@ -694,6 +627,9 @@ class Bot:
                         if self.config.ENABLE_EXTRA_FIGHT:
                             if self.grabber.search(self.images.diamond, bool_only=True):
                                 if self.grabber.search(self.images.deal_110_next_attack, bool_only=True):
+                                    self.logger.info("Extra clan quest fight has been enabled, and entry cost is five "
+                                                     "diamonds, spending diamonds and entering fight again.")
+
                                     # Begin an additional fight by spending diamonds.
                                     click_on_point(self.locs.clan_fight, pause=2)
                                     click_on_point(self.locs.diamond_okay, pause=5)
@@ -703,6 +639,7 @@ class Bot:
                                     sleep(8)
 
                         # All clan quest fights have been completed now, leave the clan quest pages.
+                        self.logger.info("Exiting the clan panel now.")
                         click_on_point(self.locs.clan_quest_exit, pause=2)
                         click_on_point(self.locs.clan_leave_screen, clicks=3, pause=2)
 
@@ -713,7 +650,10 @@ class Bot:
 
             # If the clan_battle_ready_at attribute isn't set, perform a check to set the value.
             else:
-                if now > self.next_clan_battle_check or force_check:
+                if force_check or now > self.next_clan_battle_check:
+                    self.logger.info("{force_or_initiate} clan battle play again check now.".format(
+                        force_or_initiate="Forcing" if force_check else "Beginning"))
+
                     # Travel to the clan quest page, checking to see if a clan quest is currently in progress.
                     # OR, that a clan quest is on cooldown, using this information to determine when the next
                     # fight should take place.
@@ -723,16 +663,23 @@ class Bot:
 
                     # Is the clan quest currently active, or on cooldown?
                     if self.grabber.search(self.images.goal_complete, bool_only=True):
+                        self.logger.info("Clan quest is currently on cooldown, attempting to parse out the next fight "
+                                         "date in game now.")
+
                         # Perform an OCR check on the clan quest page, this will determine the datetime
                         # at which the clan quest will be ready to participate in.
                         self.clan_battle_ready_at = self.stats.play_again_ocr()
+                        self.logger.info("Clan quest will be ready in {time}".format(
+                            time=strfdelta(self.clan_battle_ready_at - now)))
 
                     # Clan quest in progress, lets set the clan battle ready at to the current datetime.
                     # Next game loop will then begin a clan quest.
                     else:
+                        self.logger.info("A clan quest is already in progress, setting the ready date to now.")
                         self.clan_battle_ready_at = now
 
                     # Exit out of the clan quest screen.
+                    self.logger.info("Exiting the clan panel now.")
                     click_on_point(self.locs.clan_quest_exit, pause=2)
                     click_on_point(self.locs.clan_leave_screen, clicks=3, pause=2)
 
@@ -742,43 +689,49 @@ class Bot:
     @not_in_transition
     def collect_ad(self):
         """Collect ad if one is available on the screen."""
-        self.logger.info("collecting any ads available on the screen")
         while self.grabber.search(self.images.collect_ad, bool_only=True):
             if self.config.ENABLE_PREMIUM_AD_COLLECT:
-                self.logger.info("accepting premium ad")
                 self.stats.premium_ads += 1
+                self.logger.info("Collecting premium ad now.")
                 click_on_point(self.locs.collect_ad, pause=1, offset=1)
             else:
-                self.logger.info("declining premium ad")
+                self.logger.info("Declining premium ad now.")
+                click_on_point(self.locs.no_thanks, pause=1, offset=1)
+
+    def collect_ad_no_transition(self):
+        """Collect ad if one is available on the screen. No transition wrapper is included though."""
+        while self.grabber.search(self.images.collect_ad, bool_only=True):
+            if self.config.ENABLE_PREMIUM_AD_COLLECT:
+                self.stats.premium_ads += 1
+                self.logger.info("Collecting premium ad now.")
+                click_on_point(self.locs.collect_ad, pause=1, offset=1)
+            else:
+                self.logger.info("Declining premium ad now.")
                 click_on_point(self.locs.no_thanks, pause=1, offset=1)
 
     @not_in_transition
     def fight_boss(self):
         """Ensure that the boss is being fought if it isn't already."""
-        self.logger.info("checking if the boss is not currently being fought")
         if self.grabber.search(self.images.fight_boss, bool_only=True):
-            self.logger.info("attempting to fight boss")
+            self.logger.info("Initiating boss fight in game now.")
             click_on_point(self.locs.fight_boss, pause=0.5)
 
     @not_in_transition
     def tap(self):
         """Perform simple screen tap over entire game area."""
         if self.config.ENABLE_TAPPING:
-            self.logger.info("beginning tapping process in game")
-
+            self.logger.info("Tapping...")
             taps = 0
             for point in self.locs.fairies_map:
                 taps += 1
-
-                # Check for an ad as the tapping process occurs. Click and return early if one is available.
                 if taps == 5:
+                    # Check for an ad as the tapping process occurs. Click and return early if one is available.
                     if self.grabber.search(self.images.collect_ad, bool_only=True):
-                        self.collect_ad()
+                        self.collect_ad_no_transition()
                         return
 
                     # Reset taps counter.
                     taps = 0
-
                 click_on_point(point)
 
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
@@ -789,7 +742,7 @@ class Bot:
     def activate_skills(self, force=False):
         """Activate any skills off of cooldown, and determine if waiting for longest cd to be done."""
         if self.config.ENABLE_SKILLS:
-            self.logger.info("beginning process to activate skills")
+            self.logger.info("Activating skills in game now.")
             self.goto_master()
 
             # Datetime to determine skill intervals.
@@ -800,20 +753,14 @@ class Bot:
             if self.config.FORCE_ENABLED_SKILLS_WAIT and not force:
                 attr = getattr(self, next_key + skills[0][1])
                 if not now > attr:
-                    self.logger.info("skills will only be activated when {key} is ready.".format(key=skills[0][1]))
-                    self.logger.info("{key} will be ready to activate in: {time}".format(
-                        key=skills[0][1], time=strfdelta(attr - now))
-                    )
-                    return
+                    self.logger.info("Skills will only be activated once {key} is ready.".format(key=skills[0][1]))
+                    self.logger.info("{key} will be ready in {time}.".format(
+                        key=skills[0][1], time=strfdelta(attr - now)))
 
             # If this point is reached, ensure no panel is currently active, and begin skill activation.
             self.no_panel()
-
-            if force:
-                self.logger.info("forcing skill activation instead of waiting")
-
             for skill in skills:
-                self.logger.info("activating {skill} now".format(skill=skill[1]))
+                self.logger.info("Activating {skill} now.".format(skill=skill[1]))
                 click_on_point(getattr(self.locs, skill[1]), pause=0.2)
 
             # Recalculate all skill execution times.
@@ -831,8 +778,6 @@ class Bot:
         self.logger.debug("attempting to travel to the {collapse_expand} {top_bot} of {panel} panel".format(
             collapse_expand="collapsed" if collapsed else "expanded", top_bot="top" if top else "bottom", panel=panel)
         )
-        self.logger.debug("using {top_find} as top_find image".format(top_find=top_find))
-        self.logger.debug("using {bot_find} as bottom_find image".format(bot_find=bottom_find))
 
         while not self.grabber.search(icon, bool_only=True):
             click_on_point(getattr(self.locs, panel), pause=1)
@@ -908,7 +853,6 @@ class Bot:
     @not_in_transition
     def no_panel(self):
         """Instruct the bot to make sure no panels are currently open."""
-        self.logger.info("attempting to close any open panels in game")
         while self.grabber.search(self.images.exit_panel, bool_only=True):
             click_on_point(self.locs.close_bottom, offset=2)
             if not self.grabber.search(self.images.exit_panel, bool_only=True):
@@ -920,9 +864,7 @@ class Bot:
 
     def soft_shutdown(self):
         """Perform a soft shutdown of the bot, taking care of any cleanup or related tasks."""
-        self.logger.info("attempting to run soft shutdown before bot execution is terminated")
-
-        # Update bot statistics before shutdown.
+        self.logger.info("Beginning soft shutdown now.")
         self.update_stats(force=True)
 
     def restart_game(self):
@@ -932,13 +874,12 @@ class Bot:
         - Nox
         """
         from pyautogui import moveTo
-        self.logger.info("attempting to restart the game within {emulator} emulator".format(
+        self.logger.info("Attempting to restart the game within {emulator} emulator".format(
             emulator=self.config.EMULATOR
         ))
-        click_on_point(self.emulator_locs["opened_apps"], pause=1)
-        moveTo(self.emulator_locs["close_game"][0], self.emulator_locs["close_game"][1], pause=3)
-
-        click_on_point(self.emulator_locs["close_game"], pause=2)
+        click_on_point(self.emulator_locs["opened_apps"], pause=3)
+        moveTo(self.emulator_locs["close_game"][0], self.emulator_locs["close_game"][1], pause=5)
+        click_on_point(self.emulator_locs["close_game"], pause=3)
 
         # Opening the game, waiting at least twenty seconds before continuing.
         click_on_point(self.emulator_locs["launch_game"], pause=20)
@@ -950,29 +891,20 @@ class Bot:
         automated action within the emulator.
         """
         try:
-            self.logger.info("running bot now...")
             self.goto_master()
-
-            if self.config.ACTIVATE_SKILLS_ON_START:
-                self.level_master()
-                self.level_skills()
-                self.activate_skills(force=True)
-
             if self.config.RUN_ACTIONS_ON_START:
                 self.actions(force=True)
-            else:
-                self.calculate_next_action_run()
-
+            if self.config.ACTIVATE_SKILLS_ON_START:
+                self.activate_skills(force=True)
             if self.config.CLAN_BATTLE_CHECK_ON_START:
                 self.clan_battle(force_check=True)
 
             # Main game loop.
             while True:
                 if self.TERMINATE:
-                    self.logger.info("bot termination flag has been set, exiting")
+                    self.logger.info("TERMINATE SIGNAL, EXITING.")
                     break
 
-                # Main bot game loop process / actions.
                 self.goto_master()
                 self.fight_boss()
                 self.tap()
@@ -984,40 +916,30 @@ class Bot:
                 self.activate_skills()
                 self.update_stats()
 
+        # Making use of the PyAutoGUI FailSafeException to allow some cleanup to take place
+        # before totally exiting. Only if the CTRL key is held down when exception is thrown.
         except FailSafeException:
-            # Making use of the PyAutoGUI FailSafeException to allow some cleanup to take place
-            # before totally exiting. Only if the CTRL key is held down when exception is thrown.
             self.logger.info(
-                "bot is shutting down now, please press the {key} key to perform a soft shutdown in {seconds} "
-                "second(s).".format(
-                    key=self.config.SOFT_SHUTDOWN_KEY, seconds=self.config.SHUTDOWN_SECONDS)
-            )
+                "Bot SHUTDOWN SIGNAL RETRIEVED. Press the {key} key to perform a soft shutdown in {seconds} "
+                "second(s).".format(key=self.config.SOFT_SHUTDOWN_KEY, seconds=self.config.SHUTDOWN_SECONDS))
 
             # Create datetime objects to specify how long until the bot shutdowns.
             now = datetime.datetime.now()
-
-            # Give a user five seconds before going through with normal shutdown.
             shutdown_at = now + datetime.timedelta(seconds=self.config.SHUTDOWN_SECONDS)
 
-            # Flag to determine soft shutdown status.
             soft = False
-
             while now < shutdown_at:
                 now = datetime.datetime.now()
                 if keyboard.is_pressed(self.config.SOFT_SHUTDOWN_KEY) and not soft:
                     soft = True
-                    self.logger.info("soft shutdown will now take place in {time}".format(
-                        time=strfdelta(shutdown_at - now))
-                    )
-
+                    self.logger.info("Soft SHUTDOWN will take place in {time}".format(
+                        time=strfdelta(shutdown_at - now)))
             if soft:
-                self.logger.info("{key} was activated during shutdown, soft shutdown will execute now".format(
-                    key=self.config.SOFT_SHUTDOWN_KEY)
-                )
                 self.soft_shutdown()
 
-        # Any other exception, perform soft shutdown before termination.
+        # Any other exception, perform soft shutdown before termination if specified by configuration.
         except BotException as exc:
-            self.logger.critical("bot has encountered critical error: {exc}".format(exc=exc))
+            self.logger.critical("CRITICAL ERROR ENCOUNTERED: {exc}".format(exc=exc))
             if self.config.SOFT_SHUTDOWN_ON_CRITICAL_ERROR:
+                self.logger.info("Soft SHUTDOWN will take place now due to critical error.")
                 self.soft_shutdown()

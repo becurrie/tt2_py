@@ -207,6 +207,7 @@ IMAGES = {
         "exit_panel": IMAGE_DIR + "/generic/exit_panel.png",
         "expand_panel": IMAGE_DIR + "/generic/expand_panel.png",
         "heroes_active": IMAGE_DIR + "/generic/heroes_active.png",
+        "large_exit_panel": IMAGE_DIR + "/generic/large_exit_panel.png",
         "master_active": IMAGE_DIR + "/generic/master_active.png",
         "max": IMAGE_DIR + "/generic/max.png",
         "pets_active": IMAGE_DIR + "/generic/pets_active.png",
