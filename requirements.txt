@@ -8,3 +8,4 @@ ipython
 pytesseract
 coverage
 keyboard
+GitPython

@@ -3,7 +3,6 @@ configure.py
 
 All values stored within the data/config.ini data file are parsed and placed into a readable Python class.
 """
-
 import configparser
 
 

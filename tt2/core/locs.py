@@ -10,11 +10,14 @@ class Locs:
     """
     Locs class wraps all location points into a friendly wrapper class for use with the bot.
     """
-    def __init__(self, locs):
+    def __init__(self, locs, logger):
         self._base()
+        self.logger = logger
+
         for group, d in locs.items():
             for key, value in d.items():
                 setattr(self, key, value)
+                self.logger.debug("Locs.{attr}: {value}".format(attr=key, value=value))
 
     def _base(self):
         """Manually set every expected value."""

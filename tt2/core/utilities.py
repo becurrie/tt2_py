@@ -22,7 +22,7 @@ logger = logging.getLogger(LOGGER_NAME)
 
 def sleep(seconds):
     """Wrap the time.sleep method to allow for logging the time to sleep for."""
-    logger.debug("sleeping for {seconds} second(s)".format(seconds=seconds))
+    logger.debug("Sleeping for {seconds} second(s)".format(seconds=seconds))
     time.sleep(seconds)
 
 
@@ -45,7 +45,6 @@ def strfdelta(timedelta, fmt=STATS_TIMEDELTA_STR):
     for key, value in d.items():
         if value < 10 and "D" not in key:
             d[key] = "0" + str(value)
-
     return f.format(fmt, **d)
 
 
@@ -69,7 +68,6 @@ def convert(value):
 
     if unit in STATS_LOOKUP_MULTIPLIER:
         return STATS_LOOKUP_MULTIPLIER[unit] * number
-
     return number
 
 
@@ -110,7 +108,6 @@ def diff(old, new):
         # Gracefully exit and return None, treated as null in JSON.
         except Exception:
             return "ERROR DIFFING"
-
     return None
 
 
@@ -121,7 +118,6 @@ def gen_offset(point, amount):
 
     rand_x = random.randint(-amount, amount)
     rand_y = random.randint(-amount, amount)
-
     return point[0] + rand_x, point[1] + rand_y
 
 
@@ -130,11 +126,8 @@ def click_on_point(point, clicks=1, interval=0, button="left", pause=0.0, offset
     if offset != 0:
         point = gen_offset(point, offset)
 
-    logger.debug(
-        "{button} clicking {point} on screen {clicks} time(s) with {interval} interval and {pause} pause".format(
-            button=button, point=point, clicks=clicks, interval=interval, pause=pause
-        )
-    )
+    logger.debug("{button} clicking {point} on screen {clicks} time(s) with {interval} interval and "
+                 "{pause} pause".format(button=button, point=point, clicks=clicks, interval=interval, pause=pause))
     click((point[0], point[1]), clicks=clicks, interval=interval, button=button, pause=pause)
 
 
@@ -142,19 +135,15 @@ def click_on_image(image=None, pos=None, button="left", pause=0.0):
     """Click on the specified image on the screen."""
     logger.debug(
         "{button} clicking on {image} located at {pos} with {pause}s pause".format(
-            button=button, image=image, pos=pos, pause=pause
-        )
-    )
+            button=button, image=image, pos=pos, pause=pause))
     click_image(image=image, pos=pos, action=button, timestamp=0, pause=pause)
 
 
 def drag_mouse(start, end, button="left", duration=0.3, pause=0.5, tween=linear, quick_stop=None):
     """Drag the mouse from the starting position, to the end position."""
-    logger.debug(
-        "{button} clicking and dragging mouse from {start} to {end} over {duration}s with quick stop {quick}".format(
-            button=button, start=start, end=end, duration=duration, quick="enabled" if quick_stop else "disabled"
-        )
-    )
+    logger.debug("{button} clicking and dragging mouse from {start} to {end} over {duration}s with quick stop "
+                 "{quick}".format(button=button, start=start, end=end, duration=duration,
+                                  quick="enabled" if quick_stop else "disabled"))
     moveTo(start[0], start[1])
 
     # Determine pause amount tween. Tweening may be useful for specific actions
@@ -172,57 +161,48 @@ def in_transition_func(*args, max_loops):
     _self = args[0]
     loops = 0
     while True:
-        # If an ad screen is opened and it happened to be missed during the collect_ad check, a manual
-        # check is also performed here and the ad is collected / declined directly.
-        ad = _self.grabber.search(_self.images.collect_ad, bool_only=True)
-        if ad:
-            if _self.config.ENABLE_PREMIUM_AD_COLLECT:
-                _self.logger.info("accepting premium ad through transition check")
-                click_on_point(_self.locs.collect_ad, offset=1)
-            else:
-                _self.logger.info("declining premium ad through transition check")
-                click_on_point(_self.locs.no_thank, offset=1)
+        # Is a panel open that should be closed? This large exit panel will close any in game
+        # panels that may of been opened on accident.
+        found, pos = _self.grabber.search(_self.images.large_exit_panel)
+        if found:
+            click_on_image(_self.images.large_exit_panel, pos, pause=0.5)
+
+        # Is an ad panel open that should be accepted/declined?
+        _self.collect_ad_no_transition()
+
+        # At least one of these three generic images should be on the screen
+        # if the game is not in a transition state.
+        if _self.grabber.search(_self.images.exit_panel, bool_only=True):
+            break
+        if _self.grabber.search(_self.images.clan_no_battle, bool_only=True):
+            break
+        if _self.grabber.search(_self.images.clan_battle_ready, bool_only=True):
             break
 
-        exit_panel = _self.grabber.search(_self.images.exit_panel, bool_only=True)
-        if exit_panel:
-            break
-        settings = _self.grabber.search(_self.images.settings, bool_only=True)
-        if settings:
-            break
-        clan_ready = _self.grabber.search(_self.images.clan_battle_ready, bool_only=True)
-        if clan_ready:
-            break
-        clan_unready = _self.grabber.search(_self.images.clan_no_battle, bool_only=True)
-        if clan_unready:
-            break
-        fight_boss = _self.grabber.search(_self.images.fight_boss, bool_only=True)
-        if fight_boss:
-            break
-        leave_boss = _self.grabber.search(_self.images.leave_boss, bool_only=True)
-        if leave_boss:
+        # Can a stage be parsed out in the game?
+        if not _self.stats.stage_ocr() == '':
             break
 
         # Clicking the top of the screen in case of a transition taking place due to something being
         # present on the screen that requires clicking.
         click_on_point(_self.master_locs["screen_top"], clicks=3, pause=0.5)
-
-        _self.logger.debug("in a transition? waiting 1s before continuing")
+        _self.logger.debug("In a transition? waiting 1 second before continuing")
         sleep(1)
 
         loops += 1
         if loops == max_loops:
             # In this case, the game may of broke? A crash may of occurred. It's safe to attempt to restart the
             # game at this point.
-            _self.logger.error("unable to resolve transition state of game, attempting to restart game.")
+            _self.logger.error("Unable to resolve transition state of game, attempting to restart game.")
             _self.restart_game()
 
             # Is the restarted / rescued from crash?
-            if _self.grabber.search(_self.images.settings, bool_only=True):
-                _self.logger.info("game has been successfully restarted")
+            if _self.grabber.search(_self.images.clan_battle_ready, bool_only=True):
+                _self.logger.info("Game has been successfully restarted")
+                break
 
-            _self.logger.error("unable to restart game, terminating bot now")
-            _self.terminate()
+            _self.logger.error("Unable to restart game, terminating bot now")
+            _self.TERMINATE = True
             break
 
 
