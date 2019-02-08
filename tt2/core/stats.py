@@ -5,7 +5,7 @@ The stats module will encapsulate all functionality related to the stats
 panel located inside of the heroes panel in game.
 """
 from settings import __VERSION__
-from tt2.core.maps import STATS_COORDS, STAGE_COORDS, ARTIFACT_TIER_MAP
+from tt2.core.maps import STATS_COORDS, STAGE_COORDS, CLAN_COORDS, ARTIFACT_TIER_MAP
 from tt2.core.constants import (
     STATS_JSON_TEMPLATE, STATS_GAME_STAT_KEYS, STATS_BOT_STAT_KEYS, LOGGER_FILE_NAME,
     STATS_DATE_FMT, STATS_UN_PARSABLE
@@ -399,6 +399,41 @@ class Stats:
         # Do some light parse work here to make sure only digit like characters are present
         # in the returned 'text' variable retrieved through tesseract.
         return ''.join(filter(lambda x: x.isdigit(), text))
+
+    def play_again_ocr(self, test_image=None):
+        """Attempt to parse out the datetime from now that a clan battle will start at."""
+        self.logger.info("attempting to parse out the current play again datetime from in game")
+        region = CLAN_COORDS[self.key]["play_again"]
+
+        if test_image:
+            image = self._process(image=test_image)
+        else:
+            self.grabber.snapshot(region=region)
+            image = self._process()
+
+        text = pytesseract.image_to_string(image, config="--psm 7")
+        if len(text) == 8:
+            hours, minutes, seconds = text.split(":")
+        else:
+            return None
+
+        # Parse values into integers usable by timedelta.
+        try:
+            hours = int(hours)
+            minutes = int(minutes)
+            seconds = int(seconds)
+        except ValueError:
+            return None
+
+        # Calculate total seconds until a clan battle is available, also adding an additional
+        # ten seconds here to ensure that the clan quest has begun.
+        total_seconds = (hours * 3600) + (minutes * 60) + seconds + 10
+
+        # Testing can return total seconds only, allowing us to test that proper values are parsed.
+        if test_image:
+            return total_seconds
+
+        return datetime.datetime.now() + datetime.timedelta(seconds=total_seconds)
 
     def retrieve(self):
         """Attempt to retrieve the stats JSON file with all current data."""
