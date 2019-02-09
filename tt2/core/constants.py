@@ -78,3 +78,6 @@ MIDDLE_CLICK = "middle"
 # This can be determined by looking at the new value, subtracting it from the old value and seeing
 # if it crosses the threshold, in which case we can skip the current parse attempt.
 STAGE_PARSE_THRESHOLD = 10000
+
+# Store any RGB values here that are used to conditionally check for things in game.
+SKILL_MAX_COLOR = (255, 255, 255)

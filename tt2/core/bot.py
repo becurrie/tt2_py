@@ -9,7 +9,7 @@ from settings import (
 )
 
 from tt2.core.maps import *
-from tt2.core.constants import STAGE_PARSE_THRESHOLD
+from tt2.core.constants import STAGE_PARSE_THRESHOLD, SKILL_MAX_COLOR
 from tt2.core.grabber import Grabber
 from tt2.core.configure import Config
 from tt2.core.stats import Stats
@@ -374,7 +374,27 @@ class Bot:
 
             # Looping through each skill coord, clicking to level up.
             for skill in self._not_maxed(self._inactive_skills()):
-                click_on_point(self.master_locs["skills"].get(skill), clicks=self.config.SKILL_LEVEL_INTENSITY)
+                point = self.master_locs["skills"].get(skill)
+
+                # Should the bot upgrade the max amount of upgrades available for the current skill?
+                if self.config.MAX_SKILL_IF_POSSIBLE:
+                    # Retrieve the pixel location where the color should be the proper max level
+                    # color once a single click takes place.
+                    color_point = self.master_locs["skill_level_max"].get(skill)
+                    click_on_point(point, pause=1)
+
+                    # Take a snapshot right after, and check for the point being the proper color.
+                    self.grabber.snapshot()
+                    if self.grabber.current.getpixel(color_point) == SKILL_MAX_COLOR:
+                        self.logger.debug("Levelling max amount of available upgrades for skill: {skill}.".format(
+                            skill=skill))
+                        click_on_point(color_point, pause=0.5)
+
+                # Otherwise, just level up the skills normally using the intensity setting.
+                else:
+                    self.logger.debug("Levelling skill: {skill} {intensity} time(s).".format(
+                        skill=skill, intensity=self.config.SKILL_LEVEL_INTENSITY))
+                    click_on_point(self.master_locs["skills"].get(skill), clicks=self.config.SKILL_LEVEL_INTENSITY)
 
     def actions(self, force=False):
         """Perform bot actions in game."""
@@ -439,15 +459,25 @@ class Bot:
                     if self.config.PRESTIGE_AFTER_X_MINUTES != 0:
                         self.calculate_next_prestige()
 
+                    # After a prestige, run all actions instantly to ensure that initial levels are gained.
+                    # Also attempt to activate skills afterwards so that stage progression is started before
+                    # any other actions or logic takes place in game.
+                    self.actions(force=True)
+                    self.activate_skills(force=True)
+
+                    # If the current stage currently is greater than the current max stage, lets update our stats
+                    # to reflect that a new max stage has been reached. This allows for
+                    if self.current_stage and self.stats.highest_stage:
+                            if self.current_stage > self.stats.highest_stage:
+                                self.logger.info(
+                                    "Current run stage is greater than your previous max stage {max}, forcing a stats "
+                                    "update to reflect these changes.".format(max=self.stats.highest_stage))
+                                self.update_stats(force=True)
+
                     # Additional checks can take place during a prestige.
                     self.artifacts()
                     self.daily_rewards()
                     self.hatch_eggs()
-
-                    # After a prestige, run all actions instantly to ensure that initial levels are gained.
-                    # Also attempt to activate skills afterwards.
-                    self.actions(force=True)
-                    self.activate_skills(force=True)
 
     @not_in_transition
     def artifacts(self):
