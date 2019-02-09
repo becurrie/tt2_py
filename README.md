@@ -146,6 +146,7 @@ The configuration values all have some comments that describe the option slightl
 | INTERVAL_WAR_CRY | Activate war cry every x seconds. (0 = do not activate). | 0 | 0, 10, 200 |
 | INTERVAL_SHADOW_CLONE | Activate shadow clone every x seconds. (0 = do not activate). | 200 | 0, 10, 200 |
 | FORCE_ENABLED_SKILLS_WAIT | Given the intervals specified above, determine if skills should only be activated once the biggest interval is reached. | on | on, off |
+| MAX_SKILL_IF_POSSIBLE | Determine if your skills should be upgraded to their max available level. | on | on, off |
 | SKILL_LEVEL_INTENSITY | Determine the amount of clicks performed on each skill during the level up process. | 10 | 10, 20, 50 |
 
 ### Prestige Action Options
