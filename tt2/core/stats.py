@@ -322,7 +322,7 @@ class Stats:
 
         Note that the current screen should be the stats page before calling this method.
         """
-        for key, region in STATS_COORDS[self.key].items():
+        for key, region in STATS_COORDS.items():
             if test_set:
                 image = Image.open(test_set[key])
             else:
@@ -388,12 +388,10 @@ class Stats:
     def stage_ocr(self, test_image=None):
         """Attempt to parse out the current stage in game through an OCR check."""
         self.logger.debug("Attempting to parse out the current stage from in game")
-        region = STAGE_COORDS[self.key]
-
         if test_image:
             image = self._process_stage(scale=3, image=test_image)
         else:
-            self.grabber.snapshot(region=region)
+            self.grabber.snapshot(region=STAGE_COORDS)
             image = self._process_stage(scale=3)
 
         text = pytesseract.image_to_string(image, config='--psm 7 nobatch digits')
@@ -406,7 +404,7 @@ class Stats:
     def play_again_ocr(self, test_image=None):
         """Attempt to parse out the datetime from now that a clan battle will start at."""
         self.logger.debug("Attempting to parse out the current play again datetime from in game.")
-        region = CLAN_COORDS[self.key]["play_again"]
+        region = CLAN_COORDS["play_again"]
 
         if test_image:
             image = self._process(image=test_image)
