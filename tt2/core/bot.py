@@ -9,12 +9,11 @@ from settings import (
 )
 
 from tt2.core.maps import *
-from tt2.core.constants import STAGE_PARSE_THRESHOLD, SKILL_MAX_COLOR
+from tt2.core.constants import STAGE_PARSE_THRESHOLD
 from tt2.core.grabber import Grabber
 from tt2.core.configure import Config
 from tt2.core.stats import Stats
-from tt2.core.images import Images
-from tt2.core.locs import Locs
+from tt2.core.wrap import Images, Locs, Colors
 from tt2.core.utilities import click_on_point, drag_mouse, make_logger, strfdelta, sleep
 from tt2.core.decorators import not_in_transition
 
@@ -46,16 +45,14 @@ class Bot:
         if not self.config.ENABLE_LOGGING:
             self.logger.disabled = True
 
+        # Bot utilities.
         self.grabber = Grabber(self.config.EMULATOR, self.config.HEIGHT, self.config.WIDTH, self.logger)
         self.stats = Stats(self.grabber, self.config, stats_file, self.logger)
+
+        # Data containers.
         self.images = Images(IMAGES, self.logger)
-        self.locs = Locs(GAME_LOCS[self.stats.key], self.logger)
-        self.master_locs = MASTER_LOCS[self.stats.key]
-        self.master_coords = MASTER_COORDS[self.stats.key]
-        self.heroes_locs = HEROES_LOCS[self.stats.key]
-        self.artifacts_locs = ARTIFACTS_LOCS[self.stats.key]
-        self.emulator_locs = EMULATOR_LOCS[self.stats.key][self.config.EMULATOR]
-        self.artifacts_images = ARTIFACT_MAP
+        self.locs = Locs(GAME_LOCS, self.logger)
+        self.colors = Colors(GAME_COLORS, self.logger)
 
         self._last_stage = None
         self.current_stage = None
@@ -174,7 +171,7 @@ class Bot:
     def _inactive_skills(self):
         """Create a list of all skills that are currently inactive."""
         inactive = []
-        for key, region in self.master_coords["skills"].items():
+        for key, region in MASTER_COORDS["skills"].items():
             if self.grabber.search(self.images.cancel_active_skill, region, bool_only=True):
                 continue
             inactive.append(key)
@@ -188,7 +185,7 @@ class Bot:
     def _not_maxed(self, inactive):
         """Given a list of inactive skill keys, determine which ones are not maxed out of those."""
         not_maxed = []
-        for key, region in {k: r for k, r in self.master_coords["skills"].items() if k in inactive}.items():
+        for key, region in {k: r for k, r in MASTER_COORDS["skills"].items() if k in inactive}.items():
             if self.grabber.search(self.images.skill_max_level, region, bool_only=True):
                 continue
             not_maxed.append(key)
@@ -324,7 +321,7 @@ class Bot:
             if self.grabber.search(self.images.max_level, bool_only=True):
                 self.logger.debug("A max levelled hero has been found on the top portion of the hero panel.")
                 self.logger.debug("Only the first set of heroes will be levelled.")
-                for point in self.heroes_locs["level_heroes"][::-1][1:9]:
+                for point in HEROES_LOCS["level_heroes"][::-1][1:9]:
                     click_on_point(point, self.config.HERO_LEVEL_INTENSITY, interval=0.07)
 
                 # Early exit as well.
@@ -332,21 +329,21 @@ class Bot:
 
             # Always level the first 5 heroes in the list.
             self.logger.debug("Levelling first five heroes in list.")
-            for point in self.heroes_locs["level_heroes"][::-1][1:6]:
+            for point in HEROES_LOCS["level_heroes"][::-1][1:6]:
                 click_on_point(point, self.config.HERO_LEVEL_INTENSITY, interval=0.07)
 
             # Travel to the bottom of the panel.
             for i in range(5):
                 drag_mouse(self.locs.scroll_start, self.locs.scroll_bottom_end)
 
-            drag_start = self.heroes_locs["drag_heroes"]["start"]
-            drag_end = self.heroes_locs["drag_heroes"]["end"]
+            drag_start = HEROES_LOCS["drag_heroes"]["start"]
+            drag_end = HEROES_LOCS["drag_heroes"]["end"]
 
             # Begin level and scrolling process. An assumption is made that all heroes
             # are unlocked, meaning that some un-necessary scrolls may take place.
             self.logger.debug("Scrolling and levelling all heroes.")
             for i in range(4):
-                for point in self.heroes_locs["level_heroes"]:
+                for point in HEROES_LOCS["level_heroes"]:
                     click_on_point(point, clicks=self.config.HERO_LEVEL_INTENSITY, interval=0.07)
 
                 # Skip the last drag since it's un-needed.
@@ -363,7 +360,7 @@ class Bot:
 
             # Travel to the sword master panel, and level up specified amount of clicks.
             self.goto_master(collapsed=False)
-            click_on_point(self.master_locs["master_level"], clicks=clicks)
+            click_on_point(MASTER_LOCS["master_level"], clicks=clicks)
 
     @not_in_transition
     def level_skills(self):
@@ -374,18 +371,18 @@ class Bot:
 
             # Looping through each skill coord, clicking to level up.
             for skill in self._not_maxed(self._inactive_skills()):
-                point = self.master_locs["skills"].get(skill)
+                point = MASTER_LOCS["skills"].get(skill)
 
                 # Should the bot upgrade the max amount of upgrades available for the current skill?
                 if self.config.MAX_SKILL_IF_POSSIBLE:
                     # Retrieve the pixel location where the color should be the proper max level
                     # color once a single click takes place.
-                    color_point = self.master_locs["skill_level_max"].get(skill)
+                    color_point = MASTER_LOCS["skill_level_max"].get(skill)
                     click_on_point(point, pause=1)
 
                     # Take a snapshot right after, and check for the point being the proper color.
                     self.grabber.snapshot()
-                    if self.grabber.current.getpixel(color_point) == SKILL_MAX_COLOR:
+                    if self.grabber.current.getpixel(color_point) == self.colors.WHITE:
                         self.logger.debug("Levelling max amount of available upgrades for skill: {skill}.".format(
                             skill=skill))
                         click_on_point(color_point, pause=0.5)
@@ -394,7 +391,7 @@ class Bot:
                 else:
                     self.logger.debug("Levelling skill: {skill} {intensity} time(s).".format(
                         skill=skill, intensity=self.config.SKILL_LEVEL_INTENSITY))
-                    click_on_point(self.master_locs["skills"].get(skill), clicks=self.config.SKILL_LEVEL_INTENSITY)
+                    click_on_point(MASTER_LOCS["skills"].get(skill), clicks=self.config.SKILL_LEVEL_INTENSITY)
 
     def actions(self, force=False):
         """Perform bot actions in game."""
@@ -427,7 +424,7 @@ class Bot:
 
                 # Opening the stats panel within the heroes panel in game.
                 # Scrolling to the bottom of this page, which contains all needed game stats info.
-                click_on_point(self.heroes_locs["stats_collapsed"], pause=0.5)
+                click_on_point(HEROES_LOCS["stats_collapsed"], pause=0.5)
                 for i in range(3):
                     drag_mouse(self.locs.scroll_start, self.locs.scroll_bottom_end)
 
@@ -436,7 +433,7 @@ class Bot:
                 self.stats.write()
 
                 self.calculate_next_stats_update()
-                click_on_point(self.master_locs["screen_top"], clicks=3)
+                click_on_point(MASTER_LOCS["screen_top"], clicks=3)
 
     @not_in_transition
     def prestige(self):
@@ -449,11 +446,11 @@ class Bot:
 
                 # Click on the prestige button, and check for the prompt confirmation being present. Sleeping
                 # slightly here to ensure that connections issues do not cause the prestige to be misfire.
-                click_on_point(self.master_locs["prestige"], pause=3)
+                click_on_point(MASTER_LOCS["prestige"], pause=3)
                 prestige_found, prestige_position = self.grabber.search(self.images.confirm_prestige)
                 if prestige_found:
-                    click_on_point(self.master_locs["prestige_confirm"], pause=1)
-                    click_on_point(self.master_locs["prestige_final"], pause=10)
+                    click_on_point(MASTER_LOCS["prestige_confirm"], pause=1)
+                    click_on_point(MASTER_LOCS["prestige_final"], pause=10)
 
                     # If a timer is used for prestige. Reset this timer to the next timed prestige value.
                     if self.config.PRESTIGE_AFTER_X_MINUTES != 0:
@@ -489,17 +486,17 @@ class Bot:
 
             # Make sure that the proper spend max multiplier is used to fully upgrade an artifact.
             while not self.grabber.search(self.images.spend_max, bool_only=True):
-                click_on_point(self.artifacts_locs["buy_multiplier"], pause=0.5)
-                click_on_point(self.artifacts_locs["buy_max"], pause=0.5)
+                click_on_point(ARTIFACTS_LOCS["buy_multiplier"], pause=0.5)
+                click_on_point(ARTIFACTS_LOCS["buy_max"], pause=0.5)
 
             # Looking for the artifact to upgrade here, dragging until it is finally found.
-            while not self.grabber.search(self.artifacts_images.get(self.config.UPGRADE_ARTIFACT), bool_only=True):
+            while not self.grabber.search(ARTIFACT_MAP.get(self.config.UPGRADE_ARTIFACT), bool_only=True):
                 drag_mouse(self.locs.scroll_start, self.locs.scroll_bottom_end)
 
             # Making it here means the artifact in question has been found.
             found, position = self.grabber.search(getattr(self.images, self.config.UPGRADE_ARTIFACT))
-            new_x = position[0] + self.artifacts_locs["artifact_push"]["x"]
-            new_y = position[1] + self.artifacts_locs["artifact_push"]["y"]
+            new_x = position[0] + ARTIFACTS_LOCS["artifact_push"]["x"]
+            new_y = position[1] + ARTIFACTS_LOCS["artifact_push"]["y"]
 
             # Currently just upgrading the artifact to it's max level. Future updates may include the ability
             # to determine how much to upgrade an artifact by.
@@ -550,7 +547,7 @@ class Bot:
             click_on_point(self.locs.open_rewards, pause=1)
             click_on_point(self.locs.collect_rewards, pause=1)
             click_on_point(self.locs.game_middle, 5, interval=0.5, pause=1)
-            click_on_point(self.master_locs["screen_top"], pause=1)
+            click_on_point(MASTER_LOCS["screen_top"], pause=1)
 
     @not_in_transition
     def hatch_eggs(self):
@@ -907,12 +904,13 @@ class Bot:
         self.logger.info("Attempting to restart the game within {emulator} emulator".format(
             emulator=self.config.EMULATOR
         ))
-        click_on_point(self.emulator_locs["opened_apps"], pause=3)
-        moveTo(self.emulator_locs["close_game"][0], self.emulator_locs["close_game"][1], pause=5)
-        click_on_point(self.emulator_locs["close_game"], pause=3)
+        click_on_point(EMULATOR_LOCS[self.config.EMULATOR]["opened_apps"], pause=3)
+        moveTo(EMULATOR_LOCS[self.config.EMULATOR]["close_game"][0],
+               EMULATOR_LOCS[self.config.EMULATOR]["close_game"][1], pause=5)
+        click_on_point(EMULATOR_LOCS[self.config.EMULATOR]["close_game"], pause=3)
 
         # Opening the game, waiting at least twenty seconds before continuing.
-        click_on_point(self.emulator_locs["launch_game"], pause=20)
+        click_on_point(EMULATOR_LOCS[self.config.EMULATOR]["launch_game"], pause=20)
 
     def run(self):
         """
