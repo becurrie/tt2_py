@@ -86,6 +86,7 @@ class Config:
         self.INTERVAL_WAR_CRY = None
         self.INTERVAL_SHADOW_CLONE = None
         self.FORCE_ENABLED_SKILLS_WAIT = None
+        self.MAX_SKILL_IF_POSSIBLE = None
         self.SKILL_LEVEL_INTENSITY = None
 
         # ACTIONS_PRESTIGE.

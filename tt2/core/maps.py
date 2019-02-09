@@ -127,10 +127,18 @@ MASTER_LOCS = {
             "heavenly_strike": (415, 270),
             "deadly_strike": (415, 350),
             "hand_of_midas": (415, 430),
-            "fire_sword": (415, 500),
+            "fire_sword": (415, 508),
             "war_cry": (415, 580),
             "shadow_clone": (415, 650),
-        }
+        },
+        "skill_level_max": {
+            "heavenly_strike": (268, 280),
+            "deadly_strike": (268, 357),
+            "hand_of_midas": (268, 433),
+            "fire_sword": (268, 508),
+            "war_cry": (268, 584),
+            "shadow_clone": (268, 659),
+        },
     },
 }
 
@@ -171,6 +179,11 @@ ARTIFACTS_LOCS = {
         "buy_multiplier": (410, 105),
         "buy_max": (50, 105),
     },
+}
+
+# Store any colors used (RGB) by the bot to determine so things in game.
+GAME_COLORS = {
+    "WHITE": (255, 255, 255)
 }
 
 # All images should have their names mapped to the file path within the module.
