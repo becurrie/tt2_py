@@ -100,6 +100,9 @@ class Images:
         self.join = None
         self.collect_prize = None
 
+        # CLAN CRATE.
+        self.okay = None
+
 
 class Locs:
     """Locs class wraps all location points into a friendly wrapper class for use with the bot."""
@@ -147,6 +150,7 @@ class Locs:
         self.scroll_bottom_end = None
         self.scroll_quick_stop = None
         self.fairies_map = None
+        self.clan_crate = None
 
         # PANELS.
         self.expand_collapse_top = None

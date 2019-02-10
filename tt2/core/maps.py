@@ -78,6 +78,7 @@ GAME_LOCS = {
             # Click on spot where equipment appears.
             (355, 445),
         ),
+        "clan_crate": (70, 165),
     },
     "PANELS": {
         "expand_collapse_top": (386, 43),
@@ -261,6 +262,9 @@ IMAGES = {
     "TOURNAMENT": {
         "join": IMAGE_DIR + "/tournament/join.png",
         "collect_prize": IMAGE_DIR + "/tournament/collect_prize.png",
+    },
+    "CLAN_CRATE": {
+        "okay": IMAGE_DIR + "/clan_crate/okay.png",
     },
 }
 
