@@ -168,6 +168,7 @@ The configuration values all have some comments that describe the option slightl
 | config | Description | Default | Examples |
 |-------------------------------|-----------------------------------------------------------------|---------|------------|
 | ENABLE_STATS | Enable statistic updates. | on | on, off |
+| UPDATE_STATS_ON_START | Should a statistics update take place when the bot first starts? | on | on, off |
 | STATS_UPDATE_INTERVAL_MINUTES | How many minutes between each stat update while bot is running. | 30 | 30, 60, 90 |
 
 ### Artifact Parsing Options

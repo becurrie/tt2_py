@@ -102,6 +102,7 @@ class Config:
 
         # STATS.
         self.ENABLE_STATS = None
+        self.UPDATE_STATS_ON_START = None
         self.STATS_UPDATE_INTERVAL_MINUTES = None
 
         # ARTIFACT_PARSING.

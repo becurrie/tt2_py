@@ -924,6 +924,8 @@ class Bot:
                 self.actions(force=True)
             if self.config.ACTIVATE_SKILLS_ON_START:
                 self.activate_skills(force=True)
+            if self.config.UPDATE_STATS_ON_START:
+                self.update_stats(force=True)
             if self.config.CLAN_BATTLE_CHECK_ON_START:
                 self.clan_battle(force_check=True)
 
