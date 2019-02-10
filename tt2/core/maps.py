@@ -282,7 +282,9 @@ STATS_COORDS = {
     "daily_achievements": (55, 750, 430, 773),
 }
 
-STAGE_COORDS = (214, 71, 268, 84),
+STAGE_COORDS = {
+    "region": (214, 71, 268, 84),
+}
 
 CLAN_COORDS = {
     "play_again": (70, 768, 172, 787),

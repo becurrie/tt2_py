@@ -388,10 +388,12 @@ class Stats:
     def stage_ocr(self, test_image=None):
         """Attempt to parse out the current stage in game through an OCR check."""
         self.logger.debug("Attempting to parse out the current stage from in game")
+        region = STAGE_COORDS["region"]
+
         if test_image:
             image = self._process_stage(scale=3, image=test_image)
         else:
-            self.grabber.snapshot(region=STAGE_COORDS)
+            self.grabber.snapshot(region=region)
             image = self._process_stage(scale=3)
 
         text = pytesseract.image_to_string(image, config='--psm 7 nobatch digits')
