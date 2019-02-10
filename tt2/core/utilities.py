@@ -4,6 +4,7 @@ utilities.py
 Any utility or backing functions can be placed here and imported when needed.
 """
 from tt2.external.imagesearch import *
+from tt2.core.maps import MASTER_LOCS
 from tt2.core.constants import (
     STATS_DURATION_RE, STATS_LOOKUP_MULTIPLIER, STATS_TIMEDELTA_STR,
     LOGGER_NAME, LOGGER_FORMAT, LOGGER_FILE_NAME
@@ -185,7 +186,7 @@ def in_transition_func(*args, max_loops):
 
         # Clicking the top of the screen in case of a transition taking place due to something being
         # present on the screen that requires clicking.
-        click_on_point(_self.master_locs["screen_top"], clicks=3, pause=0.5)
+        click_on_point(MASTER_LOCS["screen_top"], clicks=3, pause=0.5)
         _self.logger.debug("In a transition? waiting 1 second before continuing")
         sleep(1)
 
