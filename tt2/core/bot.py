@@ -14,7 +14,7 @@ from tt2.core.grabber import Grabber
 from tt2.core.configure import Config
 from tt2.core.stats import Stats
 from tt2.core.wrap import Images, Locs, Colors
-from tt2.core.utilities import click_on_point, drag_mouse, make_logger, strfdelta, sleep
+from tt2.core.utilities import click_on_point, click_on_image, drag_mouse, make_logger, strfdelta, sleep
 from tt2.core.decorators import not_in_transition
 
 from pyautogui import easeOutQuad, FailSafeException
@@ -714,6 +714,16 @@ class Bot:
                     self.calculate_next_clan_battle_check()
 
     @not_in_transition
+    def clan_crate(self):
+        """Check if a clan crate is currently available and collect it if one is."""
+        self.goto_master()
+        click_on_point(self.locs.clan_crate, pause=0.5)
+        found, pos = self.grabber.search(self.images.okay)
+        if found:
+            self.logger.info("Clan crate was found, collecting now.")
+            click_on_image(self.images.okay, pos, pause=1)
+
+    @not_in_transition
     def collect_ad(self):
         """Collect ad if one is available on the screen."""
         while self.grabber.search(self.images.collect_ad, bool_only=True):
@@ -938,6 +948,7 @@ class Bot:
 
                 self.goto_master()
                 self.fight_boss()
+                self.clan_crate()
                 self.tap()
                 self.collect_ad()
                 self.parse_current_stage()
