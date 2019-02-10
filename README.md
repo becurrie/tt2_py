@@ -35,10 +35,11 @@ TapTitans2 Py is bot written in python that enables the mobile tap game Tap Tita
 - Automatically level up the sword master, skills and heroes in game with a specified amount of intensity (clicks).
 - Automatically prestige after a specified amount of minutes spent in a run or once a certain stage has been reached.
 - Prestige can also be configured to occur once a percentage of your max stage has been reached.
-- Upgrade your bos artifact after a prestige has been completed.
+- Upgrade a specific artifact after a prestige takes place.
 - Participate in tournaments when they become available (enter/collect rewards).
 - Hatch and collect any eggs when they become available.
 - Participate in clan battles with the option to enable an additional fight after the first one (diamonds).
+- Collect clan crates in game.
 - Store all game/bot/session statistics in a single location to provide some insight into progress made.
 - Console/file logging capabilities to provide debugging and bug tracking.
 
