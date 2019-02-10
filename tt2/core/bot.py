@@ -783,6 +783,7 @@ class Bot:
                     self.logger.info("Skills will only be activated once {key} is ready.".format(key=skills[0][1]))
                     self.logger.info("{key} will be ready in {time}.".format(
                         key=skills[0][1], time=strfdelta(attr - now)))
+                    return
 
             # If this point is reached, ensure no panel is currently active, and begin skill activation.
             self.no_panel()
