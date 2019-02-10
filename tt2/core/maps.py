@@ -341,7 +341,7 @@ ARTIFACT_TIER_MAP = {
         "hero's_blade": IMAGE_DIR + "/artifacts/heros_blade.png",
         "the_sword_of_storms": IMAGE_DIR + "/artifacts/the_sword_of_storms.png",
         "furies_bow": IMAGE_DIR + "/artifacts/furies_bow.png",
-        "charm_of_the_ancients": IMAGE_DIR + "/artifacts/charm_of_the_ancients.png",
+        "charm_of_the_ancient": IMAGE_DIR + "/artifacts/charm_of_the_ancient.png",
         "tiny_titan_tree": IMAGE_DIR + "/artifacts/tiny_titan_tree.png",
         "helm_of_hermes": IMAGE_DIR + "/artifacts/helm_of_hermes.png",
         "o'ryans_charm": IMAGE_DIR + "/artifacts/oryans_charm.png",
