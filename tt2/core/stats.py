@@ -235,11 +235,11 @@ class Stats:
         from tt2.core.utilities import drag_mouse
 
         # Game locations based on current size of game.
-        locs = GAME_LOCS[self.key]["GAME_SCREEN"]
+        locs = GAME_LOCS["GAME_SCREEN"]
         images = IMAGES["GENERIC"]
 
         # Region to search for the final artifact, taken from the configuration file.
-        last_artifact_region = GAME_LOCS[self.key]["ARTIFACTS"]["bottom_region"]
+        last_artifact_region = GAME_LOCS["ARTIFACTS"]["bottom_region"]
 
         # Looping forever until the bottom artifact has been found.
         break_next = False
