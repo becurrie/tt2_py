@@ -425,7 +425,7 @@ class Bot:
                 # Opening the stats panel within the heroes panel in game.
                 # Scrolling to the bottom of this page, which contains all needed game stats info.
                 click_on_point(HEROES_LOCS["stats_collapsed"], pause=0.5)
-                for i in range(3):
+                for i in range(5):
                     drag_mouse(self.locs.scroll_start, self.locs.scroll_bottom_end)
 
                 self.stats.update_ocr()
@@ -616,7 +616,7 @@ class Bot:
                     # happen due to configuration changes and restarting bot. Although rare, still worth dealing with.
                     if self.config.ENABLE_EXTRA_FIGHT:
                         if self.grabber.search(self.images.diamond, bool_only=True):
-                            if self.grabber.search(self.images.deal_110_next_attack, bool_only=True):
+                            if self.grabber.search(self.images.deal_110_next_attack, precision=0.95, bool_only=True):
                                 # Only ever fighting an additional fight if it costs five diamonds.
                                 # Spending more is un-realistic and unsupported at the moment.
                                 click_on_point(self.locs.clan_fight, pause=2)
@@ -779,7 +779,7 @@ class Bot:
     def activate_skills(self, force=False):
         """Activate any skills off of cooldown, and determine if waiting for longest cd to be done."""
         if self.config.ENABLE_SKILLS:
-            self.logger.info("Activating skills in game now.")
+            self.logger.debug("Activating skills in game now.")
             self.goto_master()
 
             # Datetime to determine skill intervals.
@@ -790,8 +790,8 @@ class Bot:
             if self.config.FORCE_ENABLED_SKILLS_WAIT and not force:
                 attr = getattr(self, next_key + skills[0][1])
                 if not now > attr:
-                    self.logger.info("Skills will only be activated once {key} is ready.".format(key=skills[0][1]))
-                    self.logger.info("{key} will be ready in {time}.".format(
+                    self.logger.debug("Skills will only be activated once {key} is ready.".format(key=skills[0][1]))
+                    self.logger.debug("{key} will be ready in {time}.".format(
                         key=skills[0][1], time=strfdelta(attr - now)))
                     return
 
