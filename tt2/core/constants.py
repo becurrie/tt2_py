@@ -54,7 +54,6 @@ STATS_LOOKUP_MULTIPLIER = {
 STATS_DURATION_RE = re.compile(
     r'^((?P<days>[.\d]+?)d) ?((?P<hours>[.\d]+?):)?((?P<minutes>[.\d]+?):)?((?P<seconds>[.\d]+?)?$)'
 )
-STATS_UN_PARSABLE = "NOT PARSABLE"
 
 # Format string used when converting time delta objects back into their respective format found in game.
 STATS_TIMEDELTA_STR = "{D}d {H}:{M}:{S}"

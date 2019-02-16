@@ -7,8 +7,7 @@ panel located inside of the heroes panel in game.
 from settings import __VERSION__
 from tt2.core.maps import STATS_COORDS, STAGE_COORDS, CLAN_COORDS, ARTIFACT_TIER_MAP
 from tt2.core.constants import (
-    STATS_JSON_TEMPLATE, STATS_GAME_STAT_KEYS, STATS_BOT_STAT_KEYS, LOGGER_FILE_NAME,
-    STATS_DATE_FMT, STATS_UN_PARSABLE
+    STATS_JSON_TEMPLATE, STATS_GAME_STAT_KEYS, STATS_BOT_STAT_KEYS, LOGGER_FILE_NAME, STATS_DATE_FMT,
 )
 from tt2.core.utilities import convert, diff
 
@@ -339,7 +338,6 @@ class Stats:
             # at all, safe to assume the OCR has failed wonderfully.
             if not any(char.isdigit() for char in text):
                 self.logger.warning("No digits found in OCR result, skipping key: {key}".format(key=key))
-                setattr(self, key, STATS_UN_PARSABLE)
                 continue
 
             # Otherwise, attempt to parse out the proper value.
@@ -363,7 +361,6 @@ class Stats:
                             try:
                                 float(value[:-1])
                             except ValueError:
-                                setattr(self, key, STATS_UN_PARSABLE)
                                 continue
 
                     # Last character is a digit, value may be pure digit of some sort?
@@ -374,16 +371,14 @@ class Stats:
                             try:
                                 float(value)
                             except ValueError:
-                                setattr(self, key, STATS_UN_PARSABLE)
                                 continue
 
-                self.logger.debug("Parsed value: {key} -> {value}".format(key=key, value=value))
+                self.logger.info("Parsed value: {key} -> {value}".format(key=key, value=value))
                 setattr(self, key, value)
 
             # Gracefully continuing loop if failure occurs.
             except ValueError:
                 self.logger.error("Could not parse {key}: (OCR Result: {text})".format(key=key, text=text))
-                return "NOT PARSABLE"
 
     def stage_ocr(self, test_image=None):
         """Attempt to parse out the current stage in game through an OCR check."""
