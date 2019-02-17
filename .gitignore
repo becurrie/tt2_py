@@ -3,3 +3,4 @@ logs/
 config.ini
 stats.json
 __pycache__
+*.sqlite3
