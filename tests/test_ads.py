@@ -7,8 +7,8 @@ The ad prompts may occur when a fairy is pressed. If a user has premium ad colle
 turned on, we can accept these rewards instantly without having to watch an ad.
 """
 from settings import TEST_CONFIG_FILE, TEST_STATS_FILE
-from titanbot.tt2.core import Bot
-from titanbot.tt2.core import IMAGES as BOT_IMAGES
+from titanbot.tt2.core.bot import Bot
+from titanbot.tt2.core.maps import IMAGES as BOT_IMAGES
 from tests.maps import IMAGES as TEST_IMAGES
 
 from PIL import Image
