@@ -326,7 +326,7 @@ ARTIFACT_TIER_MAP = {
         "heart_of_storms": IMAGE_DIR + "/artifacts/heart_of_storms.png",
         "ring_of_calisto": IMAGE_DIR + "/artifacts/ring_of_calisto.png",
         "invaders_gjalarhorn": IMAGE_DIR + "/artifacts/invaders_gjalarhorn.png",
-        "boot_of_hermes": IMAGE_DIR + "/artifacts/boot_of_hermes.png",
+        "boots_of_hermes": IMAGE_DIR + "/artifacts/boots_of_hermes.png",
     },
     "A": {
         "book_of_prophecy": IMAGE_DIR + "/artifacts/book_of_prophecy.png",
@@ -405,7 +405,6 @@ ARTIFACT_TIER_MAP = {
         "glacial_axe": IMAGE_DIR + "/artifacts/glacial_axe.png",
         "aegis": IMAGE_DIR + "/artifacts/aegis.png",
         "swamp_gauntlet": IMAGE_DIR + "/artifacts/swamp_gauntlet.png",
-        "ambrosia_gauntlet": IMAGE_DIR + "/artifacts/ambrosia_gauntlet.png",
         "ambrosia_elixir": IMAGE_DIR + "/artifacts/ambrosia_elixir.png",
         "mystic_staff": IMAGE_DIR + "/artifacts/mystic_staff.png",
         "egg_of_fortune": IMAGE_DIR + "/artifacts/egg_of_fortune.png",
