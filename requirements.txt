@@ -9,3 +9,4 @@ pytesseract
 coverage
 keyboard
 GitPython
+Django

@@ -8,8 +8,8 @@ these panels house basically all the functionality within the game. The goal of 
 that the image searching and methods available on the bot can determine what state the game is in at all times.
 """
 from settings import TEST_CONFIG_FILE, TEST_STATS_FILE
-from tt2.core.bot import Bot
-from tt2.core.maps import IMAGES as BOT_IMAGES
+from titanbot.tt2.core import Bot
+from titanbot.tt2.core import IMAGES as BOT_IMAGES
 from tests.maps import IMAGES as TEST_IMAGES
 
 from PIL import Image

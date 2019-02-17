@@ -8,8 +8,8 @@ to access the Users account, skill tree, achievements and inbox. As well as the 
 the master from here. All of the skills are present here as well.
 """
 from settings import TEST_CONFIG_FILE, TEST_STATS_FILE
-from tt2.core.bot import Bot
-from tt2.core.maps import IMAGES as BOT_IMAGES
+from titanbot.tt2.core import Bot
+from titanbot.tt2.core import IMAGES as BOT_IMAGES
 from tests.maps import IMAGES as TEST_IMAGES
 
 from PIL import Image

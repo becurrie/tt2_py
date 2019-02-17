@@ -3,9 +3,9 @@ utilities.py
 
 Any utility or backing functions can be placed here and imported when needed.
 """
-from tt2.external.imagesearch import *
-from tt2.core.maps import MASTER_LOCS
-from tt2.core.constants import (
+from titanbot.tt2.external.imagesearch import click_image
+from titanbot.tt2.core.maps import MASTER_LOCS
+from titanbot.tt2.core.constants import (
     STATS_DURATION_RE, STATS_LOOKUP_MULTIPLIER, STATS_TIMEDELTA_STR,
     LOGGER_NAME, LOGGER_FORMAT, LOGGER_FILE_NAME
 )
@@ -13,6 +13,7 @@ from tt2.core.constants import (
 from string import Template, Formatter
 from pyautogui import *
 
+import random
 import datetime
 import logging
 import time

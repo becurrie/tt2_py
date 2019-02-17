@@ -5,11 +5,11 @@ The stats module will encapsulate all functionality related to the stats
 panel located inside of the heroes panel in game.
 """
 from settings import __VERSION__
-from tt2.core.maps import STATS_COORDS, STAGE_COORDS, CLAN_COORDS, ARTIFACT_TIER_MAP
-from tt2.core.constants import (
+from titanbot.tt2.core.maps import STATS_COORDS, STAGE_COORDS, CLAN_COORDS, ARTIFACT_TIER_MAP
+from titanbot.tt2.core.constants import (
     STATS_JSON_TEMPLATE, STATS_GAME_STAT_KEYS, STATS_BOT_STAT_KEYS, LOGGER_FILE_NAME, STATS_DATE_FMT,
 )
-from tt2.core.utilities import convert, diff
+from titanbot.tt2.core.utilities import convert, diff
 
 from PIL import Image
 
@@ -229,9 +229,9 @@ class Stats:
 
         Additionally, this method expects that the game screen is at the top of the expanded artifacts screen.
         """
-        from tt2.core.maps import ARTIFACT_TIER_MAP, ARTIFACT_MAP, GAME_LOCS, IMAGES
-        from tt2.core.utilities import sleep
-        from tt2.core.utilities import drag_mouse
+        from titanbot.tt2.core import ARTIFACT_TIER_MAP, ARTIFACT_MAP, GAME_LOCS, IMAGES
+        from titanbot.tt2.core import sleep
+        from titanbot.tt2.core import drag_mouse
 
         # Game locations based on current size of game.
         locs = GAME_LOCS["GAME_SCREEN"]
