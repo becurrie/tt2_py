@@ -10,8 +10,10 @@ __VERSION__ = "0.2.5"
 # Store the root directory of the project. May be used and appended to files in other directories without
 # the need for relative urls being generated to travel to the file.
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Django titanbot directory.
+DJANGO_DIR = os.path.join(ROOT_DIR, "titanbot")
 # Bot directory (tt2).
-BOT_DIR = os.path.join(ROOT_DIR, "tt2")
+BOT_DIR = os.path.join(DJANGO_DIR, "tt2")
 # Core bot file directory.
 CORE_DIR = os.path.join(BOT_DIR, "core")
 # External library file directory.
