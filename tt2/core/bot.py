@@ -492,9 +492,10 @@ class Bot:
             # Looking for the artifact to upgrade here, dragging until it is finally found.
             while not self.grabber.search(ARTIFACT_MAP.get(self.config.UPGRADE_ARTIFACT), bool_only=True):
                 drag_mouse(self.locs.scroll_start, self.locs.scroll_bottom_end)
+                sleep(1)
 
             # Making it here means the artifact in question has been found.
-            found, position = self.grabber.search(getattr(self.images, self.config.UPGRADE_ARTIFACT))
+            found, position = self.grabber.search(ARTIFACT_MAP.get(self.config.UPGRADE_ARTIFACT))
             new_x = position[0] + ARTIFACTS_LOCS["artifact_push"]["x"]
             new_y = position[1] + ARTIFACTS_LOCS["artifact_push"]["y"]
 
@@ -978,6 +979,8 @@ class Bot:
                         time=strfdelta(shutdown_at - now)))
             if soft:
                 self.soft_shutdown()
+            else:
+                return None
 
         # Any other exception, perform soft shutdown before termination if specified by configuration.
         except BotException as exc:
