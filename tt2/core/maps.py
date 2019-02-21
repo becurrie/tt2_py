@@ -187,6 +187,7 @@ IMAGES = {
         "artifacts_discovered": IMAGE_DIR + "/artifacts/artifacts_discovered.png",
         "book_of_shadows": IMAGE_DIR + "/artifacts/book_of_shadows.png",
         "spend_max": IMAGE_DIR + "/artifacts/spend_max.png",
+        "salvaged": IMAGE_DIR + "/artifacts/salvaged.png",
     },
     "CLAN_BATTLE": {
         "diamond": IMAGE_DIR + "/clan_battle/diamond.png",

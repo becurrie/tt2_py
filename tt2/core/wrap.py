@@ -25,6 +25,7 @@ class Images:
         self.artifacts_discovered = None
         self.book_of_shadows = None
         self.spend_max = None
+        self.salvaged = None
 
         # CLAN_BATTLE.
         self.diamond = None
