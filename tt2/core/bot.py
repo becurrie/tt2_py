@@ -86,6 +86,11 @@ class Bot:
         self.action_order = self._order_actions()
         self.skill_order = self._order_skill_intervals()
 
+        # Store information about the artifacts in game.
+        self.owned_artifacts = None
+        self.next_artifact_index = None
+        self.next_artifact_upgrade = None
+
         # Setup the datetime objects used initially to determine when the bot
         # will perform specific actions in game.
         self.calculate_skill_execution()
@@ -93,6 +98,25 @@ class Bot:
         self.calculate_next_stats_update()
         self.calculate_next_clan_battle_check()
         self.calculate_next_action_run()
+
+    def get_owned_artifacts(self):
+        """Retrieve a list of all discovered/owned artifacts in game."""
+        lst = []
+        for tier, d in self.stats.artifact_statistics["artifacts"].items():
+            for key, owned in d.items():
+                if not owned:
+                    continue
+                lst.append(key)
+        return lst
+
+    def update_next_artifact_upgrade(self):
+        """Update the next artifact to be upgraded to the next one in the list."""
+        if self.next_artifact_index == len(self.owned_artifacts):
+            self.next_artifact_index = 0
+            self.next_artifact_upgrade = self.owned_artifacts[0]
+        else:
+            self.next_artifact_index += 1
+            self.next_artifact_upgrade = self.owned_artifacts[self.next_artifact_index]
 
     def parse_current_stage(self):
         """
@@ -480,9 +504,17 @@ class Bot:
     def artifacts(self):
         """Determine whether or not any artifacts should be purchased, and purchase them."""
         if self.config.ENABLE_ARTIFACT_PURCHASE:
-            self.logger.info("Attempting to upgrade artifact: {artifact} now.".format(
-                artifact=self.config.UPGRADE_ARTIFACT))
             self.goto_artifacts(collapsed=False)
+
+            if self.config.UPGRADE_OWNED_ARTIFACTS:
+                artifact = self.next_artifact_upgrade
+                self.update_next_artifact_upgrade()
+            elif self.config.UPGRADE_ARTIFACT:
+                artifact = self.config.UPGRADE_ARTIFACT
+
+            # Fallback to the users first artifact. This shouldn't happen, better safe than sorry.
+            else:
+                artifact = self.owned_artifacts[0]
 
             # Make sure that the proper spend max multiplier is used to fully upgrade an artifact.
             while not self.grabber.search(self.images.spend_max, bool_only=True):
@@ -490,12 +522,12 @@ class Bot:
                 click_on_point(ARTIFACTS_LOCS["buy_max"], pause=0.5)
 
             # Looking for the artifact to upgrade here, dragging until it is finally found.
-            while not self.grabber.search(ARTIFACT_MAP.get(self.config.UPGRADE_ARTIFACT), bool_only=True):
+            while not self.grabber.search(ARTIFACT_MAP.get(artifact), bool_only=True):
                 drag_mouse(self.locs.scroll_start, self.locs.scroll_bottom_end)
                 sleep(1)
 
             # Making it here means the artifact in question has been found.
-            found, position = self.grabber.search(ARTIFACT_MAP.get(self.config.UPGRADE_ARTIFACT))
+            found, position = self.grabber.search(ARTIFACT_MAP.get(artifact))
             new_x = position[0] + ARTIFACTS_LOCS["artifact_push"]["x"]
             new_y = position[1] + ARTIFACTS_LOCS["artifact_push"]["y"]
 
@@ -878,7 +910,7 @@ class Bot:
     def goto_artifacts(self, collapsed=True, top=True):
         """Instruct the bot to travel to the artifacts panel."""
         self._goto_panel(
-            "artifacts", self.images.artifacts_active, self.images.artifacts_discovered, None,
+            "artifacts", self.images.artifacts_active, self.images.salvaged, None,
             collapsed=collapsed, top=top
         )
 
@@ -940,6 +972,12 @@ class Bot:
                 self.update_stats(force=True)
             if self.config.CLAN_BATTLE_CHECK_ON_START:
                 self.clan_battle(force_check=True)
+
+            # Update the initial bots artifacts information that is used when upgrading
+            # artifacts in game. This is handled after stats have been updated.
+            self.owned_artifacts = self.get_owned_artifacts()
+            self.next_artifact_index = 0
+            self.next_artifact_upgrade = self.owned_artifacts[self.next_artifact_index]
 
             # Main game loop.
             while True:

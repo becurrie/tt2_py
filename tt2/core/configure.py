@@ -99,6 +99,7 @@ class Config:
         # ACTIONS_ARTIFACTS.
         self.ENABLE_ARTIFACT_PURCHASE = None
         self.UPGRADE_ARTIFACT = None
+        self.UPGRADE_OWNED_ARTIFACTS = None
 
         # STATS.
         self.ENABLE_STATS = None
