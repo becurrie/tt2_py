@@ -1,12 +1,12 @@
 # TitanBot
-Tap Titans 2 Progression Bot/Tools
+Progression Bot/Tool Kit.
 
-TapTitans2 Py is bot written in python that enables the mobile tap game Tap Titans 2 to play and progress all on its own.
+TitanBot is a bot written in python that enables the mobile tap game Tap Titans 2 to play and progress with numerous configuration options.
 
 ---
 
 **Table of Contents**
-- [TapTitans2 Py](#titanbot)
+- [TitanBot](#titanbot)
 - [Current Features](#current-features)
   - [Tools](#tools)
     - [Artifact Parsing](#artifact-parsing)
