@@ -812,6 +812,14 @@ class Bot:
             click_on_point(self.locs.fight_boss, pause=0.5)
 
     @not_in_transition
+    def leave_boss(self):
+        """Ensure that there is no boss being fought (avoids transition)."""
+        while not self.grabber.search(self.images.fight_boss, bool_only=True):
+            click_on_point(self.locs.fight_boss, pause=0.2)
+
+        sleep(3)
+
+    @not_in_transition
     def tap(self):
         """Perform simple screen tap over entire game area."""
         if self.config.ENABLE_TAPPING:
