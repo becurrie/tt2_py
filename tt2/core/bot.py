@@ -471,6 +471,10 @@ class Bot:
                     force_or_initiate="Forcing" if force else "Beginning"))
                 self.goto_heroes()
 
+                # Leaving boss fight here so that a stage transition does not take place
+                # in the middle of a stats update.
+                self.leave_boss()
+
                 # Opening the stats panel within the heroes panel in game.
                 # Scrolling to the bottom of this page, which contains all needed game stats info.
                 click_on_point(HEROES_LOCS["stats_collapsed"], pause=0.5)
