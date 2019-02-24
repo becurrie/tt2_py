@@ -45,8 +45,6 @@ class Config:
         self.UPDATE_STATS_ON_SOFT_SHUTDOWN = None
 
         # DEVICE.
-        self.WIDTH = None
-        self.HEIGHT = None
         self.EMULATOR = None
 
         # GENERIC.

@@ -47,7 +47,7 @@ class Bot:
             self.logger.disabled = True
 
         # Bot utilities.
-        self.grabber = Grabber(self.config.EMULATOR, self.config.HEIGHT, self.config.WIDTH, self.logger)
+        self.grabber = Grabber(self.config.EMULATOR, self.logger)
         self.stats = Stats(self.grabber, self.config, stats_file, self.logger)
 
         # Data containers.

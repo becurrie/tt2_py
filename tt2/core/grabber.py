@@ -13,11 +13,11 @@ class Grabber:
     Grabber class provides functionality to capture a portion of the screen, based on the height
     and width that the emulator should be set to.
     """
-    def __init__(self, emulator, height, width, logger):
+    def __init__(self, emulator, logger):
         # Base height and width, resolution of game.
         self.logger = logger
-        self.height = height
-        self.width = width
+        self.height = 800
+        self.width = 480
 
         # Padding provided by emulator, x1, y1.
         self.x = 0
