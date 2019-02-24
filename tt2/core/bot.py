@@ -322,7 +322,7 @@ class Bot:
                 return False
 
         elif self.config.PRESTIGE_AT_MAX_STAGE_PERCENT != 0:
-            percent = self.config.PRESTIGE_AT_MAX_STAGE_PERCENT / 100
+            percent = float(self.config.PRESTIGE_AT_MAX_STAGE_PERCENT) / 100
             threshold = int(self.stats.highest_stage * percent)
             self.logger.debug("Prestige at max stage percent ({percent}): {current}/{needed}".format(
                 percent=percent, current=self.current_stage, needed=threshold))
