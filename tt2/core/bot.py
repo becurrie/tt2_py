@@ -22,6 +22,7 @@ from pyautogui import easeOutQuad, FailSafeException
 import datetime
 import keyboard
 import git
+import random
 
 
 class BotException(Exception):
@@ -101,19 +102,43 @@ class Bot:
 
     def get_owned_artifacts(self):
         """Retrieve a list of all discovered/owned artifacts in game."""
+        self.logger.info("Retrieving owned artifacts that will be used when upgrading after prestige.")
         lst = []
         for tier, d in self.stats.artifact_statistics["artifacts"].items():
+            if self.config.UPGRADE_OWNED_TIER:
+                if "," in self.config.UPGRADE_OWNED_TIER:
+                    self.config.UPGRADE_OWNED_TIER = self.config.UPGRADE_OWNED_TIER.split(",")
+
+                if tier not in self.config.UPGRADE_OWNED_TIER:
+                    continue
+
             for key, owned in d.items():
                 if not owned:
                     continue
+                if key in ARTIFACT_WITH_MAX_LEVEL:
+                    continue
+
+                if self.config.IGNORE_SPECIFIC_ARTIFACTS:
+                    if "," in self.config.IGNORE_SPECIFIC_ARTIFACTS:
+                        self.config.IGNORE_SPECIFIC_ARTIFACTS = self.config.IGNORE_SPECIFIC_ARTIFACTS.split(",")
+
+                    if key in self.config.IGNORE_SPECIFIC_ARTIFACTS:
+                        continue
+
+                self.logger.info("Artifact: {artifact} will be upgraded.".format(artifact=key))
                 lst.append(key)
+
+        if self.config.SHUFFLE_OWNED_ARTIFACTS:
+            self.logger.info("Shuffling owned artifacts that will be upgraded.")
+            random.shuffle(lst)
+
         return lst
 
     def update_next_artifact_upgrade(self):
         """Update the next artifact to be upgraded to the next one in the list."""
-        if self.next_artifact_index == len(self.owned_artifacts):
+        if self.next_artifact_index + 1 == len(self.owned_artifacts):
             self.next_artifact_index = 0
-            self.next_artifact_upgrade = self.owned_artifacts[0]
+            self.next_artifact_upgrade = self.owned_artifacts[self.next_artifact_index]
         else:
             self.next_artifact_index += 1
             self.next_artifact_upgrade = self.owned_artifacts[self.next_artifact_index]
