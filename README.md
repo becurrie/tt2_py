@@ -34,8 +34,10 @@ TitanBot is a bot written in python that enables the mobile tap game Tap Titans 
 - Activate chosen in game skills on a specified cooldown, with the option to wait for one specific skill before activating others.
 - Automatically level up the sword master, skills and heroes in game with a specified amount of intensity (clicks).
 - Automatically prestige after a specified amount of minutes spent in a run or once a certain stage has been reached.
-- Prestige can also be configured to occur once a percentage of your max stage has been reached.
+    - Choose a percent of your max stage to prestige at (99, 99.7, 100.1, etc).
 - Upgrade a specific artifact after a prestige takes place.
+    - Upgrade a specified tier(s) of artifacts (one per prestige).
+    - Shuffle list to upgrade different ones each session.
 - Participate in tournaments when they become available (enter/collect rewards).
 - Hatch and collect any eggs when they become available.
 - Participate in clan battles with the option to enable an additional fight after the first one (diamonds).
@@ -95,8 +97,6 @@ The configuration values all have some comments that describe the option slightl
 ### Device Options
 | config | Description | Default | Examples |
 |----------|--------------------------------------------------|---------|----------|
-| WIDTH | Specify the width of the game screen. | 480 | 480 |
-| HEIGHT | Specify the height of the game screen. | 800 | 800 |
 | EMULATOR | Specify the emulator service that is being used. | nox | nox |
 
 ### Generic Options
@@ -164,6 +164,10 @@ The configuration values all have some comments that describe the option slightl
 |--------------------------|----------------------------------------------------------------------------------------------------------------------------------------|-----------------|-----------------------------------------------------------|
 | ENABLE_ARTIFACT_PURCHASE | Enable artifact purchases. | on | on, off |
 | UPGRADE_ARTIFACT | Specify the name of the artifact that will be upgraded (Take the name of the artifact, replace spaces with underscored, all lowercase. | book_of_shadows | stryfes_peace, ward_of_the_darkness, flute_of_the_soloist |
+| UPGRADE_OWNED_ARTIFACTS | Enable ability to iterate through all owned artifacts and upgrade a different one each prestige. | on | on, off |
+| UPGRADE_OWNED_TIER | Specify a specific artifact tier that will be upgraded instead of all artifacts owned. This may also be a comma separated list to combine tiers. | S | S, A, B, C, "S,A" |
+| SHUFFLE_OWNED_ARTIFACTS | Turn this on to shuffle the list of specified artifacts before upgrading any. This is useful if you start/stop the bot often and don't want the same artifacts being upgraded all the time. | off | off, on |
+| IGNORE_SPECIFIC_ARTIFACTS | Specify a single artifact, or multiple artifacts (comma separated) that will be ignored completely when an upgrade takes place. (off to disable). | off | off, book_of_shadows, "book_of_shadows,heroic_shield" |
 
 ### Stats Options
 | config | Description | Default | Examples |
