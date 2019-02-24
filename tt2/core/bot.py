@@ -533,6 +533,7 @@ class Bot:
     def artifacts(self):
         """Determine whether or not any artifacts should be purchased, and purchase them."""
         if self.config.ENABLE_ARTIFACT_PURCHASE:
+            self.logger.info("Beginning artifact purchase process.")
             self.goto_artifacts(collapsed=False)
 
             if self.config.UPGRADE_OWNED_ARTIFACTS:
@@ -544,6 +545,8 @@ class Bot:
             # Fallback to the users first artifact. This shouldn't happen, better safe than sorry.
             else:
                 artifact = self.owned_artifacts[0]
+
+            self.logger.info("Attempting to upgrade {artifact} now.".format(artifact=artifact))
 
             # Make sure that the proper spend max multiplier is used to fully upgrade an artifact.
             while not self.grabber.search(self.images.spend_max, bool_only=True):
