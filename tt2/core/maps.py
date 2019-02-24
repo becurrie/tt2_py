@@ -187,6 +187,7 @@ IMAGES = {
         "artifacts_discovered": IMAGE_DIR + "/artifacts/artifacts_discovered.png",
         "book_of_shadows": IMAGE_DIR + "/artifacts/book_of_shadows.png",
         "spend_max": IMAGE_DIR + "/artifacts/spend_max.png",
+        "salvaged": IMAGE_DIR + "/artifacts/salvaged.png",
     },
     "CLAN_BATTLE": {
         "diamond": IMAGE_DIR + "/clan_battle/diamond.png",
@@ -421,3 +422,16 @@ ARTIFACT_TIER_MAP = {
 
 # Dictionary containing all artifacts in game mapped to their respective image path. No tiers included.
 ARTIFACT_MAP = {k1: v1 for k, v in ARTIFACT_TIER_MAP.items() for k1, v1 in v.items()}
+
+# Create a set of artifact keys that have a max level (these shouldn't be upgraded). Assuming that
+# they are maxed at all times.
+ARTIFACT_WITH_MAX_LEVEL = (
+    "hourglass_of_the_impatient", "phantom_timepiece", "forbidden_scroll", "ring_of_fealty",
+    "glacial_axe", "aegis", "swamp_gauntlet", "infinity_pendulum", "glove_of_kuma", "titan_spear",
+    "oak_staff", "the_arcana_cloak", "hunter's_ointment", "ambrosia_elixir", "mystic_staff",
+    "mystical_beans_of_senzu", "egg_of_fortune", "divine_chalice", "invader's_shield", "axe_of_muerte",
+    "essence_of_the_kitsune", "boots_of_hermes", "unbound_gauntlet", "oberon_pendant",
+    "lucky_foot_of_al-mi-raj", "lost_king's_mask", "staff_of_radiance", "morgelai_sword",
+    "the_master's_sword", "the_magnifier", "the_treasure_of_fergus", "the_white_dwarf", "aram_spear",
+    "ward_of_the_darkness",
+)

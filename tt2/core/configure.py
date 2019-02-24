@@ -99,6 +99,10 @@ class Config:
         # ACTIONS_ARTIFACTS.
         self.ENABLE_ARTIFACT_PURCHASE = None
         self.UPGRADE_ARTIFACT = None
+        self.UPGRADE_OWNED_ARTIFACTS = None
+        self.UPGRADE_OWNED_TIER = None
+        self.SHUFFLE_OWNED_ARTIFACTS = None
+        self.IGNORE_SPECIFIC_ARTIFACTS = None
 
         # STATS.
         self.ENABLE_STATS = None
