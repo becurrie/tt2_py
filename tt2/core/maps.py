@@ -170,6 +170,7 @@ ARTIFACTS_LOCS = {
     },
     "buy_multiplier": (410, 105),
     "buy_max": (50, 105),
+    "percent_toggle": (303, 540),
 }
 
 # Store any colors used (RGB) by the bot to determine so things in game.
@@ -188,6 +189,7 @@ IMAGES = {
         "book_of_shadows": IMAGE_DIR + "/artifacts/book_of_shadows.png",
         "spend_max": IMAGE_DIR + "/artifacts/spend_max.png",
         "salvaged": IMAGE_DIR + "/artifacts/salvaged.png",
+        "percent_on": IMAGE_DIR + "/artifacts/percent_on.png"
     },
     "CLAN_BATTLE": {
         "diamond": IMAGE_DIR + "/clan_battle/diamond.png",

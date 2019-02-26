@@ -26,6 +26,7 @@ class Images:
         self.book_of_shadows = None
         self.spend_max = None
         self.salvaged = None
+        self.percent_on = None
 
         # CLAN_BATTLE.
         self.diamond = None
