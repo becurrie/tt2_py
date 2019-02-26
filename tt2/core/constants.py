@@ -77,3 +77,11 @@ MIDDLE_CLICK = "middle"
 # This can be determined by looking at the new value, subtracting it from the old value and seeing
 # if it crosses the threshold, in which case we can skip the current parse attempt.
 STAGE_PARSE_THRESHOLD = 10000
+
+# Determine how many loops are possible before giving up functionality
+# (due to an error in game that causes the ui to lag and the bot to miss an image check).
+# Now, ideally, no UI errors should come up if the bots functionality is working as intended.
+# Although some issues still sneak as every use case can not be totally locked down. This is a final fallback.
+# Also, this value represents the UPPER limit of a failed case. Since some loops may take numerous attempts
+# before succeeding (artifact scrolling in particular). So this can be set to a decently large value.
+FUNCTION_LOOP_TIMEOUT = 40
