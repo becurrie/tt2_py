@@ -9,7 +9,7 @@ from settings import (
 )
 
 from tt2.core.maps import *
-from tt2.core.constants import STAGE_PARSE_THRESHOLD
+from tt2.core.constants import STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT
 from tt2.core.grabber import Grabber
 from tt2.core.configure import Config
 from tt2.core.stats import Stats
@@ -108,7 +108,6 @@ class Bot:
             if self.config.UPGRADE_OWNED_TIER:
                 if "," in self.config.UPGRADE_OWNED_TIER:
                     self.config.UPGRADE_OWNED_TIER = self.config.UPGRADE_OWNED_TIER.split(",")
-
                 if tier not in self.config.UPGRADE_OWNED_TIER:
                     continue
 
@@ -121,7 +120,6 @@ class Bot:
                 if self.config.IGNORE_SPECIFIC_ARTIFACTS:
                     if "," in self.config.IGNORE_SPECIFIC_ARTIFACTS:
                         self.config.IGNORE_SPECIFIC_ARTIFACTS = self.config.IGNORE_SPECIFIC_ARTIFACTS.split(",")
-
                     if key in self.config.IGNORE_SPECIFIC_ARTIFACTS:
                         continue
 
@@ -132,6 +130,7 @@ class Bot:
             self.logger.info("Shuffling owned artifacts that will be upgraded.")
             random.shuffle(lst)
 
+        self.logger.info("Next artifact upgrade: {artifact}".format(artifact=lst[0]))
         return lst
 
     def update_next_artifact_upgrade(self):
@@ -142,6 +141,8 @@ class Bot:
         else:
             self.next_artifact_index += 1
             self.next_artifact_upgrade = self.owned_artifacts[self.next_artifact_index]
+
+        self.logger.info("Next artifact_upgrade: {artifact}".format(artifact=self.next_artifact_upgrade))
 
     def parse_current_stage(self):
         """
@@ -361,7 +362,8 @@ class Bot:
         """Perform all actions related to the levelling of all heroes in game."""
         if self.config.ENABLE_HEROES:
             self.logger.info("Hero levelling process is beginning now.")
-            self.goto_heroes(collapsed=False)
+            if not self.goto_heroes(collapsed=False):
+                return False
 
             # A quick check can be performed to see if the top of the heroes panel contains
             # a hero that is already max level, if this is the case, it's safe to assume
@@ -404,19 +406,19 @@ class Bot:
     def level_master(self):
         """Perform all actions related to the levelling of the sword master in game."""
         if self.config.ENABLE_MASTER:
-            clicks = self.config.MASTER_LEVEL_INTENSITY
-            self.logger.info("Levelling the sword master {clicks} time(s)".format(clicks=clicks))
+            self.logger.info("Levelling the sword master {clicks} time(s)".format(clicks=self.config.MASTER_LEVEL_INTENSITY))
+            if not self.goto_master(collapsed=False):
+                return False
 
-            # Travel to the sword master panel, and level up specified amount of clicks.
-            self.goto_master(collapsed=False)
-            click_on_point(MASTER_LOCS["master_level"], clicks=clicks)
+            click_on_point(MASTER_LOCS["master_level"], clicks=self.config.MASTER_LEVEL_INTENSITY)
 
     @not_in_transition
     def level_skills(self):
         """Perform all actions related to the levelling of skills in game."""
         if self.config.ENABLE_SKILLS:
             self.logger.info("Levelling up skills in game if they are inactive and not maxed.")
-            self.goto_master(collapsed=False)
+            if not self.goto_master(collapsed=False):
+                return False
 
             # Looping through each skill coord, clicking to level up.
             for skill in self._not_maxed(self._inactive_skills()):
@@ -446,9 +448,10 @@ class Bot:
         """Perform bot actions in game."""
         now = datetime.datetime.now()
         if force or now > self.next_action_run:
-            self.logger.info("{force_or_initiate} in game actions now.".format(
-                force_or_initiate="Forcing" if force else "Beginning"))
-            self.goto_master(collapsed=False)
+            self.logger.info("{force_or_initiate} in game actions now.".format(force_or_initiate="Forcing" if force else "Beginning"))
+            if not self.goto_master(collapsed=False):
+                return
+
             for action in self.action_order:
                 action[1]()
 
@@ -469,11 +472,14 @@ class Bot:
             if force or now > self.next_stats_update:
                 self.logger.info("{force_or_initiate} in game statistics update now.".format(
                     force_or_initiate="Forcing" if force else "Beginning"))
-                self.goto_heroes()
+
+                if not self.goto_heroes():
+                    return False
 
                 # Leaving boss fight here so that a stage transition does not take place
                 # in the middle of a stats update.
-                self.leave_boss()
+                if not self.leave_boss():
+                    return False
 
                 # Opening the stats panel within the heroes panel in game.
                 # Scrolling to the bottom of this page, which contains all needed game stats info.
@@ -493,9 +499,10 @@ class Bot:
         """Perform a prestige in game."""
         if self.config.ENABLE_AUTO_PRESTIGE:
             if self.should_prestige():
-                self.logger.info("Beginning prestige in game now.")
+                self.logger.info("Beginning prestige process in game now.")
                 self.check_tournament()
-                self.goto_master(collapsed=False, top=False)
+                if not self.goto_master(collapsed=False, top=False):
+                    return False
 
                 # Click on the prestige button, and check for the prompt confirmation being present. Sleeping
                 # slightly here to ensure that connections issues do not cause the prestige to be misfire.
@@ -534,7 +541,8 @@ class Bot:
         """Determine whether or not any artifacts should be purchased, and purchase them."""
         if self.config.ENABLE_ARTIFACT_PURCHASE:
             self.logger.info("Beginning artifact purchase process.")
-            self.goto_artifacts(collapsed=False)
+            if not self.goto_artifacts(collapsed=False):
+                return False
 
             if self.config.UPGRADE_OWNED_ARTIFACTS:
                 artifact = self.next_artifact_upgrade
@@ -549,14 +557,37 @@ class Bot:
             self.logger.info("Attempting to upgrade {artifact} now.".format(artifact=artifact))
 
             # Make sure that the proper spend max multiplier is used to fully upgrade an artifact.
+            # 1.) Ensure that the percentage (%) multiplier is selected.
+            loops = 0
+            while not self.grabber.search(self.images.percent_on, bool_only=True):
+                loops += 1
+                if loops == FUNCTION_LOOP_TIMEOUT:
+                    self.logger.warning("Unable to set the artifact buy multiplier to use percentage, skipping.")
+                    return False
+
+                click_on_point(ARTIFACTS_LOCS["percent_toggle"], pause=0.5)
+
+            # 2.) Ensure that the SPEND Max multiplier is selected.
+            loops = 0
             while not self.grabber.search(self.images.spend_max, bool_only=True):
+                loops += 1
+                if loops == FUNCTION_LOOP_TIMEOUT:
+                    self.logger.warning("Unable to set the spend multiplier to SPEND Max, skipping for now.")
+                    return False
+
                 click_on_point(ARTIFACTS_LOCS["buy_multiplier"], pause=0.5)
                 click_on_point(ARTIFACTS_LOCS["buy_max"], pause=0.5)
 
             # Looking for the artifact to upgrade here, dragging until it is finally found.
+            loops = 0
             while not self.grabber.search(ARTIFACT_MAP.get(artifact), bool_only=True):
-                drag_mouse(self.locs.scroll_start, self.locs.scroll_bottom_end)
-                sleep(1)
+                loops += 1
+                if loops == FUNCTION_LOOP_TIMEOUT:
+                    self.logger.warning("Artifact: {artifact} couldn't be found on screen, skipping for now "
+                                        "for now.".format(artifact=artifact))
+                    return False
+
+                drag_mouse(self.locs.scroll_start, self.locs.scroll_bottom_end, quick_stop=self.locs.scroll_quick_stop)
 
             # Making it here means the artifact in question has been found.
             found, position = self.grabber.search(ARTIFACT_MAP.get(artifact))
@@ -572,7 +603,8 @@ class Bot:
         """Check that a tournament is available/active. Tournament will be joined if a new possible."""
         if self.config.ENABLE_TOURNAMENTS:
             self.logger.info("Checking for tournament ready to join/in progress.")
-            self.goto_master()
+            if not self.goto_master():
+                return False
 
             # Looping to find tournament here, since there's a chance that the tournament is finished, which
             # causes a star trail circle the icon. May be hard to find, give it a couple of tries.
@@ -605,7 +637,9 @@ class Bot:
     def daily_rewards(self):
         """Collect any daily gifts if they're available."""
         self.logger.info("Checking if any daily rewards are currently available to collect.")
-        self.goto_master()
+        if not self.goto_master():
+            return False
+
         reward_found = self.grabber.search(self.images.daily_reward, bool_only=True)
         if reward_found:
             self.logger.info("Daily rewards are available, collecting now.")
@@ -614,17 +648,23 @@ class Bot:
             click_on_point(self.locs.game_middle, 5, interval=0.5, pause=1)
             click_on_point(MASTER_LOCS["screen_top"], pause=1)
 
+        return reward_found
+
     @not_in_transition
     def hatch_eggs(self):
         """Hatch any eggs if they're available."""
         if self.config.ENABLE_EGG_COLLECT:
             self.logger.info("Checking if any eggs are available to be hatched in game.")
-            self.goto_master()
+            if not self.goto_master():
+                return False
+
             egg_found = self.grabber.search(self.images.hatch_egg, bool_only=True)
             if egg_found:
                 self.logger.info("Egg(s) are available, collecting now.")
                 click_on_point(self.locs.hatch_egg, pause=1)
                 click_on_point(self.locs.game_middle, 5, interval=0.5, pause=1)
+
+            return egg_found
 
     @not_in_transition
     def clan_battle(self, force_ready=False, force_check=False):
@@ -781,16 +821,25 @@ class Bot:
     @not_in_transition
     def clan_crate(self):
         """Check if a clan crate is currently available and collect it if one is."""
-        self.goto_master()
+        if not self.goto_master():
+            return False
+
         click_on_point(self.locs.clan_crate, pause=0.5)
         found, pos = self.grabber.search(self.images.okay)
         if found:
             self.logger.info("Clan crate was found, collecting now.")
             click_on_image(self.images.okay, pos, pause=1)
 
+        return found
+
     @not_in_transition
     def collect_ad(self):
-        """Collect ad if one is available on the screen."""
+        """
+        Collect ad if one is available on the screen.
+
+        Note: This function does not require a max loop (FUNCTION_LOOP_TIMEOUT) since it only ever loops
+              while the collect panel is on screen, this provides only two possible options.
+        """
         while self.grabber.search(self.images.collect_ad, bool_only=True):
             if self.config.ENABLE_PREMIUM_AD_COLLECT:
                 self.stats.premium_ads += 1
@@ -814,17 +863,41 @@ class Bot:
     @not_in_transition
     def fight_boss(self):
         """Ensure that the boss is being fought if it isn't already."""
-        if self.grabber.search(self.images.fight_boss, bool_only=True):
-            self.logger.info("Initiating boss fight in game now.")
-            click_on_point(self.locs.fight_boss, pause=0.5)
+        loops = 0
+        while True:
+            loops += 1
+            if loops == FUNCTION_LOOP_TIMEOUT:
+                self.logger.warning("Error occurred, exiting function early.")
+                return False
+
+            if self.grabber.search(self.images.fight_boss, bool_only=True):
+                self.logger.info("Attempting to initiate boss fight in game.")
+                click_on_point(self.locs.fight_boss, pause=0.8)
+            else:
+                break
+
+        return True
 
     @not_in_transition
     def leave_boss(self):
         """Ensure that there is no boss being fought (avoids transition)."""
-        while not self.grabber.search(self.images.fight_boss, bool_only=True):
-            click_on_point(self.locs.fight_boss, pause=0.2)
+        loops = 0
+        while True:
+            loops += 1
+            if loops == FUNCTION_LOOP_TIMEOUT:
+                self.logger.warning("Error occurred, exiting function early.")
+                return False
 
+            if not self.grabber.search(self.images.fight_boss, bool_only=True):
+                self.logger.info("Attempting to leave active boss fight in game.")
+                click_on_point(self.locs.fight_boss, pause=0.8)
+            else:
+                break
+
+        # Sleeping for a bit after leaving boss fight in case some sort of
+        # transition takes places directly after.
         sleep(3)
+        return True
 
     @not_in_transition
     def tap(self):
@@ -853,7 +926,8 @@ class Bot:
         """Activate any skills off of cooldown, and determine if waiting for longest cd to be done."""
         if self.config.ENABLE_SKILLS:
             self.logger.debug("Activating skills in game now.")
-            self.goto_master()
+            if not self.goto_master():
+                return False
 
             # Datetime to determine skill intervals.
             now = datetime.datetime.now()
@@ -869,28 +943,40 @@ class Bot:
                     return
 
             # If this point is reached, ensure no panel is currently active, and begin skill activation.
-            self.no_panel()
+            if not self.no_panel():
+                return False
+
             for skill in skills:
                 self.logger.info("Activating {skill} now.".format(skill=skill[1]))
                 click_on_point(getattr(self.locs, skill[1]), pause=0.2)
 
             # Recalculate all skill execution times.
             self.calculate_skill_execution()
+            return True
 
     @not_in_transition
-    def _goto_panel(self, panel, icon, top_find, bottom_find, collapsed=True, top=True, max_tries=25):
+    def _goto_panel(self, panel, icon, top_find, bottom_find, collapsed=True, top=True):
         """
         Goto a specific panel, panel represents the key of this panel, also used when determining what panel
         to click on initially.
 
         Icon represents the image in game that represents a panel being open. This image is searched
         for initially before attempting to move to the top or bottom of the specified panel.
+
+        NOTE: This function will return a boolean to determine if the panel was reached successfully. This can be
+              used to exit out of actions or other pieces of bot functionality early if something has gone wrong.
         """
         self.logger.debug("attempting to travel to the {collapse_expand} {top_bot} of {panel} panel".format(
             collapse_expand="collapsed" if collapsed else "expanded", top_bot="top" if top else "bottom", panel=panel)
         )
 
+        loops = 0
         while not self.grabber.search(icon, bool_only=True):
+            loops += 1
+            if loops == FUNCTION_LOOP_TIMEOUT:
+                self.logger.warning("Error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
+                return False
+
             click_on_point(getattr(self.locs, panel), pause=1)
 
         # At this point, the panel should at least be opened.
@@ -901,62 +987,75 @@ class Bot:
         loops = 0
         end_drag = self.locs.scroll_top_end if top else self.locs.scroll_bottom_end
         while not self.grabber.search(find, bool_only=True):
-            if loops == max_tries:
-                break
+            loops += 1
+            if loops == FUNCTION_LOOP_TIMEOUT:
+                self.logger.warning("Error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
+                return False
 
             # Manually wrap drag_mouse function in the not_in_transition call, ensure that
             # un-necessary mouse drags are not performed.
             drag_mouse(self.locs.scroll_start, end_drag, pause=1)
-            loops += 1
 
         # The shop panel may not be expanded/collapsed. Skip when travelling to shop panel.
         if panel != "shop":
             # Ensure the panel is expanded/collapsed appropriately.
+            loops = 0
             if collapsed:
                 while not self.grabber.search(self.images.expand_panel, bool_only=True):
+                    loops += 1
+                    if loops == FUNCTION_LOOP_TIMEOUT:
+                        self.logger.warning("Unable to collapse panel: {panel}, exiting function early.".format(panel=panel))
+                        return False
                     click_on_point(self.locs.expand_collapse_top, pause=1, offset=1)
             else:
                 while not self.grabber.search(self.images.collapse_panel, bool_only=True):
+                    loops += 1
+                    if loops == FUNCTION_LOOP_TIMEOUT:
+                        self.logger.warning("Unable to expand panel: {panel}, exiting function early.".format(panel=panel))
+                        return False
                     click_on_point(self.locs.expand_collapse_bottom, pause=1, offset=1)
+
+        # Reaching this point represents a successful panel travel to.
+        return True
 
     def goto_master(self, collapsed=True, top=True):
         """Instruct the bot to travel to the sword master panel."""
-        self._goto_panel(
+        return self._goto_panel(
             "master", self.images.master_active, self.images.account, self.images.prestige,
             collapsed=collapsed, top=top
         )
 
     def goto_heroes(self, collapsed=True, top=True):
         """Instruct the bot to travel to the heroes panel."""
-        self._goto_panel(
+        return self._goto_panel(
             "heroes", self.images.heroes_active, self.images.upgrades, self.images.maya_muerta,
             collapsed=collapsed, top=top
         )
 
     def goto_equipment(self, collapsed=True, top=True):
         """Instruct the bot to travel to the heroes panel."""
-        self._goto_panel(
+        return self._goto_panel(
             "equipment", self.images.equipment_active, self.images.crafting, None,
             collapsed=collapsed, top=top
         )
 
     def goto_pets(self, collapsed=True, top=True):
         """Instruct the bot to travel to the pets panel."""
-        self._goto_panel(
+        return self._goto_panel(
             "pets", self.images.pets_active, self.images.next_egg, None,
             collapsed=collapsed, top=top
         )
 
     def goto_artifacts(self, collapsed=True, top=True):
         """Instruct the bot to travel to the artifacts panel."""
-        self._goto_panel(
+        return self._goto_panel(
             "artifacts", self.images.artifacts_active, self.images.salvaged, None,
             collapsed=collapsed, top=top
         )
 
     def goto_shop(self, collapsed=False, top=True):
         """Instruct the bot to travel to the shop panel."""
-        self._goto_panel(
+        return self._goto_panel(
             "shop", self.images.shop_active, self.images.shop_keeper, None,
             collapsed=collapsed, top=top
         )
@@ -964,7 +1063,13 @@ class Bot:
     @not_in_transition
     def no_panel(self):
         """Instruct the bot to make sure no panels are currently open."""
+        loops = 0
         while self.grabber.search(self.images.exit_panel, bool_only=True):
+            loops += 1
+            if loops == FUNCTION_LOOP_TIMEOUT:
+                self.logger.warning("Error occurred while attempting to close all panels, exiting early.")
+                return False
+
             click_on_point(self.locs.close_bottom, offset=2)
             if not self.grabber.search(self.images.exit_panel, bool_only=True):
                 break
