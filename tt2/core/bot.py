@@ -1078,6 +1078,8 @@ class Bot:
             if not self.grabber.search(self.images.exit_panel, bool_only=True):
                 break
 
+        return True
+
     def soft_shutdown(self):
         """Perform a soft shutdown of the bot, taking care of any cleanup or related tasks."""
         self.logger.info("Beginning soft shutdown now.")
