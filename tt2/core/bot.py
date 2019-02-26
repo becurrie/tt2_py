@@ -925,7 +925,6 @@ class Bot:
     def activate_skills(self, force=False):
         """Activate any skills off of cooldown, and determine if waiting for longest cd to be done."""
         if self.config.ENABLE_SKILLS:
-            self.logger.debug("Activating skills in game now.")
             if not self.goto_master():
                 return False
 
@@ -946,6 +945,7 @@ class Bot:
             if not self.no_panel():
                 return False
 
+            self.logger.info("Activating skills in game now.")
             for skill in skills:
                 self.logger.info("Activating {skill} now.".format(skill=skill[1]))
                 click_on_point(getattr(self.locs, skill[1]), pause=0.2)
