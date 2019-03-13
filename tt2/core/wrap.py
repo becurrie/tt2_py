@@ -105,6 +105,9 @@ class Images:
         # CLAN CRATE.
         self.okay = None
 
+        # EMULATOR.
+        self.tap_titans_2 = None
+
 
 class Locs:
     """Locs class wraps all location points into a friendly wrapper class for use with the bot."""
@@ -180,6 +183,10 @@ class Locs:
         # AD.
         self.collect_ad = None
         self.no_thanks = None
+
+        # EMULATOR.
+        self.exit_emulator = None
+        self.restart_emulator = None
 
 
 class Colors:

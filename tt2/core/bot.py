@@ -36,6 +36,7 @@ class Bot:
     """
     def __init__(self, config=CONFIG_FILE, stats_file=STATS_FILE, logger=None):
         self.TERMINATE = False
+        self.ERRORS = 0
         self.config = Config(config)
 
         if logger:
@@ -61,6 +62,7 @@ class Bot:
         self.next_action_run = None
         self.next_prestige = None
         self.next_stats_update = None
+        self.next_recovery_reset = None
 
         self.next_heavenly_strike = None
         self.next_deadly_strike = None
@@ -99,6 +101,7 @@ class Bot:
         self.calculate_next_stats_update()
         self.calculate_next_clan_battle_check()
         self.calculate_next_action_run()
+        self.calculate_next_recovery_reset()
 
     def get_owned_artifacts(self):
         """Retrieve a list of all discovered/owned artifacts in game."""
@@ -265,6 +268,56 @@ class Bot:
         dt = now + datetime.timedelta(seconds=self.config.PRESTIGE_AFTER_X_MINUTES * 60)
         self.next_prestige = dt
         self.logger.debug("The next timed prestige will take place in {time}".format(time=strfdelta(dt - now)))
+
+    def calculate_next_recovery_reset(self):
+        """Calculate when the next recovery reset will take place."""
+        now = datetime.datetime.now()
+        dt = now + datetime.timedelta(seconds=self.config.RECOVERY_CHECK_INTERVAL_MINUTES * 60)
+        self.next_recovery_reset = dt
+        self.logger.debug("The next recovery reset will take place in {time}".format(time=strfdelta(dt - now)))
+
+    def recover(self, force=False):
+        """
+        Begin the process to recover the game if necessary.
+
+        Recovering the game requires the following steps:
+            - Press the exit button within the Nox emulator.
+            - Press the 'exit and restart' button within Nox.
+            - Wait for a decent amount of time for the emulator to start.
+            - Find the TapTitans2 app icon.
+            - Start TapTitans2 and wait for a while for the game to start.
+        """
+        if force:
+            self.ERRORS = self.config.RECOVERY_ALLOWED_FAILURES
+
+        if self.ERRORS >= self.config.RECOVERY_ALLOWED_FAILURES:
+            self.ERRORS = 0
+            if force:
+                self.logger.info("Forcing a game recovery now.")
+            else:
+                self.logger.info("{amount} errors have occurred before a reset, attempting to restart the game now.".format(
+                    amount=self.ERRORS))
+            sleep(30)
+
+            while self.grabber.search(self.images.tap_titans_2, bool_only=True):
+                # Look for the tap titans app icon and start loading the game.
+                found, pos = self.grabber.search(self.images.tap_titans_2)
+                if found:
+                    click_on_image(self.images.tap_titans_2, pos)
+
+            # Game is starting, wait for a while.
+            sleep(30)
+            return
+
+        # Otherwise, determine if the error counter should be reset at this point.
+        # To ensure an un-necessary recovery doesn't take place.
+        else:
+            now = datetime.datetime.now()
+            if now > self.next_recovery_reset:
+                self.logger.debug("{amount}/{needed} errors occurred before reset, recovery will not take place.".format(
+                    amount=self.ERRORS, needed=self.config.RECOVERY_ALLOWED_FAILURES))
+                self.ERRORS = 0
+                self.calculate_next_recovery_reset()
 
     def should_prestige(self):
         """
@@ -563,6 +616,7 @@ class Bot:
                 loops += 1
                 if loops == FUNCTION_LOOP_TIMEOUT:
                     self.logger.warning("Unable to set the artifact buy multiplier to use percentage, skipping.")
+                    self.ERRORS += 1
                     return False
 
                 click_on_point(ARTIFACTS_LOCS["percent_toggle"], pause=0.5)
@@ -573,6 +627,7 @@ class Bot:
                 loops += 1
                 if loops == FUNCTION_LOOP_TIMEOUT:
                     self.logger.warning("Unable to set the spend multiplier to SPEND Max, skipping for now.")
+                    self.ERRORS += 1
                     return False
 
                 click_on_point(ARTIFACTS_LOCS["buy_multiplier"], pause=0.5)
@@ -585,6 +640,7 @@ class Bot:
                 if loops == FUNCTION_LOOP_TIMEOUT:
                     self.logger.warning("Artifact: {artifact} couldn't be found on screen, skipping for now "
                                         "for now.".format(artifact=artifact))
+                    self.ERRORS += 1
                     return False
 
                 drag_mouse(self.locs.scroll_start, self.locs.scroll_bottom_end, quick_stop=self.locs.scroll_quick_stop)
@@ -868,6 +924,7 @@ class Bot:
             loops += 1
             if loops == FUNCTION_LOOP_TIMEOUT:
                 self.logger.warning("Error occurred, exiting function early.")
+                self.ERRORS += 1
                 return False
 
             if self.grabber.search(self.images.fight_boss, bool_only=True):
@@ -886,6 +943,7 @@ class Bot:
             loops += 1
             if loops == FUNCTION_LOOP_TIMEOUT:
                 self.logger.warning("Error occurred, exiting function early.")
+                self.ERRORS += 1
                 return False
 
             if not self.grabber.search(self.images.fight_boss, bool_only=True):
@@ -975,6 +1033,7 @@ class Bot:
             loops += 1
             if loops == FUNCTION_LOOP_TIMEOUT:
                 self.logger.warning("Error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
+                self.ERRORS += 1
                 return False
 
             click_on_point(getattr(self.locs, panel), pause=1)
@@ -990,6 +1049,7 @@ class Bot:
             loops += 1
             if loops == FUNCTION_LOOP_TIMEOUT:
                 self.logger.warning("Error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
+                self.ERRORS += 1
                 return False
 
             # Manually wrap drag_mouse function in the not_in_transition call, ensure that
@@ -1005,6 +1065,7 @@ class Bot:
                     loops += 1
                     if loops == FUNCTION_LOOP_TIMEOUT:
                         self.logger.warning("Unable to collapse panel: {panel}, exiting function early.".format(panel=panel))
+                        self.ERRORS += 1
                         return False
                     click_on_point(self.locs.expand_collapse_top, pause=1, offset=1)
             else:
@@ -1012,6 +1073,7 @@ class Bot:
                     loops += 1
                     if loops == FUNCTION_LOOP_TIMEOUT:
                         self.logger.warning("Unable to expand panel: {panel}, exiting function early.".format(panel=panel))
+                        self.ERRORS += 1
                         return False
                     click_on_point(self.locs.expand_collapse_bottom, pause=1, offset=1)
 
@@ -1068,6 +1130,7 @@ class Bot:
             loops += 1
             if loops == FUNCTION_LOOP_TIMEOUT:
                 self.logger.warning("Error occurred while attempting to close all panels, exiting early.")
+                self.ERRORS += 1
                 return False
 
             click_on_point(self.locs.close_bottom, offset=2)
@@ -1084,24 +1147,6 @@ class Bot:
         """Perform a soft shutdown of the bot, taking care of any cleanup or related tasks."""
         self.logger.info("Beginning soft shutdown now.")
         self.update_stats(force=True)
-
-    def restart_game(self):
-        """
-        Attempt to restart the game within the emulator. Currently supported emulators include:
-
-        - Nox
-        """
-        from pyautogui import moveTo
-        self.logger.info("Attempting to restart the game within {emulator} emulator".format(
-            emulator=self.config.EMULATOR
-        ))
-        click_on_point(EMULATOR_LOCS[self.config.EMULATOR]["opened_apps"], pause=3)
-        moveTo(EMULATOR_LOCS[self.config.EMULATOR]["close_game"][0],
-               EMULATOR_LOCS[self.config.EMULATOR]["close_game"][1], pause=5)
-        click_on_point(EMULATOR_LOCS[self.config.EMULATOR]["close_game"], pause=3)
-
-        # Opening the game, waiting at least twenty seconds before continuing.
-        click_on_point(EMULATOR_LOCS[self.config.EMULATOR]["launch_game"], pause=20)
 
     def run(self):
         """
@@ -1143,6 +1188,7 @@ class Bot:
                 self.actions()
                 self.activate_skills()
                 self.update_stats()
+                self.recover()
 
         # Making use of the PyAutoGUI FailSafeException to allow some cleanup to take place
         # before totally exiting. Only if the CTRL key is held down when exception is thrown.

@@ -110,6 +110,10 @@ GAME_LOCS = {
     "ARTIFACTS": {
         "bottom_region": (2, 727, 475, 797),
     },
+    "EMULATOR": {
+        "exit_emulator": (468, 16),
+        "restart_emulator": (300, 473),
+    },
 }
 
 # Points used when clicking on locations present on the master panel.
@@ -268,6 +272,9 @@ IMAGES = {
     },
     "CLAN_CRATE": {
         "okay": IMAGE_DIR + "/clan_crate/okay.png",
+    },
+    "EMULATOR": {
+        "tap_titans_2": IMAGE_DIR + "/emulator/tap_titans_2.png",
     },
 }
 

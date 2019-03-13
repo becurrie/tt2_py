@@ -110,6 +110,10 @@ class Config:
         # ARTIFACT_PARSING.
         self.BOTTOM_ARTIFACT = None
 
+        # RECOVERY.
+        self.RECOVERY_CHECK_INTERVAL_MINUTES = 5
+        self.RECOVERY_ALLOWED_FAILURES = 5
+
         # LOGGING.
         self.ENABLE_LOGGING = None
         self.LOGGING_LEVEL = None

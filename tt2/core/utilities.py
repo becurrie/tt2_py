@@ -195,16 +195,7 @@ def in_transition_func(*args, max_loops):
             # In this case, the game may of broke? A crash may of occurred. It's safe to attempt to restart the
             # game at this point.
             _self.logger.error("Unable to resolve transition state of game, attempting to restart game.")
-            _self.restart_game()
-
-            # Is the restarted / rescued from crash?
-            if _self.grabber.search(_self.images.clan_battle_ready, bool_only=True):
-                _self.logger.info("Game has been successfully restarted")
-                break
-
-            _self.logger.error("Unable to restart game, terminating bot now")
-            _self.TERMINATE = True
-            break
+            _self.recover(force=True)
 
 
 def make_logger(log_level="INFO", log_format=LOGGER_FORMAT, log_name=LOGGER_NAME, log_file=LOGGER_FILE_NAME):
