@@ -563,7 +563,10 @@ class Bot:
                 prestige_found, prestige_position = self.grabber.search(self.images.confirm_prestige)
                 if prestige_found:
                     click_on_point(MASTER_LOCS["prestige_confirm"], pause=1)
-                    click_on_point(MASTER_LOCS["prestige_final"], pause=10)
+
+                    # Waiting for a while after prestiging, this reduces the chance
+                    # of a game crash taking place due to many clicks while game is resetting.
+                    click_on_point(MASTER_LOCS["prestige_final"], pause=25)
 
                     # If a timer is used for prestige. Reset this timer to the next timed prestige value.
                     if self.config.PRESTIGE_AFTER_X_MINUTES != 0:
