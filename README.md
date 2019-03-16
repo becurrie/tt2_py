@@ -26,6 +26,7 @@ TitanBot is a bot written in python that enables the mobile tap game Tap Titans 
     - [Artifacts Action Options](#artifacts-action-options)
     - [Stats Options](#stats-options)
     - [Artifact Parsing Options](#artifact-parsing-options)
+    - [Recovery Options](#recovery-options)
     - [Logging Options](#logging-options)
 - [Development](#development)
 
@@ -44,6 +45,7 @@ TitanBot is a bot written in python that enables the mobile tap game Tap Titans 
 - Collect clan crates in game.
 - Store all game/bot/session statistics in a single location to provide some insight into progress made.
 - Console/file logging capabilities to provide debugging and bug tracking.
+- Recovery system in place to restart the emulator and game if unrecoverable errors occur.
 
 ## Tools
 Some tools are provided with the bot, these give some added external functionality that isn't included or initiated at any point during a main bot game loop, either because they take too long, or make more sense as a callable tool rather than part of the bot.
@@ -180,6 +182,12 @@ The configuration values all have some comments that describe the option slightl
 | config | Description | Default | Examples |
 |-----------------|--------------------------------------------------------------------------------|----------------------|------------------------------------------------------|
 | BOTTOM_ARTIFACT | Specify which artifact is located at the bottom of your artifact list in game. | ward_of_the_darkness | ward_of_the_darkness, aram_spear, the_masters_sword  |
+
+### Recovery Options
+| config | Description | Default | Examples |
+|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|-------------|
+| RECOVERY_CHECK_INTERVAL_MINUTES | How long between resets for the errors counter. If the amount of errors in the amount of minutes specified exceeds the specified allowed failures, a recovery takes place. | 5 | 5, 10, 60 |
+| RECOVERY_ALLOWED_FAILURES | How many failures are allowed within the specified interval before a game recovery takes place? | 45 | 45, 70, 100 |
 
 ### Logging Options
 | config | Description | Default | Examples |
