@@ -566,7 +566,7 @@ class Bot:
 
                     # Waiting for a while after prestiging, this reduces the chance
                     # of a game crash taking place due to many clicks while game is resetting.
-                    click_on_point(MASTER_LOCS["prestige_final"], pause=25)
+                    click_on_point(MASTER_LOCS["prestige_final"], pause=35)
 
                     # If a timer is used for prestige. Reset this timer to the next timed prestige value.
                     if self.config.PRESTIGE_AFTER_X_MINUTES != 0:
@@ -1181,17 +1181,29 @@ class Bot:
                     break
 
                 self.goto_master()
+                sleep(1)
                 self.fight_boss()
+                sleep(1)
                 self.clan_crate()
+                sleep(1)
                 self.tap()
+                sleep(1)
                 self.collect_ad()
+                sleep(1)
                 self.parse_current_stage()
+                sleep(1)
                 self.prestige()
+                sleep(1)
                 self.clan_battle()
+                sleep(1)
                 self.actions()
+                sleep(1)
                 self.activate_skills()
+                sleep(1)
                 self.update_stats()
+                sleep(1)
                 self.recover()
+                sleep(1)
 
         # Making use of the PyAutoGUI FailSafeException to allow some cleanup to take place
         # before totally exiting. Only if the CTRL key is held down when exception is thrown.
