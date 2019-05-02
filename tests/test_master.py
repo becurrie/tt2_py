@@ -34,15 +34,15 @@ class TestMasterPanelMethods(unittest.TestCase):
         cls.images = (cls.master_collapsed, cls.master_expanded)
         cls.bottom_images = (cls.master_bottom_expanded, cls.master_bottom_expanded)
 
-    def test_account_on_screen(self):
+    def test_raid_cards_on_screen(self):
         """Test that the bot can determine if the account icon is on the screen."""
-        account = BOT_IMAGES["MASTER"]["account"]
+        raid_cards = BOT_IMAGES["MASTER"]["raid_cards"]
 
         # Check that the images above contain the "account" icon.
         for path in self.images:
             image = Image.open(path)
             self.bot.grabber.current = image
-            self.assertTrue(self.bot.grabber.search(account, bool_only=True, testing=True))
+            self.assertTrue(self.bot.grabber.search(raid_cards, bool_only=True, testing=True))
 
     def test_skill_tree_on_screen(self):
         """Test that the bot can determine if the skill tree icon is on the screen."""
