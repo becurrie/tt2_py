@@ -65,7 +65,7 @@ class Images:
         self.upgrades = None
 
         # MASTER.
-        self.account = None
+        self.raid_cards = None
         self.achievements = None
         self.cancel_active_skill = None
         self.confirm_prestige = None

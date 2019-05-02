@@ -1086,7 +1086,7 @@ class Bot:
     def goto_master(self, collapsed=True, top=True):
         """Instruct the bot to travel to the sword master panel."""
         return self._goto_panel(
-            "master", self.images.master_active, self.images.account, self.images.prestige,
+            "master", self.images.master_active, self.images.raid_cards, self.images.prestige,
             collapsed=collapsed, top=top
         )
 
