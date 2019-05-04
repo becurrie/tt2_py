@@ -10,21 +10,23 @@ __VERSION__ = "0.4.8"
 # Store the root directory of the project. May be used and appended to files in other directories without
 # the need for relative urls being generated to travel to the file.
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+# App directory (bot).
+APP_DIR = os.path.join(ROOT_DIR, "titanbot/tt2_py")
 # Bot directory (tt2).
-BOT_DIR = os.path.join(ROOT_DIR, "tt2")
+BOT_DIR = os.path.join(APP_DIR, "bot/tt2")
 # Core bot file directory.
 CORE_DIR = os.path.join(BOT_DIR, "core")
 # External library file directory.
 EXT_DIR = os.path.join(BOT_DIR, "external")
 # Log files should be placed here.
-LOG_DIR = os.path.join(ROOT_DIR, "logs")
+LOG_DIR = os.path.join(APP_DIR, "bot/logs")
 # Any data files used directly by the bot should be placed in here.
-DATA_DIR = os.path.join(ROOT_DIR, "data")
+DATA_DIR = os.path.join(ROOT_DIR, "titanbot/tt2_py/bot/data")
 # Additional data directories.
 IMAGE_DIR = os.path.join(DATA_DIR, "images")
 
 # Testing directory.
-TEST_DIR = os.path.join(ROOT_DIR, "tests")
+TEST_DIR = os.path.join(ROOT_DIR, "titanbot/tt2_py/bot/tests")
 TEST_DATA_DIR = os.path.join(TEST_DIR, "data")
 TEST_IMAGE_DIR = os.path.join(TEST_DIR, "images")
 

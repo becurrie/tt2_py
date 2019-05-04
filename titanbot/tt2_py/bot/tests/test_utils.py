@@ -6,7 +6,7 @@ Test any of the functionality relating to the utilities present and used by diff
 Utilities should represent different functions or methods that are generic and usable by
 specific pieces of the bot. Ideally, these methods should be fail safe and always gracefully exit.
 """
-from tt2.core.utilities import convert, diff, strfdelta
+from titanbot.tt2_py.bot.tt2.core.utilities import convert, diff, strfdelta
 
 from datetime import timedelta
 import unittest

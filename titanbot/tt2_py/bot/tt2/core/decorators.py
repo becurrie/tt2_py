@@ -11,7 +11,7 @@ A transition state refers to one of the following states in game:
 These states are handled through clicking on the top of the screen if required. The ad collection
 is handled manually by clicking on either accept or decline based on user settings.
 """
-from tt2.core.utilities import in_transition_func
+from titanbot.tt2_py.bot.tt2.core.utilities import in_transition_func
 
 
 def not_in_transition(function, max_loops=30):

@@ -3,9 +3,9 @@ utilities.py
 
 Any utility or backing functions can be placed here and imported when needed.
 """
-from tt2.external.imagesearch import *
-from tt2.core.maps import MASTER_LOCS
-from tt2.core.constants import (
+from titanbot.tt2_py.bot.tt2.external.imagesearch import *
+from titanbot.tt2_py.bot.tt2.core.maps import MASTER_LOCS
+from titanbot.tt2_py.bot.tt2.core.constants import (
     STATS_DURATION_RE, STATS_LOOKUP_MULTIPLIER, STATS_TIMEDELTA_STR,
     LOGGER_NAME, LOGGER_FORMAT, LOGGER_FILE_NAME
 )
@@ -107,8 +107,8 @@ def diff(old, new):
             return strfdelta(delta)
 
         # Gracefully exit and return None, treated as null in JSON.
-        except Exception:
-            return "ERROR DIFFING"
+        except Exception as exc:
+            return "ERROR DIFFING (%s)" % exc
     return None
 
 

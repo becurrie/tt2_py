@@ -7,9 +7,9 @@ not a panel is open or not.
 These icons would include things like tournaments, clan ship, settings.
 """
 from settings import TEST_CONFIG_FILE, TEST_STATS_FILE
-from tt2.core.bot import Bot
-from tt2.core.maps import IMAGES as BOT_IMAGES
-from tests.maps import IMAGES as TEST_IMAGES
+from titanbot.tt2_py.bot.tt2.core.bot import Bot
+from titanbot.tt2_py.bot.tt2.core.maps import IMAGES as BOT_IMAGES
+from titanbot.tt2_py.bot.tests.maps import IMAGES as TEST_IMAGES
 
 from PIL import Image
 import unittest

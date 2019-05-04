@@ -8,14 +8,14 @@ from settings import (
     ROOT_DIR, CONFIG_FILE, STATS_FILE, STAGE_CAP, GAME_VERSION, __VERSION__,
 )
 
-from tt2.core.maps import *
-from tt2.core.constants import STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT
-from tt2.core.grabber import Grabber
-from tt2.core.configure import Config
-from tt2.core.stats import Stats
-from tt2.core.wrap import Images, Locs, Colors
-from tt2.core.utilities import click_on_point, click_on_image, drag_mouse, make_logger, strfdelta, sleep
-from tt2.core.decorators import not_in_transition
+from titanbot.tt2_py.bot.tt2.core.maps import *
+from titanbot.tt2_py.bot.tt2.core.constants import STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT
+from titanbot.tt2_py.bot.tt2.core.grabber import Grabber
+from titanbot.tt2_py.bot.tt2.core.configure import Config
+from titanbot.tt2_py.bot.tt2.core.stats import Stats
+from titanbot.tt2_py.bot.tt2.core.wrap import Images, Locs, Colors
+from titanbot.tt2_py.bot.tt2.core.utilities import click_on_point, click_on_image, drag_mouse, make_logger, strfdelta, sleep
+from titanbot.tt2_py.bot.tt2.core.decorators import not_in_transition
 
 from pyautogui import easeOutQuad, FailSafeException
 

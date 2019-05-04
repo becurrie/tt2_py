@@ -4,8 +4,8 @@ grabber.py
 Encapsulate the functional class used by the bot to take screenshots of the game screen and search
 for specific images present on the screen.
 """
-from tt2.core.maps import EMULATOR_PADDING_MAP
-from tt2.external.imagesearch import *
+from titanbot.tt2_py.bot.tt2.core.maps import EMULATOR_PADDING_MAP
+from titanbot.tt2_py.bot.tt2.external.imagesearch import *
 
 
 class Grabber:

@@ -23,11 +23,11 @@ if __name__ == '__main__':
 
     arguments = parser.parse_args()
     if arguments.start:
-        from tt2.core.bot import Bot
+        from titanbot.tt2_py.bot.tt2.core.bot import Bot
         Bot().run()
 
     elif arguments.parse_artifacts:
-        from tt2.tools.parse_artifacts import parse_artifacts
+        from titanbot.tt2_py.bot.tt2.tools.parse_artifacts import parse_artifacts
         parse_artifacts()
     else:
         parser.print_help()

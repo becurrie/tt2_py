@@ -6,8 +6,8 @@ each one. Can be useful for keeping track of progress in the game. This also tak
 used by the bot to place logs during the parsing into a different log file for tracking artifact parsing logs.
 """
 from settings import TOOL_LOG_DIR, CONFIG_FILE
-from tt2.core.bot import Bot
-from tt2.core.utilities import make_logger
+from titanbot.tt2_py.bot.tt2.core.bot import Bot
+from titanbot.tt2_py.bot.tt2.core.utilities import make_logger
 
 import datetime
 
