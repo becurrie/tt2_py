@@ -123,6 +123,8 @@ MASTER_LOCS = {
     "prestige_confirm": (245, 660),
     "prestige_final": (330, 570),
     "screen_top": (240, 40),
+    "achievements": (207, 537),
+    "daily_achievements": (342, 123),
     "skills": {
         "heavenly_strike": (415, 270),
         "deadly_strike": (415, 350),
