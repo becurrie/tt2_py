@@ -232,7 +232,7 @@ IMAGES = {
         "upgrades": IMAGE_DIR + "/heroes/upgrades.png",
     },
     "MASTER": {
-        "account": IMAGE_DIR + "/master/account.png",
+        "raid_cards": IMAGE_DIR + "/master/raid_cards.png",
         "achievements": IMAGE_DIR + "/master/achievements.png",
         "cancel_active_skill": IMAGE_DIR + "/master/cancel_active_skill.png",
         "confirm_prestige": IMAGE_DIR + "/master/confirm_prestige.png",
@@ -379,6 +379,7 @@ ARTIFACT_TIER_MAP = {
         "unbound_gauntlet": IMAGE_DIR + "/artifacts/unbound_gauntlet.png",
         "lucky_foot_of_al-mi-raj": IMAGE_DIR + "/artifacts/lucky_foot_of_al-mi-raj.png",
         "morgelai_sword": IMAGE_DIR + "/artifacts/morgelai_sword.png",
+        "ringing_stone": IMAGE_DIR + "/artifacts/ringing_stone.png",
         "the_magnifier": IMAGE_DIR + "/artifacts/the_magnifier.png",
         "the_treasure_of_fergus": IMAGE_DIR + "/artifacts/the_treasure_of_fergus.png",
         "the_white_dwarf": IMAGE_DIR + "/artifacts/the_white_dwarf.png",

@@ -5,7 +5,7 @@ Store all project specific settings here.
 """
 import os
 
-__VERSION__ = "0.3.7"
+__VERSION__ = "0.4.7"
 
 # Store the root directory of the project. May be used and appended to files in other directories without
 # the need for relative urls being generated to travel to the file.
@@ -51,6 +51,6 @@ if not os.path.exists(TOOL_LOG_DIR):
 
 # In game specific settings should be stored here. As the game is updated, these will change
 # and reflect the new constants that may be used by the bot.
-GAME_VERSION = "2.12.2"
-STAGE_CAP = 55000
+GAME_VERSION = "3.0.1"
+STAGE_CAP = 70000
 

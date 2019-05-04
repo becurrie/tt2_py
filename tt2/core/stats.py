@@ -284,7 +284,7 @@ class Stats:
                 if self.artifact_statistics["artifacts"][tier][artifact]:
                     discovered += 1
 
-        self.artifact_statistics["discovered"] = "{discovered}/90".format(discovered=discovered)
+        self.artifact_statistics["discovered"] = "{discovered}/91".format(discovered=discovered)
 
     def update_from_content(self):
         """Update self based on the JSON content taken from stats file."""
