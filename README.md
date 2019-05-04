@@ -41,7 +41,6 @@ TitanBot is a bot written in python that enables the mobile tap game Tap Titans 
     - Shuffle list to upgrade different ones each session.
 - Participate in tournaments when they become available (enter/collect rewards).
 - Hatch and collect any eggs when they become available.
-- Participate in clan battles with the option to enable an additional fight after the first one (diamonds).
 - Automatically collect daily achievements every X amount of hours.
 - Collect clan crates in game.
 - Store all game/bot/session statistics in a single location to provide some insight into progress made.
@@ -125,13 +124,6 @@ The configuration values all have some comments that describe the option slightl
 | ORDER_LEVEL_HEROES | Determine the order of the level heroes action. | 1 | 1, 2, 3 |
 | ORDER_LEVEL_MASTER | Determine the order of the level sword master action. | 2 | 1, 2, 3 |
 | ORDER_LEVEL_SKILLS | Determine the order of the level skills action. | 3 | 1, 2, 3 |
-
-### Clan Quest Action Options
-| config | Description | Default | Examples |
-|--------------------|------------------------------------------------------------------------------------------------------------------------------|---------|----------|
-| ENABLE_CLAN_QUEST | Enable the clicking/checking and fighting of the clan quest in game if ones available. | on | on, off |
-| CLAN_BATTLE_CHECK_INTERVAL_MINUTES | Determine the amount of time (in minutes) between each clan battle check in game. | 30 | 30, 45, 60 |
-| ENABLE_EXTRA_FIGHT | Enable the ability to perform an additional fight when battling in clan quest (only if second fight of battle (5 diamonds)). | on | on, off |
 
 ### Master Action Options
 | config | Description | Default | Examples |

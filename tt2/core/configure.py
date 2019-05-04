@@ -65,12 +65,6 @@ class Config:
         self.ORDER_LEVEL_MASTER = None
         self.ORDER_LEVEL_SKILLS = None
 
-        # ACTIONS_CLAN_QUEST.
-        self.ENABLE_CLAN_QUEST = None
-        self.CLAN_BATTLE_CHECK_ON_START = None
-        self.CLAN_BATTLE_CHECK_INTERVAL_MINUTES = None
-        self.ENABLE_EXTRA_FIGHT = None
-
         # ACTIONS_MASTER.
         self.ENABLE_MASTER = None
         self.MASTER_LEVEL_INTENSITY = None

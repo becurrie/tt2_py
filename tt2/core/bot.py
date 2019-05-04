@@ -72,14 +72,6 @@ class Bot:
         self.next_war_cry = None
         self.next_shadow_clone = None
 
-        # Clan battle check should control when and if the bot knows that a clan quest is currently on cooldown,
-        # if a clan quest is currently active, this can remain None. Only checked every X minutes based on config.
-        self.next_clan_battle_check = None
-
-        # Clan battle ready at datetime attribute. This is set when a clan check determines that the clan
-        # quest is currently on cooldown, This datetime is checked on each game loop.
-        self.clan_battle_ready_at = None
-
         self.logger.info("Bot (v{version}) (v{game_version}) [{commit}] has been initialized.".format(
             version=__VERSION__, game_version=GAME_VERSION, commit=git.Repo(ROOT_DIR).head.commit.hexsha))
         self.logger.info("SESSION: [{session}]".format(session=self.stats.session))
@@ -100,7 +92,6 @@ class Bot:
         self.calculate_skill_execution()
         self.calculate_next_prestige()
         self.calculate_next_stats_update()
-        self.calculate_next_clan_battle_check()
         self.calculate_next_action_run()
         self.calculate_next_recovery_reset()
         self.calculate_next_daily_achievement_check()
@@ -404,13 +395,6 @@ class Bot:
         dt = now + datetime.timedelta(seconds=self.config.STATS_UPDATE_INTERVAL_MINUTES * 60)
         self.next_stats_update = dt
         self.logger.debug("Statistics update in game will be initiated in {time}".format(time=strfdelta(dt - now)))
-
-    def calculate_next_clan_battle_check(self):
-        """Calculate when the next clan battle check should take place."""
-        now = datetime.datetime.now()
-        dt = now + datetime.timedelta(seconds=self.config.CLAN_BATTLE_CHECK_INTERVAL_MINUTES * 60)
-        self.next_clan_battle_check = dt
-        self.logger.debug("Clan battle check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     def calculate_next_daily_achievement_check(self):
         """Calculate when the next daily achievement check should take place."""
@@ -735,158 +719,6 @@ class Bot:
             return egg_found
 
     @not_in_transition
-    def clan_battle(self, force_ready=False, force_check=False):
-        """
-        Perform all clan quest related functionality here. The clan battle should function and encapsulate
-        the two following use cases.
-
-        1. Every x amount of minutes, a check will occur that checks to see if a clan battle is on cooldown, if it is,
-           the time remaining until that battle starts is parsed and the date is set to a instance attribute that is
-           also checked here. If during this check, a fight is already in progress, a fight will take place right away
-           using the normal clan quest fight logic.
-
-        2. Every game loop also comes into here, and checks that the current datetime is greater than the new instance
-           attribute that controls when the clan quest should be available. If the attribute isn't set (likely meaning
-           that the bot has been initialized and no check has occurred yet), then the fight is skipped until it is set.
-           If the current datetime is greater, normal clan quest fight logic should take place.
-        """
-        def fight(seconds=40):
-            """
-            Main quest fight logic, deals with clicking for X amount of seconds.
-
-            Some overkill is specified as a default for the fight, fights only last thirty seconds,
-            but we want to click longer so that we click while the fight is active, and ensure that
-            the fight finished ui is clicked on to bring us back to the clan quest panel.
-            """
-            stop_at = datetime.datetime.now() + datetime.timedelta(seconds=seconds)
-            self.logger.info("Starting clan quest fight, clicking will stop in {time}".format(
-                time=strfdelta(stop_at - datetime.datetime.now())))
-
-            # Clicking continuously until stop_at date is reached with now().
-            while datetime.datetime.now() < stop_at:
-                click_on_point(self.locs.game_middle, pause=0.07)
-
-        # Are clan quests enabled at all?
-        if self.config.ENABLE_CLAN_QUEST:
-            # Firstly, determine if the bot knows whether or not a clan quest is currently pending
-            # start based on a cooldown that has been previously recorded.
-            now = datetime.datetime.now()
-            if force_ready or self.clan_battle_ready_at:
-                # We now know that there's a datetime available to determine when the clan quest will be ready.
-                if force_ready or now > self.clan_battle_ready_at:
-                    self.logger.info("{force_or_initiate} clan quest fight process now.".format(
-                        force_or_initiate="Forcing" if force_ready else "Beginning"))
-
-                    # Clan battle should be ready now. Let's begin the clan battle logic here.
-                    # First, ensure we start with no panels open.
-                    self.no_panel()
-
-                    # Open the clan quest panel.
-                    click_on_point(self.locs.clan, pause=5)
-                    click_on_point(self.locs.clan_quest, pause=5)
-
-                    # Determine whether or not the initial fight we go into will cost diamonds or not, this may
-                    # happen due to configuration changes and restarting bot. Although rare, still worth dealing with.
-                    if self.config.ENABLE_EXTRA_FIGHT:
-                        if self.grabber.search(self.images.diamond, bool_only=True):
-                            if self.grabber.search(self.images.deal_110_next_attack, precision=0.95, bool_only=True):
-                                # Only ever fighting an additional fight if it costs five diamonds.
-                                # Spending more is un-realistic and unsupported at the moment.
-                                click_on_point(self.locs.clan_fight, pause=2)
-                                click_on_point(self.locs.diamond_okay, pause=5)
-
-                                fight()
-                                self.stats.clan_ship_battles += 1
-                                sleep(8)
-
-                                # Leave the clan quest and default page.
-                                click_on_point(self.locs.clan_quest_exit, pause=2)
-                                click_on_point(self.locs.clan_leave_screen, clicks=3, pause=2)
-
-                    # If the initial fight is a normal clan quest (no diamond cost), start by fighting like normal
-                    # and performing the check to determine if diamonds will be spent during the second fight.
-                    if self.grabber.search(self.images.fight, bool_only=True):
-                        self.logger.info("Clan quest is available to participate in.")
-                        # A diamond costing fight could potentially come up here, the check happens later on,
-                        # which means we should return early if one comes up at this point.
-                        if self.grabber.search(self.images.diamond, bool_only=True):
-                            self.logger.info("Diamonds are required to participate, exiting now.")
-                            self.calculate_next_clan_battle_check()
-                            click_on_point(self.locs.clan_quest_exit, pause=2)
-                            click_on_point(self.locs.clan_leave_screen, clicks=3, pause=2)
-                            return
-
-                        # Otherwise, a normal clan quest is available to participate in.
-                        self.logger.info("Attempting to participate in clan quest now.")
-                        click_on_point(self.locs.clan_fight, pause=5)
-
-                        fight()
-                        self.stats.clan_ship_battles += 1
-                        sleep(8)
-
-                        if self.config.ENABLE_EXTRA_FIGHT:
-                            if self.grabber.search(self.images.diamond, bool_only=True):
-                                if self.grabber.search(self.images.deal_110_next_attack, bool_only=True):
-                                    self.logger.info("Extra clan quest fight has been enabled, and entry cost is five "
-                                                     "diamonds, spending diamonds and entering fight again.")
-
-                                    # Begin an additional fight by spending diamonds.
-                                    click_on_point(self.locs.clan_fight, pause=2)
-                                    click_on_point(self.locs.diamond_okay, pause=5)
-
-                                    fight()
-                                    self.stats.clan_ship_battles += 1
-                                    sleep(8)
-
-                        # All clan quest fights have been completed now, leave the clan quest pages.
-                        self.logger.info("Exiting the clan panel now.")
-                        click_on_point(self.locs.clan_quest_exit, pause=2)
-                        click_on_point(self.locs.clan_leave_screen, clicks=3, pause=2)
-
-                    # Additionally, the clan battle ready at attribute should be set back to None, so that
-                    # only once the clan battle check takes place again to determine if a quest is active,
-                    # or on cooldown, will a fight take place.
-                    self.clan_battle_ready_at = None
-
-            # If the clan_battle_ready_at attribute isn't set, perform a check to set the value.
-            else:
-                if force_check or now > self.next_clan_battle_check:
-                    self.logger.info("{force_or_initiate} clan battle play again check now.".format(
-                        force_or_initiate="Forcing" if force_check else "Beginning"))
-
-                    # Travel to the clan quest page, checking to see if a clan quest is currently in progress.
-                    # OR, that a clan quest is on cooldown, using this information to determine when the next
-                    # fight should take place.
-                    self.no_panel()
-                    click_on_point(self.locs.clan, pause=5)
-                    click_on_point(self.locs.clan_quest, pause=5)
-
-                    # Is the clan quest currently active, or on cooldown?
-                    if self.grabber.search(self.images.goal_complete, bool_only=True):
-                        self.logger.info("Clan quest is currently on cooldown, attempting to parse out the next fight "
-                                         "date in game now.")
-
-                        # Perform an OCR check on the clan quest page, this will determine the datetime
-                        # at which the clan quest will be ready to participate in.
-                        self.clan_battle_ready_at = self.stats.play_again_ocr()
-                        self.logger.info("Clan quest will be ready in {time}".format(
-                            time=strfdelta(self.clan_battle_ready_at - now)))
-
-                    # Clan quest in progress, lets set the clan battle ready at to the current datetime.
-                    # Next game loop will then begin a clan quest.
-                    else:
-                        self.logger.info("A clan quest is already in progress, setting the ready date to now.")
-                        self.clan_battle_ready_at = now
-
-                    # Exit out of the clan quest screen.
-                    self.logger.info("Exiting the clan panel now.")
-                    click_on_point(self.locs.clan_quest_exit, pause=2)
-                    click_on_point(self.locs.clan_leave_screen, clicks=3, pause=2)
-
-                    # Calculate the next clan battle check.
-                    self.calculate_next_clan_battle_check()
-
-    @not_in_transition
     def clan_crate(self):
         """Check if a clan crate is currently available and collect it if one is."""
         if not self.goto_master():
@@ -1206,8 +1038,6 @@ class Bot:
                 self.activate_skills(force=True)
             if self.config.UPDATE_STATS_ON_START:
                 self.update_stats(force=True)
-            if self.config.CLAN_BATTLE_CHECK_ON_START:
-                self.clan_battle(force_check=True)
             if self.config.RUN_DAILY_ACHIEVEMENT_CHECK_ON_START:
                 self.daily_achievement_check(force=True)
 
@@ -1236,8 +1066,6 @@ class Bot:
                 self.parse_current_stage()
                 sleep(1)
                 self.prestige()
-                sleep(1)
-                self.clan_battle()
                 sleep(1)
                 self.daily_achievement_check()
                 sleep(1)
