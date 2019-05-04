@@ -17,6 +17,9 @@ class Images:
 
     def _base(self):
         """Manually set every expected value, allows for easier access later on."""
+        # ACHIEVEMENTS.
+        self.daily_collect = None
+
         # ADS.
         self.collect_ad = None
         self.no_thanks = None

@@ -53,6 +53,11 @@ class Config:
         self.ENABLE_TAPPING = None
         self.ENABLE_TOURNAMENTS = None
 
+        # DAILY ACHIEVEMENTS
+        self.ENABLE_DAILY_ACHIEVEMENTS = None
+        self.RUN_DAILY_ACHIEVEMENT_CHECK_ON_START = None
+        self.CHECK_DAILY_ACHIEVEMENTS_EVERY_X_HOURS = None
+
         # ACTIONS_GENERAL.
         self.RUN_ACTIONS_EVERY_X_SECONDS = None
         self.RUN_ACTIONS_ON_START = None

@@ -42,6 +42,7 @@ TitanBot is a bot written in python that enables the mobile tap game Tap Titans 
 - Participate in tournaments when they become available (enter/collect rewards).
 - Hatch and collect any eggs when they become available.
 - Participate in clan battles with the option to enable an additional fight after the first one (diamonds).
+- Automatically collect daily achievements every X amount of hours.
 - Collect clan crates in game.
 - Store all game/bot/session statistics in a single location to provide some insight into progress made.
 - Console/file logging capabilities to provide debugging and bug tracking.
@@ -108,6 +109,13 @@ The configuration values all have some comments that describe the option slightl
 | ENABLE_EGG_COLLECT | Collect eggs in game if they are available and hatch them. | on | on, off |
 | ENABLE_TAPPING | Enable tapping on titans / game screen (this also enables clicking on fairies on screen). | on | on, off |
 | ENABLE_TOURNAMENTS | Enable entering and collecting rewards from tournaments in game. | on | on, off |
+
+### Daily Achievements
+| config | Description | Default | Examples |
+|----------------------------------------|----------------------------------------------------------------------------|---------|----------|
+| ENABLE_DAILY_ACHIEVEMENTS | Enable daily achievements checks in game. | on | on, off |
+| RUN_DAILY_ACHIEVEMENT_CHECK_ON_START | Should a daily achievement check take place as soon as the bot is started? | on | on, off |
+| CHECK_DAILY_ACHIEVEMENTS_EVERY_X_HOURS | How often should the daily achievement checks take place? | 4 | 2, 4, 8 |
 
 ### General Action Options
 | config | Description | Default | Examples |

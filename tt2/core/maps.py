@@ -123,6 +123,8 @@ MASTER_LOCS = {
     "prestige_confirm": (245, 660),
     "prestige_final": (330, 570),
     "screen_top": (240, 40),
+    "achievements": (207, 537),
+    "daily_achievements": (342, 123),
     "skills": {
         "heavenly_strike": (415, 270),
         "deadly_strike": (415, 350),
@@ -184,6 +186,9 @@ GAME_COLORS = {
 
 # All images should have their names mapped to the file path within the module.
 IMAGES = {
+    "ACHIEVEMENTS": {
+        "daily_collect": IMAGE_DIR + "/achievements/daily_collect.png",
+    },
     "ADS": {
         "collect_ad": IMAGE_DIR + "/ads/collect.png",
         "no_thanks": IMAGE_DIR + "/ads/no_thanks.png",
