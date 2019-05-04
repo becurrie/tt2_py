@@ -63,6 +63,7 @@ class Bot:
         self.next_prestige = None
         self.next_stats_update = None
         self.next_recovery_reset = None
+        self.next_daily_achievement_check = None
 
         self.next_heavenly_strike = None
         self.next_deadly_strike = None
@@ -102,6 +103,7 @@ class Bot:
         self.calculate_next_clan_battle_check()
         self.calculate_next_action_run()
         self.calculate_next_recovery_reset()
+        self.calculate_next_daily_achievement_check()
 
     def get_owned_artifacts(self):
         """Retrieve a list of all discovered/owned artifacts in game."""
@@ -409,6 +411,13 @@ class Bot:
         dt = now + datetime.timedelta(seconds=self.config.CLAN_BATTLE_CHECK_INTERVAL_MINUTES * 60)
         self.next_clan_battle_check = dt
         self.logger.debug("Clan battle check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
+
+    def calculate_next_daily_achievement_check(self):
+        """Calculate when the next daily achievement check should take place."""
+        now = datetime.datetime.now()
+        dt = now + datetime.timedelta(hours=self.config.CHECK_DAILY_ACHIEVEMENTS_EVERY_X_HOURS)
+        self.next_daily_achievement_check = dt
+        self.logger.debug("Daily achievement check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @not_in_transition
     def level_heroes(self):
@@ -892,6 +901,38 @@ class Bot:
         return found
 
     @not_in_transition
+    def daily_achievement_check(self, force=False):
+        """Perform a check for any completed daily achievements, collecting them as long as any are present."""
+        if self.config.ENABLE_DAILY_ACHIEVEMENTS:
+            now = datetime.datetime.now()
+            if force or now > self.next_daily_achievement_check:
+                self.logger.info("{force_or_initiate} daily achievement check now".format(
+                    force_or_initiate="Forcing" if force else "Beginning"))
+
+                if not self.goto_master():
+                    return False
+
+                if not self.leave_boss():
+                    return False
+
+                # Open the achievements tab in game.
+                click_on_point(MASTER_LOCS["achievements"], pause=2)
+                click_on_point(MASTER_LOCS["daily_achievements"], pause=1)
+
+                # Are there any completed daily achievements?
+                while self.grabber.search(self.images.daily_collect, bool_only=True):
+                    found, pos = self.grabber.search(self.images.daily_collect)
+                    if found:
+                        # Collect the achievement reward here.
+                        self.logger.info("Completed daily achievement found, collecting now.")
+                        click_on_point(pos, pause=2)
+                        click_on_point(GAME_LOCS["GAME_SCREEN"]["game_middle"], clicks=5, pause=1)
+                        sleep(2)
+
+                # Exiting achievements screen now.
+                click_on_point(MASTER_LOCS["screen_top"], clicks=3)
+
+    @not_in_transition
     def collect_ad(self):
         """
         Collect ad if one is available on the screen.
@@ -1167,6 +1208,8 @@ class Bot:
                 self.update_stats(force=True)
             if self.config.CLAN_BATTLE_CHECK_ON_START:
                 self.clan_battle(force_check=True)
+            if self.config.RUN_DAILY_ACHIEVEMENT_CHECK_ON_START:
+                self.daily_achievement_check(force=True)
 
             # Update the initial bots artifacts information that is used when upgrading
             # artifacts in game. This is handled after stats have been updated.
@@ -1195,6 +1238,8 @@ class Bot:
                 self.prestige()
                 sleep(1)
                 self.clan_battle()
+                sleep(1)
+                self.daily_achievement_check()
                 sleep(1)
                 self.actions()
                 sleep(1)
