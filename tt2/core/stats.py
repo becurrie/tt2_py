@@ -354,24 +354,28 @@ class Stats:
                 # integer, float with either its last character taken off (K, M, %, etc).
                 # This check is not required for the "play_time" key.
                 if not key == "play_time":
-                    if not value[-1].isdigit():
-                        try:
-                            int(value[:-1])
-                        except ValueError:
+                    try:
+                        if not value[-1].isdigit():
                             try:
-                                float(value[:-1])
+                                int(value[:-1])
                             except ValueError:
-                                continue
+                                try:
+                                    float(value[:-1])
+                                except ValueError:
+                                    continue
 
-                    # Last character is a digit, value may be pure digit of some sort?
-                    else:
-                        try:
-                            int(value)
-                        except ValueError:
+                        # Last character is a digit, value may be pure digit of some sort?
+                        else:
                             try:
-                                float(value)
+                                int(value)
                             except ValueError:
-                                continue
+                                try:
+                                    float(value)
+                                except ValueError:
+                                    continue
+                    except IndexError:
+                        self.logger.error(
+                            "{key} - {value} could not be accessed parsed properly.".format(key=key, value=value))
 
                 self.logger.info("Parsed value: {key} -> {value}".format(key=key, value=value))
                 setattr(self, key, value)
