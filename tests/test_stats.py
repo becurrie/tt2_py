@@ -64,19 +64,6 @@ class TestStatsParser(unittest.TestCase):
 
             self.assertEqual(expected[i], value)
 
-    def test_play_again_ocr(self):
-        """Test that the clan play again ocr checks are able to parse different expected time values."""
-        # Expected total seconds, note that ten seconds are added to each one to pad the check a bit.
-        expected = (5144, 4552, 4487)
-        for i in range(3):
-            index = "0{index}".format(index=i + 1)
-            key = "test_play_again_{image_index}".format(image_index=index)
-
-            image = Image.open(TEST_IMAGES["CLAN_PLAY_AGAIN"][key])
-            seconds = self.bot.stats.play_again_ocr(test_image=image)
-
-            self.assertEqual(expected[i], seconds)
-
     def test_stats_diff(self):
         """Test that the stats module can properly retrieve the differences between values."""
         game_changes = (

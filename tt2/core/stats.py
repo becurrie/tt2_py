@@ -402,49 +402,6 @@ class Stats:
         # in the returned 'text' variable retrieved through tesseract.
         return ''.join(filter(lambda x: x.isdigit(), text))
 
-    def play_again_ocr(self, test_image=None):
-        """Attempt to parse out the datetime from now that a clan battle will start at."""
-        self.logger.debug("Attempting to parse out the current play again datetime from in game.")
-        region = CLAN_COORDS["play_again"]
-
-        if test_image:
-            image = self._process(image=test_image)
-        else:
-            self.grabber.snapshot(region=region)
-            image = self._process()
-
-        text = pytesseract.image_to_string(image, config="--psm 7")
-        self.logger.debug("Parsed value: {text}".format(text=text))
-
-        if len(text) == 8:
-            hours, minutes, seconds = text.split(":")
-        else:
-            return None
-
-        # Parse values into integers usable by timedelta.
-        try:
-            hours = int(hours)
-            minutes = int(minutes)
-            seconds = int(seconds)
-        except ValueError:
-            return None
-
-        self.logger.debug("Successfully parsed out datetime values from play again time remaining.")
-        self.logger.debug("Hours: {hours}".format(hours=hours))
-        self.logger.debug("Minutes: {minutes}".format(minutes=minutes))
-        self.logger.debug("Seconds: {seconds}".format(seconds=seconds))
-
-        # Calculate total seconds until a clan battle is available, also adding an additional
-        # ten seconds here to ensure that the clan quest has begun.
-        total_seconds = (hours * 3600) + (minutes * 60) + seconds + 10
-        self.logger.debug("Total Seconds: {total_seconds}".format(total_seconds=total_seconds))
-
-        # Testing can return total seconds only, allowing us to test that proper values are parsed.
-        if test_image:
-            return total_seconds
-
-        return datetime.datetime.now() + datetime.timedelta(seconds=total_seconds)
-
     def retrieve(self):
         """Attempt to retrieve the stats JSON file with all current data."""
         try:
