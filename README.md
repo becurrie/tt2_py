@@ -95,6 +95,8 @@ The configuration values all have some comments that describe the option slightl
 | SHUTDOWN_SECONDS | How long the bot will wait for the soft shutdown key signal before terminating. | 5 | 5, 10, 20 |
 | SOFT_SHUTDOWN_CRITICAL_ERROR | Should a soft shutdown be automatically initiated if a critical error is encountered. | on | on, off |
 | UPDATE_STATS_ON_SOFT_SHUTDOWN | Perform a statistics update when a soft shutdown is initiated. | on | on, off |
+| POST_ACTION_MIN_WAIT_TIME | Minimum amount of seconds to sleep for after a bot function is finished. | 1 | 1, 4, 10 |
+| POST_ACTION_MAX_WAIT_TIME | Maximum amount of seconds to sleep for after a bot function is finished. | 3 | 3, 8, 20 |
 
 ### Device Options
 | config | Description | Default | Examples |
