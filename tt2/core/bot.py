@@ -15,7 +15,7 @@ from tt2.core.configure import Config
 from tt2.core.stats import Stats
 from tt2.core.wrap import Images, Locs, Colors
 from tt2.core.utilities import click_on_point, click_on_image, drag_mouse, make_logger, strfdelta, sleep
-from tt2.core.decorators import not_in_transition
+from tt2.core.decorators import not_in_transition, wait_afterwards
 
 from pyautogui import easeOutQuad, FailSafeException
 
@@ -1047,36 +1047,21 @@ class Bot:
             self.next_artifact_index = 0
             self.next_artifact_upgrade = self.owned_artifacts[self.next_artifact_index]
 
+            # Setup main game loop variables.
+            loop_funcs = [
+                self.goto_master, self.fight_boss, self.clan_crate, self.tap, self.collect_ad, self.parse_current_stage,
+                self.prestige, self.daily_achievement_check, self.actions, self.activate_skills, self.update_stats,
+                self.recover
+            ]
+
             # Main game loop.
             while True:
                 if self.TERMINATE:
                     self.logger.info("TERMINATE SIGNAL, EXITING.")
                     break
 
-                self.goto_master()
-                sleep(1)
-                self.fight_boss()
-                sleep(1)
-                self.clan_crate()
-                sleep(1)
-                self.tap()
-                sleep(1)
-                self.collect_ad()
-                sleep(1)
-                self.parse_current_stage()
-                sleep(1)
-                self.prestige()
-                sleep(1)
-                self.daily_achievement_check()
-                sleep(1)
-                self.actions()
-                sleep(1)
-                self.activate_skills()
-                sleep(1)
-                self.update_stats()
-                sleep(1)
-                self.recover()
-                sleep(1)
+                for func in loop_funcs:
+                    wait_afterwards(func, self.config.POST_ACTION_MIN_WAIT_TIME, self.config.POST_ACTION_MAX_WAIT_TIME)()
 
         # Making use of the PyAutoGUI FailSafeException to allow some cleanup to take place
         # before totally exiting. Only if the CTRL key is held down when exception is thrown.
