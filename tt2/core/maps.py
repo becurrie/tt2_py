@@ -446,7 +446,7 @@ ARTIFACT_WITH_MAX_LEVEL = (
     "oak_staff", "the_arcana_cloak", "hunter's_ointment", "ambrosia_elixir", "mystic_staff",
     "mystical_beans_of_senzu", "egg_of_fortune", "divine_chalice", "invader's_shield", "axe_of_muerte",
     "essence_of_the_kitsune", "boots_of_hermes", "unbound_gauntlet", "oberon_pendant",
-    "lucky_foot_of_al-mi-raj", "lost_king's_mask", "staff_of_radiance", "morgelai_sword",
+    "lucky_foot_of_al-mi-raj", "lost_king's_mask", "staff_of_radiance", "morgelai_sword", "ringing_stone",
     "the_master's_sword", "the_magnifier", "the_treasure_of_fergus", "the_white_dwarf", "aram_spear",
     "ward_of_the_darkness",
 )
