@@ -43,6 +43,8 @@ class Config:
         self.SHUTDOWN_SECONDS = None
         self.SOFT_SHUTDOWN_ON_CRITICAL_ERROR = None
         self.UPDATE_STATS_ON_SOFT_SHUTDOWN = None
+        self.POST_ACTION_MIN_WAIT_TIME = None
+        self.POST_ACTION_MAX_WAIT_TIME = None
 
         # DEVICE.
         self.EMULATOR = None
