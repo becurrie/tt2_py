@@ -36,6 +36,7 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - View all sessions that have taken place and review logs/duration/prestiges that happened while a session was active.
 - View all raid results instances and view data about damage done and who dealt damage.
 - Create multiple configurations that can be swapped out quickly when needed (farming, tournaments, push).
+- Import/export your configurations in a small, shareable string.
 - Review all current statistics taken from the game, as well as statistics related to the bot.
 - View all prestiges and review additional information (average stage, average duration).
 - View all artifact statistics and whether or not you currently own each one.
@@ -52,6 +53,7 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - Activate specific functions using keyboard shortcuts.
 - Automatically level up the sword master, skills and heroes in game with a specific intensity (clicks).
 - Automatically prestige after a threshold has been reached (stage, percent of max stage, max stage, time limit).
+- Automatically add random padding to prestige times to improve realistic use.
 - Automatically parse out clan raid results from in game.
 - Automatically take breaks in game after random intervals of game time.
 - Receive text notifications when your raid attacks timer has reset and the titan can be attacked.
@@ -74,7 +76,7 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - [Node/NPM](https://nodejs.org/en/)
 - [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract)
 - [Redis Server](https://redislabs.com/)
-- [Nox Android Emulator](https://www.bignox.com/)
+- [MEmu Emulator](https://www.memuplay.com/) or [Nox Android Emulator](https://www.bignox.com/)
 
 ## Development
 Thanks for taking the time to check out this project. If you have any suggestions, 
