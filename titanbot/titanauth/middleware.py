@@ -7,6 +7,9 @@ that is used to ensure only valid users can access the dashboard.
 from django.shortcuts import redirect
 
 from titanauth.models.user_reference import ExternalAuthReference
+from titanauth.constants import AUTH_URL_EXCEPTIONS
+
+from titanbootstrap.constants import BOOTSTRAP_URL_EXCEPTIONS
 
 
 class TitandashAuthenticationMiddleware:
@@ -15,23 +18,7 @@ class TitandashAuthenticationMiddleware:
     backend to determine if a user has access to the dashboard.
     """
     def __init__(self, get_response):
-        self.exceptions = [
-            "/auth/authenticate",
-            "/auth/ajax/credentials",
-
-            # Bootstrapper urls should be allowed into our pages always.
-            # When bootstrapping is finished, if no authentication has been
-            # done, then we can force the login through our middleware.
-            "/bootstrap/",
-            "/bootstrap/ajax/check_update",
-            "/bootstrap/ajax/perform_update",
-            "/bootstrap/ajax/perform_requirements",
-            "/bootstrap/ajax/perform_node_packages",
-            "/bootstrap/ajax/perform_migration",
-            "/bootstrap/ajax/perform_cache",
-            "/bootstrap/ajax/perform_static",
-            "/bootstrap/ajax/perform_dependency",
-        ]
+        self.exceptions = AUTH_URL_EXCEPTIONS + BOOTSTRAP_URL_EXCEPTIONS
         self.get_response = get_response
 
     def __call__(self, request):
