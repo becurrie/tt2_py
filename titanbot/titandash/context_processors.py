@@ -1,3 +1,5 @@
+from django.utils.functional import SimpleLazyObject
+
 from titandash.models.bot import BotInstance
 from titandash.models.configuration import ThemeConfig
 
@@ -7,6 +9,11 @@ import os
 
 
 def bot(request):
+    """
+    Grab all bot setting information that's used by the dashboard.
+
+    We do not need to lazily load this data since it's not using our database for any information.
+    """
     context = {
         "BOT": {
             "STAGE_CAP": settings.STAGE_CAP,
@@ -30,37 +37,55 @@ def instances(request):
     """
     Grab all BotInstances that are currently active and available.
     """
-    context = {
-        "INSTANCES": []
+    def _instance_query():
+        """
+        Use callable to lazily grab information needed.
+        """
+        lst = []
+        for instance in BotInstance.objects.all():
+            lst.append(instance.json())
+        if len(lst) == 0:
+            lst.append(BotInstance.objects.grab().json())
+
+        return lst
+
+    # Returning a simple lazy object that's only called if used by a template.
+    # This allows bootstrapping to execute without database errors raised.
+    return {
+        "INSTANCES": SimpleLazyObject(_instance_query)
     }
-
-    for instance in BotInstance.objects.all():
-        context["INSTANCES"].append(instance.json())
-    if len(context["INSTANCES"]) == 0:
-        context["INSTANCES"].append(BotInstance.objects.grab().json())
-
-    return context
 
 
 def themes(request):
-    context = {
-        "THEMES": {
+    def _theme_query():
+        """
+        Use callable to lazily grab information needed.
+        """
+        dct = {
             "selected": None,
-            "available": [],
+            "available": []
         }
+        try:
+            theme = ThemeConfig.objects.grab().theme
+        except Exception:
+            theme = "default"
+
+        dct["selected"] = theme
+
+        files = [f.split(".")[0] for f in os.listdir(settings.THEMES_DIR) if len(f.split(".")) == 3]
+        # Place default theme as first theme available.
+        for file in files:
+            if file == "default":
+                dct["available"].append({"theme": file, "selected": theme == file})
+        # Place other themes after default.
+        for file in files:
+            if file != "default":
+                dct["available"].append({"theme": file, "selected": theme == file})
+
+        return dct
+
+    # Returning a simple lazy object that's only called if used by a template.
+    # This allows bootstrapping to execute without database errors raised.
+    return {
+        "THEMES": SimpleLazyObject(_theme_query)
     }
-
-    theme = ThemeConfig.objects.grab().theme
-    context["THEMES"]["selected"] = theme
-
-    files = [f.split(".")[0] for f in os.listdir(settings.THEMES_DIR) if len(f.split(".")) == 3]
-    # Place default theme as first theme available.
-    for file in files:
-        if file == "default":
-            context["THEMES"]["available"].append({"theme": file, "selected": theme == file})
-    # Place other themes after default.
-    for file in files:
-        if file != "default":
-            context["THEMES"]["available"].append({"theme": file, "selected": theme == file})
-
-    return context
