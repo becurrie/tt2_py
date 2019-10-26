@@ -49,9 +49,10 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - Exit Application.
 
 ### Bot
+- Perform all functionality in the background, so you can do other things while the bot is running (the window must be visible currently).
 - Activate chosen in game skills on a specified cooldown, with the option to wait for a specific skill before activating others.
 - Activate specific functions using keyboard shortcuts.
-- Automatically tap on the screen, activating and collecting fairies if they're triggered.
+- Automatically tap on the screen, activating and collecting fairies.
 - Automatically tap skill minigames on the screen (coordinated offensive, astral awakening, etc), activating and collecting fairies if they're triggered.
 - Automatically level up the sword master, skills and heroes in game with specific intervals for the activation of each.
 - Automatically level up skills to a specified level cap.
@@ -63,8 +64,8 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - Upgrade or ignore specific artifacts or tiers after a prestige.
 - Participate in tournaments when they are available (enter/collect rewards).
 - Hatch and collect any eggs when they become available.
-- Collect in game ads (VIP/Watch).
-- Collect daily achievements when they are completed (Watch daily ad).
+- Collect in game ads if VIP is unlocked in game.
+- Collect daily achievements when they are completed.
 - Collect milestones in game when they are completed.
 - Collect daily rewards when they are available.
 
