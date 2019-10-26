@@ -325,4 +325,5 @@ if __name__ == "__main__":
 
     # Use finally block to ensure the server is stopped before ending our application.
     finally:
+        app.uninhibit()
         app.stop_server()
