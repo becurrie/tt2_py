@@ -128,6 +128,7 @@ class Bot(object):
         self.calculate_next_master_level()
         self.calculate_next_heroes_level()
         self.calculate_next_skills_level()
+        self.calculate_next_miscellaneous_actions()
         self.calculate_next_skills_activation()
         self.calculate_next_daily_achievement_check()
         self.calculate_next_milestone_check()
@@ -487,6 +488,16 @@ class Bot(object):
         dt = now + datetime.timedelta(seconds=self.configuration.level_skills_every_x_seconds)
         self.props.next_skills_level = dt
         self.logger.info("skills levelling process will be initiated in {time}".format(time=strfdelta(dt - now)))
+
+    @wrap_current_function
+    def calculate_next_miscellaneous_actions(self):
+        """
+        Calculate when the next miscellaneous function process will be ran.
+        """
+        now = timezone.now()
+        dt = now + datetime.timedelta(minutes=15)
+        self.props.next_miscellaneous_actions = dt
+        self.logger.info("miscellaneous actions will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
     def calculate_next_skills_activation(self):
@@ -1251,6 +1262,24 @@ class Bot(object):
 
         return found
 
+    def miscellaneous_actions(self, force=False):
+        """
+        Miscellaneous actions can be activated here when the generic cooldown is reached.
+        """
+        if force or timezone.now() > self.props.next_miscellaneous_actions:
+            self.logger.info("{force_or_initiate} miscellaneous actions now".format(
+                force_or_initiate="forcing" if force else "beginning"))
+
+            # Running through all generic functions that should only be available once
+            # every once in a while, meaning we do not have to check for them at all times.
+            self.clan_crate()
+            self.daily_rewards()
+            self.hatch_eggs()
+
+            # Calculate when the next miscellaneous actions process
+            # should take place again.
+            self.calculate_next_miscellaneous_actions()
+
     @wrap_current_function
     @not_in_transition
     def breaks(self, force=False):
@@ -1915,9 +1944,7 @@ class Bot(object):
         lst = [
             k for k, v in {
                 "fight_boss": True,
-                "clan_crate": self.configuration.enable_clan_crates,
-                "hatch_eggs": self.configuration.enable_egg_collection,
-                "daily_rewards": self.configuration.enable_daily_rewards,
+                "miscellaneous_actions": True,
                 "tap": self.configuration.enable_tapping,
                 "minigames": self.configuration.enable_minigames,
                 "parse_current_stage": True,
