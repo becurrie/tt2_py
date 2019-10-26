@@ -19,6 +19,7 @@ import PySimpleGUI as sg
 import PySimpleGUIWx as sgw
 
 import django
+import ctypes
 import webbrowser
 import logging
 import subprocess
@@ -66,6 +67,9 @@ class TitandashApplication(object):
 
     Encapsulating all functionality used to generate and open the titandash web application within a gui window.
     """
+    ES_CONTINUOUS = 0x80000000
+    ES_SYSTEM_REQUIRED = 0x00000001
+
     def __init__(self):
         """
         Initialize the core titandash application object.
@@ -82,6 +86,29 @@ class TitandashApplication(object):
         logging.info("{title} Application Initialized...".format(title=self.title))
         logging.info("=============================================================")
         logging.info("STARTING APPLICATION NOW...")
+
+    def inhibit(self):
+        """
+        Setup windows sleep inhibitor.
+
+        While titandash is running, we do not want the windows machine to goto sleep... This will cause our
+        bot instances to fail and would not allow for our bots run continuously over time.
+
+        See: http://trialstravails.blogspot.com/2017/03/preventing-windows-os-from-sleeping.html
+        """
+        logging.debug("PREVENTING WINDOWS FROM GOING TO SLEEP...")
+        ctypes.windll.kernel32.SetThreadExecutionState(
+            self.ES_CONTINUOUS | self.ES_SYSTEM_REQUIRED)
+
+    def uninhibit(self):
+        """
+        Setup windows sleep uninhibitor.
+
+        When titandash is finished running, we should allow the os to goto sleep if needed.
+        """
+        logging.debug("ALLOWING WINDOWS TO GOTO SLEEP...")
+        ctypes.windll.kernel32.SetThreadExecutionState(
+            self.ES_CONTINUOUS)
 
     def loading(self):
         logging.debug("OPENING SPLASH.")
@@ -245,6 +272,7 @@ class TitandashApplication(object):
             # before completing the event loop.
             if event == "Exit":
                 tray.ShowMessage(title="Exiting", message="Exiting Application Now")
+                self.uninhibit()
                 self.stop_server()
 
                 # Break to terminate event loop and stop python process.
@@ -274,6 +302,7 @@ if __name__ == "__main__":
         app.loading()
         app.stop_server()
         app.start_server()
+        app.inhibit()
 
         # Web application is now accessible. Let's begin the window creation process.
         # We always open the bootstrapper on the initial start of our app.
