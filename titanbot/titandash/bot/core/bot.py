@@ -980,11 +980,21 @@ class Bot(object):
                     if self.props.next_randomized_prestige:
                         self.props.next_randomized_prestige = None
 
-                tournament = self.check_tournament()
+                # Perform a tournament check, if a user has tournaments enabled, we will perform the normal
+                # prestige process in this function instead of below, which means we can set some values and exit early
+                # if a tournament is available and was joined.
+                tournament_prestige, advanced_start = self.check_tournament()
 
-                # If tournament==True, then a tournament was available to join (which means we prestiged, exit early).
-                if tournament:
-                    return False
+                if tournament_prestige:
+                    # Tournament would have handled the prestige generation, set last prestige
+                    # and our correct advanced start parsing.
+                    self.props.last_prestige = tournament_prestige
+                    self.parse_advanced_start(stage_text=advanced_start)
+                    # Sleeping explicitly if a tournament was joined, since we update the last
+                    # prestige and advanced start right after it happens.
+                    sleep(35)
+                    return True
+
                 if not self.goto_master(collapsed=False, top=False):
                     return False
 
@@ -995,6 +1005,7 @@ class Bot(object):
                 if prestige_found:
                     # Parsing the advanced start value that is present before a prestige takes place...
                     # This is used to improve stage parsing to not allow values < the advanced start value.
+                    # Also handling the prestige generation here, which is set on our instance.
                     prestige, advanced_start = self.stats.update_prestige(artifact=self.next_artifact_upgrade, current_stage=self.props.current_stage)
                     self.props.last_prestige = prestige
                     self.parse_advanced_start(advanced_start)
@@ -1159,14 +1170,14 @@ class Bot(object):
         """
         if self.configuration.enable_tournaments:
             self.logger.info("checking for tournament ready to join or in progress.")
-            if not self.goto_master():
+            if not self.ensure_collapsed():
                 return False
 
             # Looping to find tournament here, since there's a chance that the tournament is finished, which
             # causes a star trail circle the icon. May be hard to find, give it a couple of tries.
             tournament_found = False
             for i in range(5):
-                tournament_found, tournament_position = self.grabber.search(self.images.tournament)
+                tournament_found = self.grabber.search(image=self.images.tournament, bool_only=True)
                 if tournament_found:
                     break
 
@@ -1189,27 +1200,34 @@ class Bot(object):
                     if prestige_found:
                         # Parsing the advanced start value that is present before a prestige takes place...
                         # This is used to improve stage parsing to not allow values < the advanced start value.
-                        self.parse_advanced_start(self.stats.update_prestige(current_stage=self.props.current_stage, artifact=self.next_artifact_upgrade))
+                        prestige, advanced_start = self.stats.update_prestige(current_stage=self.props.current_stage, artifact=self.next_artifact_upgrade)
                         self.click(point=MASTER_LOCS["screen_top"], pause=1)
 
-                    # Collapsing the master panel... Then attempting to join tournament.
-                    self.goto_master()
-                    self.click(point=self.locs.tournament, pause=2)
-                    self.logger.info("joining new tournament now...")
-                    self.click(point=self.locs.join, pause=2)
-                    self.click(point=self.locs.tournament_prestige, pause=35)
-                    self.props.current_stage = self.ADVANCED_START
+                        # Ensuring that any panels are collapsed, then attempting to join
+                        # the tournament through the interface.
+                        self.ensure_collapsed()
+                        self.click(point=self.locs.tournament, pause=2)
 
-                    return True
+                        self.logger.info("joining new tournament now...")
+                        self.click(point=self.locs.join, pause=2)
+                        self.click(point=self.locs.tournament_prestige)
+
+                        # Return generated prestige and advanced start right away,
+                        # setting values in the prestige function directly. Wait should
+                        # take place there instead of here.
+                        return prestige, advanced_start
 
                 # Otherwise, maybe the tournament is over? Or still running.
                 else:
-                    collect_found, collect_position = self.grabber.search(self.images.collect_prize)
+                    collect_found, collect_position = self.grabber.search(image=self.images.collect_prize)
                     if collect_found:
                         self.logger.info("tournament is over, attempting to collect reward now.")
                         self.click(point=self.locs.collect_prize, pause=2)
                         self.click(point=self.locs.game_middle, clicks=10, interval=0.5)
-                        return False
+
+                # No tournament was joined, and regardless of the reward being available
+                # or not, if we reach this point, return our flags as False, None.
+                return False, None
 
     @wrap_current_function
     @not_in_transition
