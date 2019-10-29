@@ -242,7 +242,7 @@ SKILL_CAN_LEVEL_LOCS = {
 # Store any colors used (RGB) by the bot to determine so things in game.
 GAME_COLORS = {
     "WHITE": (255, 255, 255),
-    "DISCOVER": (60, 185, 174),
+    "DISCOVER": (60, 184, 174),
     "ENCHANT": (235, 167, 12),
     "COLLECT_GREEN": (101, 155, 28),
     "SKILL_CANT_LEVEL": (73, 72, 73),
