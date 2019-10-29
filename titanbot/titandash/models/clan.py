@@ -204,9 +204,10 @@ class RaidResult(models.Model):
 
     def total_damage(self):
         agg = self.attacks.aggregate(Sum("damage"))
+
         return {
             "damage": agg["damage__sum"],
-            "formatted": "{:,}".format(agg["damage__sum"])
+            "formatted": "{:,}".format(agg["damage__sum"]) if agg["damage__sum"] else None
         }
 
     def json(self):
