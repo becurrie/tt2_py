@@ -284,7 +284,7 @@ class BotInstance(models.Model):
         if self.configuration:
             dct["configuration"] = {
                 "id": self.configuration.pk,
-                "url": reverse("admin:titandash_configuration_change", kwargs={"object_id": self.configuration.pk}),
+                "url": reverse("configuration", kwargs={"pk": self.configuration.pk}),
                 "name": self.configuration.name
             }
         if self.window:
