@@ -12,6 +12,8 @@ from titandash.models.queue import Queue
 from titandash.models.clan import Clan, RaidResult
 from titandash.constants import SKILL_MAX_LEVEL
 
+from titandash.bot.core import shortcuts
+
 from titanauth.authentication.wrapper import AuthWrapper
 
 from .maps import *
@@ -20,7 +22,6 @@ from .grabber import Grabber
 from .stats import Stats
 from .wrap import Images, Locs, Colors
 from .decorators import not_in_transition, wait_afterwards, wrap_current_function
-from .shortcuts import ShortcutListener
 from .utilities import (
     click_on_point, click_on_image, drag_mouse, make_logger, strfdelta,
     strfnumber, sleep, send_raid_notification
@@ -35,7 +36,6 @@ from pyautogui import FailSafeException
 
 import datetime
 import random
-import keyboard
 import win32clipboard
 
 
@@ -1935,11 +1935,8 @@ class Bot(object):
         Setup the keypress shortcut listener.
         """
         self.logger.info("initiating keyboard (shortcut) listener...")
-        # Attach the ShortcutListener callback function that is called whenever a key is pressed.
-        listener = ShortcutListener(logger=self.logger, instance=self.instance, cooldown=2)
-
-        keyboard.on_press(callback=listener.on_press)
-        keyboard.on_release(callback=listener.on_release)
+        shortcuts.add_handle(instance=self.instance, logger=self.logger)
+        shortcuts.hook()
 
     @wrap_current_function
     def setup_loop_functions(self):
@@ -2092,8 +2089,12 @@ class Bot(object):
             self.instance.stop()
             Queue.flush()
 
-            # Cleanup the keyboard listener to no longer use callbacks.
-            keyboard.unhook_all()
+            # Unhook our now terminated instance from our local shortcut module.
+            # Shortcuts are still active at this point, but no logs or queued events are created for this instance.
+            shortcuts.unhook(
+                instance=self.instance,
+                logger=self.logger
+            )
 
             self.logger.info("==========================================================================================")
             self.logger.info("{session}".format(session=self.stats.session))
