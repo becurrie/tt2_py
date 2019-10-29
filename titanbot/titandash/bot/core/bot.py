@@ -622,6 +622,11 @@ class Bot(object):
                 for i in range(6):
                     self.drag(start=self.locs.scroll_start, end=self.locs.scroll_bottom_end)
 
+                    # Have we found any max level heroes yet?
+                    if self.grabber.search(image=self.images.max_level, bool_only=True):
+                        self.logger.info("a max levelled hero has been found! levelling heroes now.")
+                        break
+
                 drag_start = HEROES_LOCS["drag_heroes"]["start"]
                 drag_end = HEROES_LOCS["drag_heroes"]["end"]
 
