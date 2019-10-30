@@ -130,6 +130,13 @@
                     <p class="text-muted">{{ help.enable_tapping }}</p>
                 </div>
 
+                <div class="form-group">
+                    {# Tapping Repeat #}
+                    <label for="tapping_repeat">Repeat Tapping:</label>
+                    <input value="{{ config.tapping_repeat|default_if_none:"" }}" type="number" class="form-control" id="tapping_repeat" name="tapping_repeat">
+                    <p style="padding: 3px;" class="text-muted">{{ help.tapping_repeat }}</p>
+                </div>
+
                 <div class="form-check">
                     {# Enable Daily Rewards #}
                     <input {% if config.enable_daily_rewards %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_daily_rewards" name="enable_daily_rewards">
@@ -178,6 +185,13 @@
                     <input {% if config.enable_minigames %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_minigames" name="enable_minigames">
                     <label class="form-check-label" for="enable_minigames">Enable Minigames</label>
                     <p class="text-muted">{{ help.enable_minigames }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Minigames Repeat #}
+                    <label for="minigames_repeat">Repeat Minigames:</label>
+                    <input value="{{ config.minigames_repeat|default_if_none:"" }}" type="number" class="form-control" id="minigames_repeat" name="minigames_repeat">
+                    <p style="padding: 3px;" class="text-muted">{{ help.minigames_repeat }}</p>
                 </div>
 
                 <div class="form-check">

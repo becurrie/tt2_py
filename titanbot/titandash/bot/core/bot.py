@@ -1686,13 +1686,15 @@ class Bot(object):
 
             # Looping through all of our fairy map locations... Clicking and checking
             # for ads throughout the process.
-            for index, point in enumerate(self.locs.fairies_map, start=1):
-                self.click(point=point)
+            self.logger.info("executing tapping process {repeats} time(s)".format(repeats=self.configuration.tapping_repeat))
+            for i in range(self.configuration.tapping_repeat):
+                for index, point in enumerate(self.locs.fairies_map, start=1):
+                    self.click(point=point)
 
-                # Every fifth click, we should check to see if an ad is present on the
-                # screen now, since our clicks could potentially trigger a fairy ad.
-                if index % 5 == 0:
-                    self.collect_ad_no_transition()
+                    # Every fifth click, we should check to see if an ad is present on the
+                    # screen now, since our clicks could potentially trigger a fairy ad.
+                    if index % 5 == 0:
+                        self.collect_ad_no_transition()
 
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
             # clicked just as the tapping ended.
@@ -1716,16 +1718,18 @@ class Bot(object):
                 tapping_map += (minigame,)
                 tapping_map += getattr(self.locs, minigame)
 
-            for index, point in enumerate(tapping_map, start=1):
-                if isinstance(point[0], str):
-                    self.logger.info("executing/tapping {minigame}".format(minigame=point))
-                else:
-                    self.click(point=point)
+            self.logger.info("executing minigames process {repeats} time(s)".format(repeats=self.configuration.minigames_repeat))
+            for i in range(self.configuration.minigames_repeat):
+                for index, point in enumerate(tapping_map, start=1):
+                    if isinstance(point[0], str):
+                        self.logger.info("executing/tapping {minigame}".format(minigame=point))
+                    else:
+                        self.click(point=point)
 
-                # Every fifth click, we should check to see if an ad is present on the
-                # screen now, since our clicks could potentially trigger a fairy ad.
-                if index % 5 == 0:
-                    self.collect_ad_no_transition()
+                    # Every fifth click, we should check to see if an ad is present on the
+                    # screen now, since our clicks could potentially trigger a fairy ad.
+                    if index % 5 == 0:
+                        self.collect_ad_no_transition()
 
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
             # clicked just as the tapping ended.

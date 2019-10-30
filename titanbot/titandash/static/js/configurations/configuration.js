@@ -66,6 +66,10 @@ let ConfigurationController = function() {
             /* Runtime */
             post_action_min_wait_time: $("#post_action_min_wait_time"),
             post_action_max_wait_time: $("#post_action_max_wait_time"),
+            /* Generic Settings */
+            tapping_repeat: $("#tapping_repeat"),
+            /* Minigames */
+            minigames_repeat: $("#minigames_repeat"),
             /* Breaks */
             breaks_jitter: $("#breaks_jitter"),
             breaks_minutes_required: $("#breaks_minutes_required"),

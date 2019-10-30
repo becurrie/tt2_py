@@ -106,6 +106,9 @@ COMPRESSION_KEYS = {
     "hero_level_on_start": 93,
     "level_skills_on_start": 94,
     "activate_skills_every_x_seconds": 95,
+    "tapping_repeat": 96,
+    "minigames_repeat": 97
+
 }
 
 HELP_TEXT = {
@@ -116,11 +119,13 @@ HELP_TEXT = {
     "post_action_max_wait_time": "Determine the maximum amount of seconds to wait after an in game function is finished executing.",
     "emulator": "Which emulator service is being used?",
     "enable_tapping": "Enable the ability to tap on titans (This also enables the clicking of fairies in game).",
+    "tapping_repeat": "Specify how many times the tapping loop should run when executed.",
     "enable_daily_rewards": "Enable the ability to collect daily rewards in game when they become available.",
     "enable_clan_crates": "Enable the ability to collect clan crates in game when they are available.",
     "enable_egg_collection": "Enable the ability to collect and hatch eggs in game.",
     "enable_tournaments": "Enable the ability to enter and participate in tournaments.",
     "enable_minigames": "Enable the ability to enable/disable different skill minigames that can be executed.",
+    "minigames_repeat": "Specify how many times the minigames loop should run when executed.",
     "enable_coordinated_offensive": "Enable coordinated offensive tapping skill minigame.",
     "enable_astral_awakening": "Enable astral awakening tapping skill minigame.",
     "enable_heart_of_midas": "Enable heart of midas tapping skill minigame.",
@@ -220,6 +225,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
 
     # GENERIC Settings.
     enable_tapping = models.BooleanField(verbose_name="Enable Tapping", default=True, help_text=HELP_TEXT["enable_tapping"])
+    tapping_repeat = models.PositiveIntegerField(verbose_name="Repeat Tapping", default=1, help_text=HELP_TEXT["tapping_repeat"])
     enable_daily_rewards = models.BooleanField(verbose_name="Enable Daily Rewards", default=True, help_text=HELP_TEXT["enable_daily_rewards"])
     enable_clan_crates = models.BooleanField(verbose_name="Enable Clan Crates", default=True, help_text=HELP_TEXT["enable_clan_crates"])
     enable_egg_collection = models.BooleanField(verbose_name="Enable Egg Collection", default=True, help_text=HELP_TEXT["enable_egg_collection"])
@@ -227,6 +233,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
 
     # MINIGAME Settings.
     enable_minigames = models.BooleanField(verbose_name="Enable Skill Minigames", default=False, help_text=HELP_TEXT["enable_minigames"])
+    minigames_repeat = models.PositiveIntegerField(verbose_name="Repeat Minigames", default=1, help_text=HELP_TEXT["minigames_repeat"])
     enable_coordinated_offensive = models.BooleanField(verbose_name="Enable Coordinated Offensive", default=False, help_text=HELP_TEXT["enable_coordinated_offensive"])
     enable_astral_awakening = models.BooleanField(verbose_name="Enable Astral Awakening", default=False, help_text=HELP_TEXT["enable_astral_awakening"])
     enable_heart_of_midas = models.BooleanField(verbose_name="Enable Heart Of Midas", default=False, help_text=HELP_TEXT["enable_heart_of_midas"])
@@ -433,6 +440,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
             },
             "Generic": {
                 "enable_tapping": self.enable_tapping,
+                "tapping_repeat": self.tapping_repeat,
                 "enable_daily_rewards": self.enable_daily_rewards,
                 "enable_clan_crates": self.enable_clan_crates,
                 "enable_egg_collection": self.enable_egg_collection,
@@ -440,6 +448,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
             },
             "Minigames": {
                 "enable_minigames": self.enable_minigames,
+                "minigames_repeat": self.minigames_repeat,
                 "enable_coordinated_offensive": self.enable_coordinated_offensive,
                 "enable_astral_awakening": self.enable_astral_awakening,
                 "enable_heart_of_midas": self.enable_heart_of_midas,
