@@ -209,7 +209,7 @@ class Stats:
         while True:
             loops += 1
 
-            drag_mouse(start=locs["scroll_start"], end=locs["scroll_bottom_end"], window=self.window, quick_stop=locs["scroll_quick_stop"])
+            drag_mouse(start=locs["scroll_start"], end=locs["scroll_bottom_end"], window=self.window)
             sleep(1)
 
             # Take another screenshot of the screen now.
