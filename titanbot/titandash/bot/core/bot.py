@@ -1171,7 +1171,7 @@ class Bot(object):
         if self.configuration.enable_tournaments:
             self.logger.info("checking for tournament ready to join or in progress.")
             if not self.ensure_collapsed():
-                return False
+                return False, None
 
             # Looping to find tournament here, since there's a chance that the tournament is finished, which
             # causes a star trail circle the icon. May be hard to find, give it a couple of tries.
@@ -1193,7 +1193,7 @@ class Bot(object):
                     self.logger.info("tournament is available to join. generating prestige instance before joining.")
                     self.click(point=MASTER_LOCS["screen_top"], pause=1)
                     if not self.goto_master(collapsed=False, top=False):
-                        return False
+                        return False, None
 
                     self.click(point=MASTER_LOCS["prestige"], pause=3)
                     prestige_found = self.grabber.search(self.images.confirm_prestige, bool_only=True)
@@ -1225,9 +1225,9 @@ class Bot(object):
                         self.click(point=self.locs.collect_prize, pause=2)
                         self.click(point=self.locs.game_middle, clicks=10, interval=0.5)
 
-                # No tournament was joined, and regardless of the reward being available
-                # or not, if we reach this point, return our flags as False, None.
-                return False, None
+            # No tournament was joined, and regardless of the reward being available
+            # or not, if we reach this point, return our flags as False, None.
+            return False, None
 
     @wrap_current_function
     @not_in_transition
