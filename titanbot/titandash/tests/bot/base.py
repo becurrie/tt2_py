@@ -31,7 +31,7 @@ class BaseBotTest(TestCase):
         # Configuration is handled by our migration signals...
         # A DEFAULT Configuration is generated that may be used here.
         cls.config = Configuration.objects.get(name="DEFAULT")
-        cls.window = Window(hwnd=1)
+        cls.window = Window(hwnd=1, text="Test Emulator", rectangle=(0, 0, 480, 800))
         cls.bot = Bot(
             configuration=cls.config,
             window=cls.window,

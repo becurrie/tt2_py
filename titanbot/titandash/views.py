@@ -18,7 +18,7 @@ from titandash.models.artifact import Artifact, Tier
 from titandash.models.configuration import Configuration, ThemeConfig
 from titandash.models.prestige import Prestige
 from titandash.models.queue import Queue
-from titandash.bot.core.window import WindowHandler, Window
+from titandash.bot.core.window import WindowHandler
 from titandash.bot.core.constants import QUEUEABLE_FUNCTIONS, QUEUEABLE_TOOLTIPS, SHORTCUT_FUNCTIONS
 
 from io import BytesIO
@@ -593,12 +593,21 @@ def prestiges(request):
 
 def screen(request):
     """Grab a screen shot of the current bot in game... Returning it as Base64 Image."""
+    # Note: Nox Emulator is the only supported emulator... We can use
+    # the expected values for that emulator for our screenshots...
+    from titandash.bot.external.imagesearch import region_grabber
     from PIL.Image import ANTIALIAS
 
     inst = BotInstance.objects.get(pk=request.GET.get("instance"))
     window = inst.window
 
-    grab = Window(hwnd=window["hwnd"]).screenshot().resize((360, 600), ANTIALIAS)
+    grab = region_grabber((
+        window["x"], window["y"],
+        window["x"] + window["width"],
+        window["y"] + window["height"]
+    ))
+    grab = grab.resize((360, 600), ANTIALIAS)
+
     buffered = BytesIO()
     grab.save(buffered, format="JPEG", quality=30)
 

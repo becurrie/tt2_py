@@ -67,6 +67,11 @@ class Stats:
         # Grabber is used to perform OCR updates when grabbing game statistics.
         self.grabber = grabber
 
+        # Generate a key that matches the currently specified height and width that's configured.
+        # Key is used by the update method to grab proper regions when taking screenshots.
+        self.key = "{0}x{1}".format(self.grabber.width, self.grabber.height)
+        self.version = BOT_VERSION
+
         # Updating the pytesseract command that is used based on the one
         # present in the django settings... Which should be handled by our bootstrapper.
         pytesseract.pytesseract.tesseract_cmd = settings.TESSERACT_COMMAND
