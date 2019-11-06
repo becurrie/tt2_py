@@ -4,7 +4,12 @@ from .constants import (
 
 from pyautogui import _failSafeCheck
 
+from PIL import Image
+from threading import Lock
+from ctypes import windll
+
 import win32gui
+import win32ui
 import win32api
 import win32con
 
@@ -19,30 +24,22 @@ class Window(object):
         "middle": (win32con.WM_MBUTTONDOWN, win32con.WM_MBUTTONUP),
     }
 
-    def __init__(self, hwnd, text, rectangle):
-        self.hwnd = hwnd
-        self.text = text
-        self.x = rectangle[0]
-        self.y = rectangle[1]
-        self.width = rectangle[2] - self.x
-        self.height = rectangle[3] - self.y
+    EMULATOR_WIDTH = 480
+    EMULATOR_HEIGHT = 800
 
-        # Depending on the type of emulator being used (and support), some
-        # differences in the way their window object is defined.
-        # Nox: X Axis is not included in window rectangle.
-        # MEmu: X Axis is included.
-        # Based on these differences, we should modify appropriately
+    def __init__(self, hwnd):
+        self.hwnd = hwnd
+        self.x_subtract = 0
+
+        # Depending on the type of emulator being used (and supported), some differences in the way their window object is defined.
+        # Nox: X Axis is not included in window rectangle.  MEmu: X Axis is included. Based on these differences, we should modify appropriately
         # the width and height values before calculating padding.
         if self.text.lower() in MEMU_WINDOW_FILTER:
-            self.width -= 38
+            self.x_subtract = 38
 
-        # Additionally, based on the size of the emulator, we want
-        # to ensure we can pad the x, y value so the title bar is taken
-        # into account when things are clicked or searched for...
-        # We expect the emulator size to be 480x800, so we can get
-        # the padding from this value.
-        self.x_padding = self.width - 480
-        self.y_padding = self.height - 800
+        # We use a lock object to ensure that screenshots are only ever taken by a single
+        # thread, we do this to avoid issues with the win32api and ctypes implementations.
+        self.lock = Lock()
 
     def __str__(self):
         return "{text} ({x}, {y}, {w}, {h})".format(
@@ -50,6 +47,38 @@ class Window(object):
 
     def __repr__(self):
         return "<Window: {window}>".format(window=self)
+
+    @property
+    def text(self):
+        return win32gui.GetWindowText(self.hwnd)
+
+    @property
+    def rect(self):
+        return win32gui.GetClientRect(self.hwnd)
+
+    @property
+    def x_padding(self):
+        return self.width - 480
+
+    @property
+    def y_padding(self):
+        return self.height - 800
+
+    @property
+    def x(self):
+        return self.rect[0] + self.x_padding
+
+    @property
+    def y(self):
+        return self.rect[1] + self.y_padding
+
+    @property
+    def width(self):
+        return self.rect[2] - self.x_subtract
+
+    @property
+    def height(self):
+        return self.rect[3]
 
     def find(self, search):
         """
@@ -64,7 +93,7 @@ class Window(object):
 
         return False
 
-    def click(self, point, clicks=1, interval=0.0, button="left", pause=0.0, disable_padding=False):
+    def click(self, point, clicks=1, interval=0.0, button="left", pause=0.0):
         """
         Perform a click on the given window in the background.
 
@@ -75,19 +104,10 @@ class Window(object):
         evt_d = self.SUPPORTED_CLICK_EVENTS[button][0]
         evt_u = self.SUPPORTED_CLICK_EVENTS[button][1]
 
-        # Padding should be disabled in the cases where our point is derived
-        # through an image search, which returns a relative coord that
-        # does not need any modification.
-        if disable_padding:
-            param = win32api.MAKELONG(
-                point[0],
-                point[1]
-            )
-        else:
-            param = win32api.MAKELONG(
-                point[0],
-                point[1] + self.y_padding
-            )
+        param = win32api.MAKELONG(
+            point[0],
+            point[1] + self.y_padding
+        )
 
         # Loop through all clicks that should take place.
         for x in range(clicks):
@@ -152,6 +172,38 @@ class Window(object):
         if pause:
             time.sleep(pause)
 
+    def screenshot(self, region=None):
+        """
+        Take a screenshot of the current window. The window may be visible or behind another window.
+        """
+        with self.lock:
+            hwnd_dc = win32gui.GetWindowDC(self.hwnd)
+            mfc_dc = win32ui.CreateDCFromHandle(hwnd_dc)
+            save_dc = mfc_dc.CreateCompatibleDC()
+
+            save_bitmap = win32ui.CreateBitmap()
+            save_bitmap.CreateCompatibleBitmap(mfc_dc, self.width, self.height)
+            save_dc.SelectObject(save_bitmap)
+
+            result = windll.user32.PrintWindow(self.hwnd, save_dc.GetSafeHdc(), 0)
+
+            bmp_info = save_bitmap.GetInfo()
+            bmp_str = save_bitmap.GetBitmapBits(True)
+            image = Image.frombuffer("RGB", (bmp_info["bmWidth"], bmp_info["bmHeight"]), bmp_str, "raw", "BGRX", 0, 1)
+
+            save_dc.DeleteDC()
+            mfc_dc.DeleteDC()
+            win32gui.ReleaseDC(self.hwnd, hwnd_dc)
+            win32gui.DeleteObject(save_bitmap.GetHandle())
+
+            image = image.crop(box=(0, self.y_padding, self.EMULATOR_WIDTH, self.EMULATOR_HEIGHT + self.y_padding))
+            if not region:
+                return image
+
+            # If we have a region available, we can crop the screenshot
+            # to represent the specified region of the emulator.
+            return image.crop(box=region)
+
     def json(self):
         """Convert window instance to a json compliant dictionary."""
         return {
@@ -184,12 +236,7 @@ class WindowHandler(object):
         if hwnd in self.windows:
             pass
 
-        window = Window(
-            hwnd=hwnd,
-            text=win32gui.GetWindowText(hwnd),
-            rectangle=win32gui.GetWindowRect(hwnd))
-
-        self.windows[hwnd] = window
+        self.windows[hwnd] = Window(hwnd=hwnd)
 
     def enum(self):
         """Begin enumerating windows and generate windows objects."""

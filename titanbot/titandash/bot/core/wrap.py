@@ -111,6 +111,8 @@ class Images:
         self.leave_boss = None
         self.settings = None
         self.tournament = None
+        self.pet_damage = None
+        self.master_damage = None
 
         # PETS.
         self.next_egg = None

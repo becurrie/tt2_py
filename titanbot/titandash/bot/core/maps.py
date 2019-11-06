@@ -327,6 +327,9 @@ IMAGES = {
         "leave_boss": IMAGE_DIR + "/no_panels/leave_boss.png",
         "settings": IMAGE_DIR + "/no_panels/settings.png",
         "tournament": IMAGE_DIR + "/no_panels/tournament.png",
+        "pet_damage": IMAGE_DIR + "/no_panels/pet_damage.png",
+        "master_damage": IMAGE_DIR + "/no_panels/master_damage.png",
+
     },
     "PETS": {
         "next_egg": IMAGE_DIR + "/pets/next_egg.png",

@@ -17,16 +17,6 @@ class Grabber:
         self.window = window
         self.logger = logger
 
-        # Padding provided by emulator, x1, y1.
-        self.x = window.x
-        self.y = window.y + window.y_padding
-        self.width = window.width
-        self.height = window.height - window.y_padding
-
-        # x2, y2, represent the width and height of the emulator.
-        self.x2 = self.width + self.x
-        self.y2 = self.height + self.y
-
         # Screen is updated and set to the result of an image grab as needed through the snapshot method.
         self.current = None
 
@@ -36,25 +26,19 @@ class Grabber:
         an explicit region is specified to use to take a screen-shot with.
         """
         if not region:
-            self.logger.debug("taking snapshot of game screen (X1: {x}, Y1: {x}, X2: {x2}, Y2: {y2})".format(
-                x=self.x, y=self.y, x2=self.x2, y2=self.y2))
-            self.current = region_grabber((self.x, self.y, self.x2, self.y2))
+            self.logger.debug("taking snapshot of game screen ({window})".format(window=self.window))
+            self.current = self.window.screenshot()
         else:
-            self.logger.debug("taking snapshot of region in game screen (X1: {x}, Y1: {y}, X2: {x2}, Y2: {y2}".format(
-                x=region[0], y=region[1], x2=region[2], y2=region[3]))
+            self.logger.debug("taking snapshot of region in game screen region {region} ({window})".format(region=region, window=self.window))
+            self.current = self.window.screenshot(region=region)
 
-            padded = self.window.y + self.window.y_padding
-            region = (
-                region[0] + self.window.x, region[1] + padded,
-                region[2] + self.window.x, region[3] + padded
-            )
-            self.current = region_grabber(region)
-
-            if downsize:
-                self.current.thumbnail((
-                    self.current.width / downsize,
-                    self.current.height / downsize
-                ))
+        # Optionally, we can downsize the image grabbed, may improve performance
+        # if we are grabbing or parsing many images and want them to be smaller sizes.
+        if downsize:
+            self.current.thumbnail((
+                self.current.width / downsize,
+                self.current.height / downsize
+            ))
 
     def search(self, image, region=None, precision=0.8, bool_only=False, testing=False, im=None):
         """
@@ -72,47 +56,26 @@ class Grabber:
 
         found = False
         position = -1, -1
-        padded = self.window.y + self.window.y_padding
-        try:
-            if region:
-                region = (
-                    region[0] + self.window.x, region[1] + padded,
-                    region[2] + self.window.x, region[3] + padded
-                )
 
-                search_kwargs = {
-                    "x1": region[0],
-                    "y1": region[1],
-                    "x2": region[2],
-                    "y2": region[3],
-                    "precision": precision,
-                    "im": im
-                }
-            else:
-                search_kwargs = {
-                    "x1": self.x,
-                    "y1": self.y,
-                    "x2": self.x2,
-                    "y2": self.y2,
-                    "precision": precision,
-                    "im": self.current if not im else im
-                }
+        search_kwargs = {
+            "x1": region[0] if region else self.window.x,
+            "y1": region[1] if region else self.window.y,
+            "x2": region[2] if region else self.window.width,
+            "y2": region[3] if region else self.window.height,
+            "precision": precision,
+            "im": im if region else self.current if not im else im,
+            "logger": self.logger
+        }
 
-            # If a list of images to be searched for is being used, loop through and search.
-            # The first image specified that is found breaks the loop.
-            if isinstance(image, list):
-                for _image in image:
-                    position = imagesearcharea(image=_image, **search_kwargs)
-                    if position[0] != -1:
-                        break
-            else:
-                position = imagesearcharea(image=image, **search_kwargs)
-
-        # Catch any errors relating the cv2 functionality. Most commonly appears if the
-        # file could not be found. But additional errors could crop up.
-        except cv2.error:
-            self.logger.error("error occurred during image search, does the file: {file} exist?".format(file=image), exc_info=True)
-            raise
+        # If a list of images to be searched for is being used, loop through and search.
+        # The first image specified that is found breaks the loop.
+        if isinstance(image, list):
+            for _image in image:
+                position = imagesearcharea(window=self.window, image=_image, **search_kwargs)
+                if position[0] != -1:
+                    break
+        else:
+            position = imagesearcharea(window=self.window, image=image, **search_kwargs)
 
         if position[0] != -1:
             found = True
@@ -121,7 +84,7 @@ class Grabber:
 
         # Modify the position to reflect the current window location.
         if position[0] != -1:
-            position = (position[0] + self.window.x, position[1] + padded)
+            position = (position[0] + self.window.x, position[1])
 
         return found, position
 

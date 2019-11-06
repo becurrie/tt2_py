@@ -193,7 +193,7 @@ def gen_offset(point, amount):
     return point[0] + rand_x, point[1] + rand_y
 
 
-def click_on_point(point, window, clicks=1, interval=0.0, button="left", pause=0.0, offset=5, disable_padding=False):
+def click_on_point(point, window, clicks=1, interval=0.0, button="left", pause=0.0, offset=5):
     """
     Click on the specified X, Y value based on the point passed along as a parameter.
     """
@@ -206,8 +206,7 @@ def click_on_point(point, window, clicks=1, interval=0.0, button="left", pause=0
         clicks=clicks,
         interval=interval,
         button=button,
-        pause=pause,
-        disable_padding=disable_padding
+        pause=pause
     )
 
 
@@ -215,13 +214,6 @@ def click_on_image(window, image=None, pos=None, button="left", pause=0.0):
     """
     Click on the specified image on the screen.
     """
-    # Since our emulator window can be technically anywhere, we should subtract whatever the x, y
-    # is, since our clicks are relative to the window being clicked anyways...
-    pos = (
-        pos[0] - window.x,
-        pos[1] - window.y
-    )
-
     logger.debug("{button} clicking on {image} located at {pos} with {pause}s pause".format(button=button, image=image, pos=pos, pause=pause))
     click_image(
         window=window,
@@ -267,17 +259,11 @@ def in_transition_func(*args, max_loops):
         # Is an ad panel open that should be accepted/declined?
         _self.collect_ad_no_transition()
 
-        if _self.grabber.search(image=[
-            _self.images.exit_panel,
-            _self.images.clan_raid_ready,
-            _self.images.clan_no_raid,
-            _self.images.daily_reward,
-            _self.images.fight_boss,
-            _self.images.hatch_egg,
-            _self.images.leave_boss,
-            _self.images.settings,
-            _self.images.tournament
-        ], bool_only=True):
+        # Check the screen for any images that would represent a non active transition state.
+        # If any of these are found, it's safe to say that we are NOT in a transition.
+        if _self.grabber.search(image=[_self.images.exit_panel, _self.images.clan_raid_ready,_self.images.clan_no_raid, _self.images.daily_reward,
+                                       _self.images.fight_boss, _self.images.hatch_egg, _self.images.leave_boss, _self.images.settings, _self.images.tournament,
+                                       _self.images.pet_damage, _self.images.master_damage], bool_only=True):
             break
 
         # Clicking the top of the screen in case of a transition taking place due to something being
@@ -291,7 +277,11 @@ def in_transition_func(*args, max_loops):
             # In this case, the game may of broke? A crash may of occurred. It's safe to attempt to restart the
             # game at this point.
             _self.logger.error("unable to resolve transition state of game, exiting...")
-            _self.terminate()
+
+            # Raising our termination error manually. Since our main loop that is accessing this function
+            # could contain a while loop, we want to ensure we terminate here.
+            from .bot import TerminationEncountered
+            raise TerminationEncountered()
 
 
 class TitanBotHandler(logging.StreamHandler):

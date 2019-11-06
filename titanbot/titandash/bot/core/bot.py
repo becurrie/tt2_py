@@ -154,11 +154,11 @@ class Bot(object):
         if start:
             self.run()
 
-    def click(self, point, clicks=1, interval=0.0, button="left", pause=0.0, offset=5, disable_padding=False):
+    def click(self, point, clicks=1, interval=0.0, button="left", pause=0.0, offset=5):
         """
         Local click method for use with the bot, ensuring we pass the window being used into the click function.
         """
-        click_on_point(point=point, window=self.window, clicks=clicks, interval=interval, button=button, pause=pause, offset=offset, disable_padding=disable_padding)
+        click_on_point(point=point, window=self.window, clicks=clicks, interval=interval, button=button, pause=pause, offset=offset)
 
     def click_image(self, image, pos, button="left", pause=0.0):
         """
@@ -1163,7 +1163,7 @@ class Bot(object):
 
             # Currently just upgrading the artifact to it's max level. Future updates may include the ability
             # to determine how much to upgrade an artifact by.
-            self.click(point=(new_x, new_y), pause=1, disable_padding=True)
+            self.click(point=(new_x, new_y), pause=1)
 
     @not_in_transition
     def check_tournament(self):
