@@ -19,6 +19,7 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - Perform all functionality in the background, so you can do other things while the bot is running.
 - Activate chosen in game skills on a specified cooldown, with the option to wait for a specific skill before activating others.
 - Use/purchase chosen in game perks on a specified cooldown, or only when a tournament is joined.
+- Equip headgear based on your current highest levelled hero (melee, spell, ranged).
 - Use/purchase a specific in game perk whenever you prestige.
 - Activate specific functions using keyboard shortcuts.
 - Automatically tap on the screen, activating and collecting fairies.
@@ -37,6 +38,7 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - Collect daily achievements when they are completed.
 - Collect milestones in game when they are completed.
 - Collect daily rewards when they are available.
+- Update and use newest configuration variables in real time as you modify for your configurations.
 
 ### Bootstrapper
 - Perform automatic updates as they are released directly from this page within the web application.
@@ -54,7 +56,7 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - Choose a specific window (emulator) to target when initializing a bot.
 - Generate multiple instances of a bot and start bots for multiple emulator sessions.
 - View a real time view of the current in game screen.
-- View all log records associated with the current bot session.
+- View all log records associated with the current bot session and filter on specific log levels.
 - Countdowns until specific functionality takes place.
 - View all sessions that have taken place and review logs/duration/prestiges that happened while a session was active.
 - View all raid results instances and view data about damage done and who dealt damage.
@@ -63,7 +65,7 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - View and edit globally available settings that are used by every bot session.
 - Review all current statistics taken from the game, as well as statistics related to the bot.
 - View all prestiges and review additional information (average stage, average duration).
-- View all artifact statistics and whether or not you currently own each one.
+- View all artifact statistics and whether or not you currently own each one. (Toggle owned status).
 - Choose different themes for the dashboard (including dark theme).
 
 ### System Tray
