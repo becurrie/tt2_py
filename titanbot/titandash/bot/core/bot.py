@@ -337,6 +337,7 @@ class Bot(object):
             self.owned_artifacts = []
 
     @wrap_current_function
+    @bot_property(queueable=True, tooltip="Update the next artifact that will be upgraded on prestige.")
     def update_next_artifact_upgrade(self):
         """
         Update the next artifact to be upgraded to the next one in the list.
