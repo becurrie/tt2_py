@@ -1638,6 +1638,7 @@ class Bot(object):
                 if found:
                     break
                 # Drag and try again.
+                loops += 1
                 self.drag(
                     start=self.locs.scroll_start,
                     end=self.locs.scroll_bottom_end,
