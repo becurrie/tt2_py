@@ -160,14 +160,18 @@ let TitandashBootstrapper = function() {
             <p>Would you like to update to the newest version now?</p>
             <p>You will be going from version <strong>${current}</strong> to <strong>${newest}</strong></p>
             <hr/>
-            <p>
-                Please note that, after an update is successful, you will need to reboot the titandash
-                application to see the changes present in the newest release.
-            </p>
-            <p>
-                If you have any issues with the automated update process, you can always download the newest
-                release directly and extract it somewhere on your computer and use it that way.
-            </p>
+            <div class="alert alert-warning" role="alert">
+                <h4>Note</h4>
+                <p>
+                    Please note that, after an update is successful, you will need to reboot the titandash
+                    application to see the changes present in the newest release.
+                </p>
+                <hr/>
+                <p>
+                    If you have any issues with the automated update process, you can always download the newest
+                    release directly and extract it somewhere instead of using the auto updater.
+                </p>
+            </div>
             `
         );
 
