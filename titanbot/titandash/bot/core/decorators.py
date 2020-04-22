@@ -1,6 +1,6 @@
 from functools import wraps
 
-from .utilities import in_transition_func, sleep
+from .utilities import globals, in_transition_func, sleep
 
 from random import randint
 
@@ -48,6 +48,10 @@ class BotProperty(object):
 
         @wraps(function)
         def wrapper(bot, *args, **kwargs):
+            # Raise our failsafe exception if activated
+            # while the function is being executed.
+            globals.failsafe()
+
             # Ensure instance has its "Props" object updated to ensure
             # that the bot instance is saved and web sockets are sent.
             if self.wrap_name:
