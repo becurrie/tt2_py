@@ -821,8 +821,18 @@ class Bot(object):
                 # Begin level and scrolling process. An assumption is made that all heroes
                 # are unlocked, meaning that some un-necessary scrolls may take place.
                 self.logger.info("scrolling and levelling all heroes present.")
-                while not self.grabber.search(image=self.images.masteries, bool_only=True):
-                    self.logger.info("levelling heroes on screen...")
+
+                _loops = 0
+                _last = self.grabber.snapshot(region=PANEL_COORDS["panel_check"])
+                _current = _last
+
+                while True:
+                    if _loops == FUNCTION_LOOP_TIMEOUT:
+                        self.logger.warning("reached limit allowed for hero levelling, finishing now...")
+                        break
+
+                    _loops += 1
+
                     for point in HEROES_LOCS["level_heroes"]:
                         self.click(
                             point=point,
@@ -836,6 +846,12 @@ class Bot(object):
                         end=drag_end,
                         pause=1
                     )
+
+                    _last = _current
+                    _current = self.grabber.snapshot(region=PANEL_COORDS["panel_check"])
+
+                    if self.stats.images_duplicate(image_one=_last, image_two=_current):
+                        break
 
                 # Performing one additional heroes level after the top
                 # has been reached...
