@@ -441,6 +441,8 @@ class Bot(object):
             minigames.append("flash_zip")
         if self.configuration.enable_forbidden_contract:
             minigames.append("forbidden_contract")
+        if self.configuration.enable_summon_dagger:
+            minigames.append("summon_dagger")
 
         self.minigame_order = minigames
 
