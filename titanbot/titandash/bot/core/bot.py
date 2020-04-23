@@ -2391,7 +2391,8 @@ class Bot(object):
             self.logger.info("executing tapping process {repeats} time(s)".format(repeats=self.configuration.tapping_repeat))
             for i in range(self.configuration.tapping_repeat):
                 for index, point in enumerate(self.locs.fairies_map, start=1):
-                    # No need to sleep, some fails are acceptable
+                    # No need to sleep, some fails are acceptable since
+                    # we loop through a good amount fo coords here.
                     self.click(
                         point=point
                     )
