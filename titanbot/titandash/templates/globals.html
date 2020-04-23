@@ -51,7 +51,7 @@
                                 <option {% if global_settings.pihole_ads_settings == choice.0 %}selected{% endif %} data-value="{{ choice.0 }}">{{ choice.1 }}</option>
                             {% endfor %}
                         </select>
-                        <p style="padding: 3px;" class="text-muted">{{ help.pihole_ads_settings }}</p>
+                        <div style="padding: 3px;" class="text-muted">{{ help.pihole_ads_settings | safe }}</div>
                     </div>
 
                      <div class="form-group">

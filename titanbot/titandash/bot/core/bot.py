@@ -441,6 +441,8 @@ class Bot(object):
             minigames.append("flash_zip")
         if self.configuration.enable_forbidden_contract:
             minigames.append("forbidden_contract")
+        if self.configuration.enable_summon_dagger:
+            minigames.append("summon_dagger")
 
         self.minigame_order = minigames
 
@@ -821,8 +823,18 @@ class Bot(object):
                 # Begin level and scrolling process. An assumption is made that all heroes
                 # are unlocked, meaning that some un-necessary scrolls may take place.
                 self.logger.info("scrolling and levelling all heroes present.")
-                while not self.grabber.search(image=self.images.masteries, bool_only=True):
-                    self.logger.info("levelling heroes on screen...")
+
+                _loops = 0
+                _last = self.grabber.snapshot(region=PANEL_COORDS["panel_check"])
+                _current = _last
+
+                while True:
+                    if _loops == FUNCTION_LOOP_TIMEOUT:
+                        self.logger.warning("reached limit allowed for hero levelling, finishing now...")
+                        break
+
+                    _loops += 1
+
                     for point in HEROES_LOCS["level_heroes"]:
                         self.click(
                             point=point,
@@ -836,6 +848,12 @@ class Bot(object):
                         end=drag_end,
                         pause=1
                     )
+
+                    _last = _current
+                    _current = self.grabber.snapshot(region=PANEL_COORDS["panel_check"])
+
+                    if self.stats.images_duplicate(image_one=_last, image_two=_current):
+                        break
 
                 # Performing one additional heroes level after the top
                 # has been reached...
@@ -2375,7 +2393,8 @@ class Bot(object):
             self.logger.info("executing tapping process {repeats} time(s)".format(repeats=self.configuration.tapping_repeat))
             for i in range(self.configuration.tapping_repeat):
                 for index, point in enumerate(self.locs.fairies_map, start=1):
-                    sleep(0.05)
+                    # No need to sleep, some fails are acceptable since
+                    # we loop through a good amount fo coords here.
                     self.click(
                         point=point
                     )
@@ -2399,14 +2418,14 @@ class Bot(object):
                 for minigame in self.minigame_order:
                     self.logger.info("tapping minigame: {minigame}".format(minigame=minigame))
                     for point in getattr(self.locs, minigame):
-                        sleep(0.05)
+                        sleep(0.02)
                         self.click(
                             point=point
                         )
 
                     # Sleep for an additional amount of time if astral awakening
                     # is currently enabled (allow orb to fly).
-                    if minigame == "astral_awakening":
+                    if minigame == "astral_awakening" and self.configuration.minigames_repeat > 1:
                         self.logger.info("sleeping slightly to allow astral awakening orb to fly...")
                         sleep(0.5)
 
@@ -2499,24 +2518,24 @@ class Bot(object):
                 return True
 
             # Let's ensure that the specified tab is opened (ie: sword, headgear, cloak, aura, slash).
-            self.click(
-                point=EQUIPMENT_LOCS["tabs"][equipment_tab],
-                clicks=5,
-                interval=0.5,
-            )
+            while not self.grabber.point_is_color(point=EQUIPMENT_LOCS["color_checks"][equipment_tab], color=self.colors.EQUIPMENT_CHOSEN):
+                self.click(
+                    point=EQUIPMENT_LOCS["tabs"][equipment_tab],
+                )
+
             # Let's also perform a bit of a drag to try and reach the top or bottom of the tab.
             # Ensuring that our tab is at the top.
             if top:
                 self.drag(
                     start=EQUIPMENT_LOCS["drag_equipment"]["start"],
                     end=EQUIPMENT_LOCS["drag_equipment"]["end"],
-                    pause=0.3
+                    pause=0.1
                 )
             else:
                 self.drag(
                     start=EQUIPMENT_LOCS["drag_equipment"]["end"],
                     end=EQUIPMENT_LOCS["drag_equipment"]["start"],
-                    pause=0.3
+                    pause=0.1
                 )
             return True
         # Any other panel travelling happens here.
