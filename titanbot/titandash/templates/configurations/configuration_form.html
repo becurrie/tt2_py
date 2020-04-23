@@ -202,6 +202,13 @@
                     <label class="form-check-label" for="enable_forbidden_contract">Enable Forbidden Contract</label>
                     <p class="text-muted">{{ help.enable_forbidden_contract }}</p>
                 </div>
+
+                <div class="form-check">
+                    {# Enable Summon Dagger #}
+                    <input {% if config.enable_summon_dagger %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_summon_dagger" name="enable_summon_dagger">
+                    <label class="form-check-label" for="enable_summon_dagger">Enable Summon Dagger</label>
+                    <p class="text-muted">{{ help.enable_summon_dagger }}</p>
+                </div>
             </div>
         </div>
     </div>
