@@ -199,6 +199,13 @@ EQUIPMENT_LOCS = {
         "aura": (240, 86),
         "slash": (307, 86),
     },
+    "color_checks": {
+        "sword": (29, 114),
+        "headgear": (94, 114),
+        "cloak": (161, 114),
+        "aura": (225, 114),
+        "slash": (291, 114),
+    },
     "drag_equipment": {
         "start": (328, 165),
         "end": (328, 610),
@@ -240,6 +247,7 @@ GAME_COLORS = {
     "ENCHANT": (235, 167, 12),
     "COLLECT_GREEN": (101, 155, 28),
     "SKILL_CANT_LEVEL": (73, 72, 73),
+    "EQUIPMENT_CHOSEN": (66, 64, 68),
 }
 
 # All images should have their names mapped to the file path within the module.

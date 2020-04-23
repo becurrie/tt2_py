@@ -2515,24 +2515,24 @@ class Bot(object):
                 return True
 
             # Let's ensure that the specified tab is opened (ie: sword, headgear, cloak, aura, slash).
-            self.click(
-                point=EQUIPMENT_LOCS["tabs"][equipment_tab],
-                clicks=5,
-                interval=0.5,
-            )
+            while not self.grabber.point_is_color(point=EQUIPMENT_LOCS["color_checks"][equipment_tab], color=self.colors.EQUIPMENT_CHOSEN):
+                self.click(
+                    point=EQUIPMENT_LOCS["tabs"][equipment_tab],
+                )
+
             # Let's also perform a bit of a drag to try and reach the top or bottom of the tab.
             # Ensuring that our tab is at the top.
             if top:
                 self.drag(
                     start=EQUIPMENT_LOCS["drag_equipment"]["start"],
                     end=EQUIPMENT_LOCS["drag_equipment"]["end"],
-                    pause=0.3
+                    pause=0.1
                 )
             else:
                 self.drag(
                     start=EQUIPMENT_LOCS["drag_equipment"]["end"],
                     end=EQUIPMENT_LOCS["drag_equipment"]["start"],
-                    pause=0.3
+                    pause=0.1
                 )
             return True
         # Any other panel travelling happens here.
