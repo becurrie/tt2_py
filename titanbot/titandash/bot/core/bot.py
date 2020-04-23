@@ -2391,7 +2391,7 @@ class Bot(object):
             self.logger.info("executing tapping process {repeats} time(s)".format(repeats=self.configuration.tapping_repeat))
             for i in range(self.configuration.tapping_repeat):
                 for index, point in enumerate(self.locs.fairies_map, start=1):
-                    sleep(0.05)
+                    # No need to sleep, some fails are acceptable
                     self.click(
                         point=point
                     )
@@ -2415,14 +2415,14 @@ class Bot(object):
                 for minigame in self.minigame_order:
                     self.logger.info("tapping minigame: {minigame}".format(minigame=minigame))
                     for point in getattr(self.locs, minigame):
-                        sleep(0.05)
+                        sleep(0.02)
                         self.click(
                             point=point
                         )
 
                     # Sleep for an additional amount of time if astral awakening
                     # is currently enabled (allow orb to fly).
-                    if minigame == "astral_awakening":
+                    if minigame == "astral_awakening" and self.configuration.minigames_repeat > 1:
                         self.logger.info("sleeping slightly to allow astral awakening orb to fly...")
                         sleep(0.5)
 
