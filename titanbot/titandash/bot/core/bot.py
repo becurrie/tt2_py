@@ -2521,6 +2521,7 @@ class Bot(object):
             while not self.grabber.point_is_color(point=EQUIPMENT_LOCS["color_checks"][equipment_tab], color=self.colors.EQUIPMENT_CHOSEN):
                 self.click(
                     point=EQUIPMENT_LOCS["tabs"][equipment_tab],
+                    pause=1
                 )
 
             # Let's also perform a bit of a drag to try and reach the top or bottom of the tab.
