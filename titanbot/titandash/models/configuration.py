@@ -76,9 +76,6 @@ COMPRESSION_KEYS = {
     "enable_stats": 60,
     "update_stats_on_start": 61,
     "update_stats_every_x_minutes": 62,
-    "enable_clan_results_parse": 63,
-    "parse_clan_results_on_start": 64,
-    "parse_clan_results_every_x_minutes": 65,
     "master_level_only_once": 70,
     "enable_prestige_threshold_randomization": 71,
     "prestige_random_min_time": 72,
@@ -228,9 +225,6 @@ HELP_TEXT = {
     "enable_stats": "Enable the ability to update statistics during game sessions.",
     "update_stats_on_start": "Should stats be updated when a session is started.",
     "update_stats_every_x_minutes": "Determine how many minutes between each stats update in game.",
-    "enable_clan_results_parse": "Enable the ability to have the bot attempt to parse out clan raid results.",
-    "parse_clan_results_on_start": "Should clan results be parsed when a session is started.",
-    "parse_clan_results_every_x_minutes": "Determine how many minutes between each clan results parse attempt."
 }
 
 
@@ -376,11 +370,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
     enable_stats = models.BooleanField(verbose_name="Enable Stats", default=True, help_text=HELP_TEXT["enable_stats"])
     update_stats_on_start = models.BooleanField(verbose_name="Update Stats On Session Start", default=False, help_text=HELP_TEXT["update_stats_on_start"])
     update_stats_every_x_minutes = models.PositiveIntegerField(verbose_name="Update Stats Every X Minutes", default=60, help_text=HELP_TEXT["update_stats_every_x_minutes"])
-
-    # RAID PARSING Settings.
-    enable_clan_results_parse = models.BooleanField(verbose_name="Enable Clan Results Parsing", default=True, help_text=HELP_TEXT["enable_clan_results_parse"])
-    parse_clan_results_on_start = models.BooleanField(verbose_name="Parse Clan Results On Session Start", default=False, help_text=HELP_TEXT["parse_clan_results_on_start"])
-    parse_clan_results_every_x_minutes = models.PositiveIntegerField(verbose_name="Attempt To Parse Clan Results Every X Minutes", default=300, help_text=HELP_TEXT["parse_clan_results_every_x_minutes"])
 
     def __str__(self):
         return "{name}".format(name=self.name)
@@ -602,11 +591,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "update_stats_on_start": self.update_stats_on_start,
                 "update_stats_every_x_minutes": self.update_stats_every_x_minutes
             },
-            "Raid Parsing": {
-                "enable_clan_results_parse": self.enable_clan_results_parse,
-                "parse_clan_results_on_start": self.parse_clan_results_on_start,
-                "parse_clan_results_every_x_minutes": self.parse_clan_results_every_x_minutes
-            }
         }
 
         if condense:

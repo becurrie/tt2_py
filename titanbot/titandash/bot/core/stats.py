@@ -425,28 +425,6 @@ class Stats:
             self.logger.error("error occurred while creating a prestige instance.")
             self.logger.error(str(exc))
 
-    def clan_name_and_code(self, test_images=None):
-        """
-        Parse out the current name and code for the users current clan.
-
-        Assuming that the information panel of their clan is currently open.
-        """
-        self.logger.info("attempting to parse out current clan name and code...")
-        region_name = CLAN_COORDS["info_name"]
-        region_code = CLAN_COORDS["info_code"]
-
-        if test_images:
-            image_name = self._process(image=test_images[0])
-            image_code = self._process(image=test_images[1])
-        else:
-            image_name = self._process(use_current=True, region=region_name)
-            image_code = self._process(use_current=True, region=region_code)
-
-        name = pytesseract.image_to_string(image=image_name, config="--psm 7")
-        code = pytesseract.image_to_string(image=image_code, config="--psm 7")
-
-        return name, code
-
     def get_raid_attacks_reset(self, test_image=None):
         """
         Parse out the current attacks reset value for the current clan raid.

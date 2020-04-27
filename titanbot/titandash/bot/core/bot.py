@@ -6,7 +6,6 @@ from django.utils import timezone
 from django.db.models import Q
 
 from titandash.models.queue import Queue
-from titandash.models.clan import Clan, RaidResult
 from titandash.models.tournament import Tournament, Participant
 from titandash.constants import SKILL_MAX_LEVEL, PERK_CHOICES, NO_PERK, MEGA_BOOST
 
@@ -36,7 +35,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import datetime
 import random
 import uuid
-import win32clipboard
 
 
 class TerminationEncountered(Exception):
@@ -165,7 +163,6 @@ class Bot(object):
         self.calculate_next_daily_achievement_check()
         self.calculate_next_milestone_check()
         self.calculate_next_raid_notifications_check()
-        self.calculate_next_clan_result_parse()
         self.calculate_next_break()
 
         self.setup_scheduler()
@@ -718,16 +715,6 @@ class Bot(object):
         self._calculate(
             attr="next_raid_notifications_check",
             interval=self.configuration.raid_notifications_check_every_x_minutes * 60
-        )
-
-    @bot_property(queueable=True, tooltip="Calculate the next time a clan result parse will take place.")
-    def calculate_next_clan_result_parse(self):
-        """
-        Calculate when the next clan result parse should take place.
-        """
-        self._calculate(
-            attr="next_clan_results_parse",
-            interval=self.configuration.parse_clan_results_every_x_minutes * 60
         )
 
     @bot_property(queueable=True, tooltip="Calculate the next time a break will take place.")
@@ -2211,122 +2198,6 @@ class Bot(object):
 
                 self.calculate_next_raid_notifications_check()
 
-    @not_in_transition
-    @bot_property(forceable=True, shortcut="ctrl+p", tooltip="Force a clan results parse in game.")
-    def clan_results_parse(self, force=False):
-        """
-        If the time threshold has been reached and clan result parsing is enabled, initiate the process
-        in game to grab and parse out the information from the most recent results data taken from the current
-        in game guild.
-
-        A clan results parse will take the following steps:
-
-            - Determine the name and id of the users current clan, if no clan is available or the name and id
-              can not be successfully parsed, the function will exit early.
-
-            - Grab the most recent "results" CSV data and parse it into some readable data points.
-
-            - If the results grabbed are a duplicate (This will happen if the interval between checks takes place
-              multiple times before a different raid is completed).
-
-            - A digested version of the CSV data is used as the primary key for our clan results.
-        """
-        if self.configuration.enable_clan_results_parse:
-            if force or timezone.now() > self.props.next_clan_results_parse:
-                self.logger.info("{force_or_initiate} clan results parsing now.".format(
-                    force_or_initiate="forcing" if force else "beginning"))
-
-                # The clan results parse should take place.
-                if not self.ensure_no_panel():
-                    return False
-                if not self.leave_boss():
-                    return False
-
-                # Travel to the clan page and attempt to parse out some generic
-                # information about the current users clan.
-                if not self.goto_clan():
-                    return False
-
-                # Is the user in a clan or not? If no clan is present,
-                # exiting early and not attempting to parse.
-                if not self.grabber.search(self.images.clan_info, bool_only=True):
-                    self.logger.warning("no clan is available to parse, giving up...")
-                    return False
-
-                # A clan is available, begin by opening the information panel
-                # to retrieve some generic information about the clan.
-                self.click(
-                    point=self.locs.clan_info,
-                    pause=2
-                )
-                self.click(
-                    point=self.locs.clan_info_header,
-                    pause=2
-                )
-
-                self.logger.info("attempting to parse out generic clan information now...")
-
-                # The clan info panel is open and we can attempt to grab the name and code
-                # of the users current clan.
-                name, code = self.stats.clan_name_and_code()
-
-                if not name:
-                    self.logger.warning("unable to parse clan name, giving up...")
-                    return False
-                if not code:
-                    self.logger.warning("unable to parse clan code, giving up...")
-                    return False
-
-                # Getting or creating the initial clan objects. Updating the clan name
-                # if it's changed since the last results parse, the code may not change.
-                try:
-                    clan = Clan.objects.get(code=code)
-                except Clan.DoesNotExist:
-                    clan = Clan.objects.create(code=code, name=name)
-
-                if clan.name != name:
-                    self.logger.info("clan name: {orig_name} has changed to {new_name}, updating clan information.".format(
-                        orig_name=clan.name, new_name=name))
-                    clan.name = name
-                    clan.save()
-
-                self.logger.info("{clan} was parsed successfully.".format(clan=clan))
-                self.logger.info("attempting to parse out most recent raid results from clan...")
-
-                self.click(
-                    point=self.locs.clan_previous_raid,
-                    pause=2
-                )
-                self.click(
-                    point=self.locs.clan_results_copy,
-                    pause=1
-                )
-
-                win32clipboard.OpenClipboard()
-                results = win32clipboard.GetClipboardData()
-                win32clipboard.CloseClipboard()
-
-                if not results:
-                    self.logger.warning("no clipboard data was retrieved, giving up...")
-                    return False
-
-                # Attempting to generate the raid result for logging purposes,
-                # if the raid found already exists, we'll simply return a False
-                # boolean to determine this and log some info.
-                raid = RaidResult.objects.generate(
-                    clipboard=results,
-                    clan=clan,
-                    instance=self.instance
-                )
-
-                if not raid:
-                    self.logger.warning("the parsed raid results already exist and likely haven't changed since the last parse.")
-                else:
-                    self.logger.info("successfully parsed and created a new raid result instance.")
-                    self.logger.info("raid result: {raid}".format(raid=raid))
-
-                self.calculate_next_clan_result_parse()
-
     def welcome_screen_check(self):
         """
         Check to see if the welcome panel is currently on the screen, and close it if the global
@@ -2886,7 +2757,6 @@ class Bot(object):
                 self.daily_achievements.__name__: self.configuration.enable_daily_achievements,
                 self.milestones.__name__: self.configuration.enable_milestones,
                 self.raid_notifications.__name__: self.configuration.enable_raid_notifications,
-                self.clan_results_parse.__name__: self.configuration.enable_clan_results_parse,
                 self.update_stats.__name__: self.configuration.enable_stats,
                 self.breaks.__name__: self.configuration.enable_breaks
             }.items() if v
@@ -2932,8 +2802,6 @@ class Bot(object):
             self.daily_achievements(force=True)
         if self.configuration.milestones_check_on_start:
             self.milestones(force=True)
-        if self.configuration.parse_clan_results_on_start:
-            self.clan_results_parse(force=True)
         if self.configuration.raid_notifications_check_on_start:
             self.raid_notifications(force=True)
         if self.configuration.headgear_swap_on_start:

@@ -13,7 +13,6 @@ from titandash.utils import start, pause, stop, resume, title
 from titandash.constants import RUNNING, PAUSED, STOPPED, CACHE_TIMEOUT
 from titandash.models.bot import BotInstance
 from titandash.models.statistics import Session, Statistics, Log, ArtifactStatistics, ArtifactOwned
-from titandash.models.clan import RaidResult
 from titandash.models.tournament import Tournament
 from titandash.models.artifact import Artifact, Tier
 from titandash.models.configuration import Configuration, ThemeConfig
@@ -714,37 +713,6 @@ def generate_queued(request):
     Queue.objects.add(function=func, instance=inst)
 
     return JsonResponse(data={"status": "success", "function": title(func)})
-
-
-def raids(request):
-    ctx = {"raids": []}
-
-    if request.GET.get("instance"):
-        _raids = RaidResult.objects.filter(instance=BotInstance.objects.get(pk=request.GET.get("instance")))
-    else:
-        _raids = RaidResult.objects.filter(instance=BotInstance.objects.grab())
-
-    for raid_result in _raids.order_by("parsed"):
-        ctx["raids"].append(raid_result.json())
-
-    ctx["RAIDS_JSON"] = json.dumps(ctx)
-
-    if request.GET.get("context"):
-        return JsonResponse(data={
-            "table": render(request, "raids/raidsTable.html", context=ctx).content.decode()
-        })
-
-    return render(request, "raids/raids.html", context=ctx)
-
-
-def raid(request, digest):
-    ctx = {
-        "raid": RaidResult.objects.get(digest=digest).json()
-    }
-
-    ctx["RAID_JSON"] = json.dumps(ctx)
-
-    return render(request, "raids/raid.html", context=ctx)
 
 
 def tournaments(request):

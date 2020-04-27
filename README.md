@@ -28,7 +28,6 @@ You can also visit our homepage, [here](https://titandash.net) for more informat
 - Automatically level up skills to a specified level cap.
 - Automatically prestige after a threshold has been reached (stage, percent of max stage, max stage, time limit).
 - Automatically add random padding to prestige times to ensure they look less robotic.
-- Automatically parse out clan raid results from in game.
 - Automatically take breaks in game after random intervals of game time.
 - Receive text notifications when your raid attacks timer has reset and the titan can be attacked.
 - Upgrade or ignore specific artifacts or tiers after a prestige.

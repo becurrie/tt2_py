@@ -77,8 +77,6 @@ let ConfigurationController = function() {
             milestones_check_every_x_hours: $("#milestones_check_every_x_hours"),
             /* Raid Notifications */
             raid_notifications_check_every_x_minutes: $("#raid_notifications_check_every_x_minutes"),
-            /* Clan Parsing */
-            parse_clan_results_every_x_minutes: $("#parse_clan_results_every_x_minutes"),
             /* Master */
             master_level_every_x_seconds: $("#master_level_every_x_seconds"),
             master_level_intensity: $("#master_level_intensity"),
