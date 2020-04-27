@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static_buster %}
+
+{% block head_title %}
+    Tournaments
+{% endblock %}
+
+{% block content %}
+    <div id="accordion">
+        <div class="card">
+            <div class="card-header" id="tournaments">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne">
+                        Tournaments
+                    </button>
+                    <button id="exportTournamentsJson" type="button" class="float-right btn btn-primary">
+                        Export JSON
+                        <span style="margin-left: 8px;" class="fa fa-file-export"></span>
+                    </button>
+                </h5>
+                <hr/>
+                <select id="tournamentsInstanceSelect" class="form-control">
+                    {% for instance in INSTANCES %}
+                        <option value="{{ instance.id }}">{{ instance.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="collapseOne" class="collapse show" data-parent="#accordion">
+                <div id="tournamentsCardBody" class="card-body">
+                    {% include "tournaments/tournamentsTable.html" %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static "js/tournaments/tournaments.js" %}"></script>
+{% endblock %}

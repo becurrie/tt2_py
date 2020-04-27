@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load static_buster %}
+
+{% block head_title %}
+    Tournament {{ tournament.identifier }}
+{% endblock %}
+
+{% block content %}
+    {# Accordion One - Basic Tournament Information #}
+    <div id="accordionOne">
+        <div class="card">
+            <div class="card-header" id="tournamentBaseHeader">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne">
+                         Tournament: {{ tournament.identifier }}
+                    </button>
+                    <button id="exportTournamentJson" type="button" class="float-right btn btn-sm btn-primary">
+                        Export JSON
+                        <span style="margin-left: 8px;" class="fa fa-file-export"></span>
+                    </button>
+                    <a href="{% url "delete_tournament" identifier=tournament.identifier  %}" style="margin-right: 8px;" type="button" class="float-right btn btn-primary btn-sm">
+                        Delete
+                        <span style="margin-left: 8px;" class="fa fa-trash"></span>
+                    </a>
+                </h5>
+            </div>
+
+            <div id="collapseOne" class="collapse show" data-parent="#accordionOne">
+                <div class="card-body">
+                    <table id="tournamentTable" class="table table-sm table-borderless table-hover table-striped titan-responsive">
+                        <tbody>
+                            <tr>
+                                <td>Identifier</td>
+                                <td id="tournamentIdentifierValue">{{ tournament.identifier }}</td>
+                            </tr>
+                            <tr>
+                                <td>Finished</td>
+                                <td>{{ tournament.finished.formatted }}</td>
+                            </tr>
+                            <tr>
+                                <td>Participants</td>
+                                <td>{{ tournament.participants_count }}</td>
+                            </tr>
+                            <tr>
+                                <td>Your Placing</td>
+                                <td>{{ tournament.user_rank }}</td>
+                            </tr>
+                            <tr>
+                                <td>Your Stage</td>
+                                <td>{{ tournament.user_stage }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="jsonData" data-json="{{ tournament_json }}" style="display: none;"></div>
+
+    {# Accordion Two - Tournament Participant Table #}
+    <div id="accordionTwo">
+        <div class="card">
+            <div class="card-header" id="tournamentParticipantsHeader">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo">
+                        Tournament Participants
+                    </button>
+                </h5>
+            </div>
+
+            <div id="collapseTwo" class="collapse show" data-parent="#accordionTwo">
+                <div class="card-body">
+                    <table id="tournamentParticipantsTable" class="table table-sm table-borderless table-hover table-striped titan-responsive">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Username</th>
+                                <th>Stage</th>
+                                <th>Is User</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for participant in tournament.participants %}
+                            {% if participant.is_user %}
+                                <tr style="background-color: #71e6e3">
+                            {% else %}
+                                <tr>
+                            {% endif %}
+                                <td>{{ participant.rank }}</td>
+                                <td>{{ participant.username }}</td>
+                                <td>{{ participant.stage }}</td>
+                                {% if participant.is_user %}
+                                    <td><span class="fa fa-check text-success"></span></td>
+                                {% else %}
+                                    <td><span class="fa fa-times text-danger"></span></td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="accordionThree">
+        <div class="card">
+            <div class="card-header" id="tournamentScreenshotHeader">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree">
+                        Tournament Screenshot
+                    </button>
+                </h5>
+            </div>
+
+            <div id="collapseThree" class="collapse show" data-parent="#accordionThree">
+                <div class="card-body text-center">
+                    <img alt="Tournament screenshot." src="{% static tournament.screenshot %}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static "js/tournaments/tournament.js" %}"></script>
+{% endblock %}
