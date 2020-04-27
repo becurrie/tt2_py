@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http.response import JsonResponse
+from django.http.response import JsonResponse, HttpResponseRedirect
 from django.core.cache import cache
 from django.conf import settings
 
@@ -14,6 +14,7 @@ from titandash.constants import RUNNING, PAUSED, STOPPED, CACHE_TIMEOUT
 from titandash.models.bot import BotInstance
 from titandash.models.statistics import Session, Statistics, Log, ArtifactStatistics, ArtifactOwned
 from titandash.models.clan import RaidResult
+from titandash.models.tournament import Tournament
 from titandash.models.artifact import Artifact, Tier
 from titandash.models.configuration import Configuration, ThemeConfig
 from titandash.models.globals import GlobalSettings
@@ -744,6 +745,60 @@ def raid(request, digest):
     ctx["RAID_JSON"] = json.dumps(ctx)
 
     return render(request, "raids/raid.html", context=ctx)
+
+
+def tournaments(request):
+    """
+    Return all tournaments for the currently selected instance.
+    """
+    context = {
+        "tournaments": [],
+    }
+
+    _instance = request.GET.get("instance") or BotInstance.objects.grab()
+    _tournaments = Tournament.objects.filter(instance=_instance)
+
+    for _tournament in _tournaments.order_by("finished"):
+        # Including each tournament as a contextual component
+        # for our table.
+        context["tournaments"].append(_tournament.json())
+
+    # Ensure our tournaments data is also included as json dumped
+    # string for use with our export utility.
+    context["tournaments_json"] = json.dumps(context)
+
+    if request.GET.get("context"):
+        return JsonResponse(data={
+            "table": render(request, "tournaments/tournamentsTable.html", context=context).content.decode()
+        })
+
+    return render(
+        request=request,
+        template_name="tournaments/tournaments.html",
+        context=context
+    )
+
+
+def tournament(request, identifier):
+    """
+    Return a specific tournament based on the identifier.
+    """
+    context = {"tournament": Tournament.objects.get(identifier=identifier).json()}
+    context["tournament_json"] = json.dumps(context)
+
+    return render(
+        request=request,
+        template_name="tournaments/tournament.html",
+        context=context
+    )
+
+
+def delete_tournament(request, identifier):
+    """
+    Delete a specific tournament based on the identifier.
+    """
+    Tournament.objects.get(identifier=identifier).delete()
+    return HttpResponseRedirect(redirect_to="/tournaments/")
 
 
 def create_instance(request):
