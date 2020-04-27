@@ -32,6 +32,7 @@ You can also visit our homepage, [here](https://titandash.net) for more informat
 - Receive text notifications when your raid attacks timer has reset and the titan can be attacked.
 - Upgrade or ignore specific artifacts or tiers after a prestige.
 - Participate in tournaments when they are available (enter/collect rewards).
+- Parse tournaments before collecting rewards to keep track of your placements and rewards earned.
 - Hatch and collect any eggs when they become available.
 - Collect in game ads if VIP is unlocked in game.
 - Collect daily achievements when they are completed.
