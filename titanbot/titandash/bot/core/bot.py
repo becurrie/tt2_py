@@ -1,10 +1,13 @@
-from settings import STAGE_CAP, BOT_VERSION, GIT_COMMIT
+from settings import (
+    STAGE_CAP, BOT_VERSION, GIT_COMMIT, LOCAL_DATA_SCREENSHOTS_DIR
+)
 
 from django.utils import timezone
 from django.db.models import Q
 
 from titandash.models.queue import Queue
 from titandash.models.clan import Clan, RaidResult
+from titandash.models.tournament import Tournament, Participant
 from titandash.constants import SKILL_MAX_LEVEL, PERK_CHOICES, NO_PERK, MEGA_BOOST
 
 from titandash.bot.core import shortcuts
@@ -32,6 +35,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 import datetime
 import random
+import uuid
 import win32clipboard
 
 
@@ -1768,11 +1772,16 @@ class Bot(object):
 
                 # Otherwise, maybe the tournament is over? Or still running.
                 else:
-                    found = self.find_and_click(
-                        image=self.images.collect_prize,
-                        pause=2
-                    )
-                    if found:
+                    if self.grabber.search(image=self.images.collect_prize, bool_only=True):
+                        # Perform a parse of the current tournament screen once the tournament
+                        # has ended. We can collect data about who won and the stage each user
+                        # got to if this functionality is enabled.
+                        self.parse_tournament()
+
+                        self.find_and_click(
+                            image=self.images.collect_prize,
+                            pause=2
+                        )
                         self.click(
                             point=self.locs.game_middle,
                             clicks=10,
@@ -1787,6 +1796,87 @@ class Bot(object):
         # are the only function that expects multiple variables returned, we only need do it in this function currently.
         else:
             return False, None
+
+    def parse_tournament(self):
+        """
+        Perform a parse of the current in game tournament.
+
+        Collecting and storing information about the placing for the current user in the tournament,
+        as well as information about each tournament participant.
+
+        The reward earned should also be included in the results.
+        """
+        if self.configuration.enable_tournament_parsing:
+            self.logger.info("attempting to parse tournament results now...")
+
+            # First, let's determine if our user is in the top ten or not in this tournament.
+            # This changes how we should handle the parsing here.
+            in_top_ten = not self.grabber.search(image=self.images.in_top_ten, bool_only=True)
+
+            # Determine which coords we will use to loop through to grab info about each person
+            # current in the tournament (either top 5 + users current placing), or the entire
+            # top 9 users in the tournament.
+            coords = TOURNAMENT_COORDS["in_top_ten"] if in_top_ten else TOURNAMENT_COORDS["not_in_top_ten"]
+            count = 9 if in_top_ten else 8  # 8 participants are displayed if user is not in the top ten.
+
+            _current = self.grabber.snapshot()
+            _identifier = uuid.uuid4()
+            _path = "{dir}/{identifier}.png".format(dir=LOCAL_DATA_SCREENSHOTS_DIR, identifier=_identifier)
+
+            # Make sure the current screenshot is also saved so it can be viewed
+            # later in the dashboard to see a real view of the tournament results.
+            _current.save(_path)
+
+            tournament = Tournament.objects.create(
+                instance=self.instance,
+                identifier=_identifier,
+            )
+
+            # Loop through each expected available participant in the tournament.
+            # Each one has an index associated for each expected location to search through.
+            for i in range(count):
+                # Generate a new participant for each iteration we take.
+                # We can use our index to determine which participant we're on.
+                if in_top_ten:
+                    _rank = i + 1
+                # Non top-ten tournament means we can manually grab up to 5th place.
+                # After that, we'll need to parse using OCR.
+                else:
+                    if i <= 4:
+                        _rank = i + 1
+                    else:
+                        _rank = self.stats.tournament_rank_ocr(region=coords["ranks"][i], threshold=150)
+
+                _user = self.stats.tournament_user_ocr(region=coords["usernames"][i])
+                _stage = self.stats.tournament_stage_ocr(region=coords["stages"][i])
+                _is_user = self.grabber.point_is_color(point=coords["user_check_points"][i], color=self.colors.TOURNAMENT_USER)
+
+                # Strip out the "W" from the winning users username.
+                # This is what the "crown" should be parsed into.
+                if i == 0 and _user[-1] == "W":
+                    _user = _user[:-1].strip()
+
+                self.logger.info("tournament participant: {index} parsed rank: {rank}".format(index=i + 1, rank=_rank))
+                self.logger.info("tournament participant: {index} parsed user: {user}".format(index=i + 1, user=_user))
+                self.logger.info("tournament participant: {index} parsed stage: {stage}".format(index=i + 1, stage=_stage))
+                self.logger.info("tournament participant: {index} parsed is user: {is_user}".format(index=i + 1, is_user=_is_user))
+
+                # All potential information is parsed for out participants, should be noted
+                # that this information isn't guaranteed to be correct, since the ocr accuracy
+                # may not be 100%.
+                tournament.participants.add(Participant.objects.create(
+                    rank=_rank,
+                    username=_user,
+                    stage=_stage,
+                    is_user=_is_user
+                ))
+
+            self.logger.info("tournament: {identifier} was parsed successfully.".format(identifier=_identifier))
+            self.logger.info("{parsed_participants} participant(s) were parsed successfully.".format(parsed_participants=tournament.participants.count()))
+
+            # Return true boolean in case of conditionals based on the
+            # returned value.
+            return True
 
     @not_in_transition
     @bot_property(queueable=True, shortcut="shift+d", tooltip="Check for daily rewards in game and collect if available.")
