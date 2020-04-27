@@ -125,6 +125,7 @@ COMPRESSION_KEYS = {
     "headgear_swap_on_start": 113,
     "enable_forbidden_contract": 114,
     "enable_summon_dagger": 115,
+    "enable_tournament_parsing": 116,
 }
 
 HELP_TEXT = {
@@ -139,6 +140,7 @@ HELP_TEXT = {
     "enable_clan_crates": "Enable the ability to collect clan crates in game when they are available.",
     "enable_egg_collection": "Enable the ability to collect and hatch eggs in game.",
     "enable_tournaments": "Enable the ability to enter and participate in tournaments.",
+    "enable_tournament_parsing": "Enable the ability to parse out tournament results once tournaments end.",
     "enable_minigames": "Enable the ability to enable/disable different skill minigames that can be executed.",
     "minigames_repeat": "Specify how many times the minigames loop should run when executed.",
     "enable_coordinated_offensive": "Enable coordinated offensive tapping skill minigame.",
@@ -258,6 +260,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
     enable_clan_crates = models.BooleanField(verbose_name="Enable Clan Crates", default=True, help_text=HELP_TEXT["enable_clan_crates"])
     enable_egg_collection = models.BooleanField(verbose_name="Enable Egg Collection", default=True, help_text=HELP_TEXT["enable_egg_collection"])
     enable_tournaments = models.BooleanField(verbose_name="Enable Tournaments", default=True, help_text=HELP_TEXT["enable_tournaments"])
+    enable_tournament_parsing = models.BooleanField(verbose_name="Enable Tournament Parsing", default=True, help_text=HELP_TEXT["enable_tournament_parsing"])
 
     # MINIGAME Settings.
     enable_minigames = models.BooleanField(verbose_name="Enable Skill Minigames", default=False, help_text=HELP_TEXT["enable_minigames"])
@@ -492,7 +495,8 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "enable_daily_rewards": self.enable_daily_rewards,
                 "enable_clan_crates": self.enable_clan_crates,
                 "enable_egg_collection": self.enable_egg_collection,
-                "enable_tournaments": self.enable_tournaments
+                "enable_tournaments": self.enable_tournaments,
+                "enable_tournament_parsing": self.enable_tournament_parsing
             },
             "Minigames": {
                 "enable_minigames": self.enable_minigames,

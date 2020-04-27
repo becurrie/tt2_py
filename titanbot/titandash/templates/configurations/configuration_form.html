@@ -138,6 +138,13 @@
                     <label class="form-check-label" for="enable_tournaments">Enable Tournaments</label>
                     <p class="text-muted">{{ help.enable_tournaments }}</p>
                 </div>
+
+                <div class="form-check">
+                    {# Enable Tournament Parsing #}
+                    <input {% if config.enable_tournament_parsing %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_tournament_parsing" name="enable_tournament_parsing">
+                    <label class="form-check-label" for="enable_tournament_parsing">Enable Tournament Parsing</label>
+                    <p class="text-muted">{{ help.enable_tournament_parsing }}</p>
+                </div>
             </div>
         </div>
     </div>
