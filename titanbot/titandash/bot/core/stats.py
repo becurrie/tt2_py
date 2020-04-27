@@ -350,7 +350,7 @@ class Stats:
         region = PRESTIGE_COORDS["event" if globals.events() else "base"]["advance_start"]
 
         if test_image:
-            image = self._process(image=test_image, scale=5, theshold=150, invert=True)
+            image = self._process(image=test_image, scale=5, threshold=150, invert=True)
         else:
             image = self._process(scale=5, threshold=150, region=region, use_current=True, invert=True)
 
@@ -542,3 +542,34 @@ class Stats:
         # No specified gear of the type was found, return
         # invalid tuple of vales.
         return False, None
+
+    def tournament_rank_ocr(self, region, threshold):
+        """
+        Attempt to parse and retrieve the current rank from the specified region.
+        """
+        return pytesseract.image_to_string(
+            image=self._process(scale=4, threshold=threshold, region=region),
+            config="--psm 7 --oem 0 nobatch digits"
+        ).strip()
+
+    def tournament_user_ocr(self, region):
+        """
+        Attempt to parse and retrieve the current username from the specified region.
+        """
+        return pytesseract.image_to_string(
+            image=self._process(scale=3, region=region),
+            config="--psm 7 --oem 0"
+        ).strip()
+
+    def tournament_stage_ocr(self, region):
+        """
+        Attempt to parse and retrieve the current stage from the specified region.
+        """
+        return pytesseract.image_to_string(
+            image=self._process(scale=5, threshold=150, region=region, invert=True),
+            config="--psm 7 --oem 0 nobatch digits"
+        ).strip()
+
+
+
+
