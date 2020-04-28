@@ -837,7 +837,7 @@ class Bot(object):
                     self.drag(
                         start=drag_start,
                         end=drag_end,
-                        pause=1
+                        pause=2
                     )
 
                     _last = _current

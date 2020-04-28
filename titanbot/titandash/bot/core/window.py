@@ -48,7 +48,7 @@ class Window(object):
 
     @property
     def rect(self):
-        return win32gui.GetClientRect(self.hwnd)
+        return win32gui.GetWindowRect(self.hwnd)
 
     @property
     def x(self):
