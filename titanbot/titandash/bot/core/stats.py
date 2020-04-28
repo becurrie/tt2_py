@@ -9,7 +9,7 @@ from titandash.models.prestige import Prestige
 
 from .maps import (
     STATS_COORDS, STAGE_COORDS, GAME_LOCS, PRESTIGE_COORDS,
-    ARTIFACT_MAP, CLAN_COORDS, CLAN_RAID_COORDS, HERO_COORDS, EQUIPMENT_COORDS,
+    ARTIFACT_MAP, CLAN_RAID_COORDS, HERO_COORDS, EQUIPMENT_COORDS,
 )
 from .utilities import convert, delta_from_values, globals
 from .constants import MELEE, SPELL, RANGED
@@ -547,7 +547,3 @@ class Stats:
             image=self._process(scale=5, threshold=150, region=region, invert=True),
             config="--psm 7 --oem 0 nobatch digits"
         ).strip()
-
-
-
-
