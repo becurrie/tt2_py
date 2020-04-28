@@ -12,7 +12,6 @@ from .models.statistics import (
     Statistics, GameStatistics, BotStatistics, ArtifactOwned, ArtifactStatistics,
     PrestigeStatistics, Session
 )
-from .models.clan import Clan, Member, RaidResult, RaidResultDamage
 from .models.globals import GlobalSettings
 
 
@@ -87,27 +86,6 @@ class PrestigeStatisticsAdmin(admin.ModelAdmin):
 @register(Session)
 class SessionAdmin(admin.ModelAdmin):
     list_display = ["__str__", "instance", "uuid", "version", "start"]
-
-
-@register(Clan)
-class ClanAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "name", "code"]
-
-
-@register(Member)
-class MemberAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "name", "code"]
-
-
-@register(RaidResultDamage)
-class RaidResultDamageAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "member", "attacks", "damage"]
-
-
-@register(RaidResult)
-class RaidResultAdmin(admin.ModelAdmin):
-    filter_horizontal = ["attacks"]
-    list_display = ["__str__", "instance", "digest", "parsed", "clan"]
 
 
 @register(GlobalSettings)

@@ -142,6 +142,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 STATICFILES_DIRS = [
     os.path.join(ROOT_DIR, 'node_modules'),
     os.path.join(IMAGE_DIR, 'artifacts'),
+
+    # Additional staticfiles directories already joined/created.
+    LOCAL_DATA_SCREENSHOTS_DIR
 ]
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',

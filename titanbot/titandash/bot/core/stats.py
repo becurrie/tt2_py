@@ -9,7 +9,7 @@ from titandash.models.prestige import Prestige
 
 from .maps import (
     STATS_COORDS, STAGE_COORDS, GAME_LOCS, PRESTIGE_COORDS,
-    ARTIFACT_MAP, CLAN_COORDS, CLAN_RAID_COORDS, HERO_COORDS, EQUIPMENT_COORDS,
+    ARTIFACT_MAP, CLAN_RAID_COORDS, HERO_COORDS, EQUIPMENT_COORDS,
 )
 from .utilities import convert, delta_from_values, globals
 from .constants import MELEE, SPELL, RANGED
@@ -350,7 +350,7 @@ class Stats:
         region = PRESTIGE_COORDS["event" if globals.events() else "base"]["advance_start"]
 
         if test_image:
-            image = self._process(image=test_image, scale=5, theshold=150, invert=True)
+            image = self._process(image=test_image, scale=5, threshold=150, invert=True)
         else:
             image = self._process(scale=5, threshold=150, region=region, use_current=True, invert=True)
 
@@ -424,28 +424,6 @@ class Stats:
         except Exception as exc:
             self.logger.error("error occurred while creating a prestige instance.")
             self.logger.error(str(exc))
-
-    def clan_name_and_code(self, test_images=None):
-        """
-        Parse out the current name and code for the users current clan.
-
-        Assuming that the information panel of their clan is currently open.
-        """
-        self.logger.info("attempting to parse out current clan name and code...")
-        region_name = CLAN_COORDS["info_name"]
-        region_code = CLAN_COORDS["info_code"]
-
-        if test_images:
-            image_name = self._process(image=test_images[0])
-            image_code = self._process(image=test_images[1])
-        else:
-            image_name = self._process(use_current=True, region=region_name)
-            image_code = self._process(use_current=True, region=region_code)
-
-        name = pytesseract.image_to_string(image=image_name, config="--psm 7")
-        code = pytesseract.image_to_string(image=image_code, config="--psm 7")
-
-        return name, code
 
     def get_raid_attacks_reset(self, test_image=None):
         """
@@ -542,3 +520,30 @@ class Stats:
         # No specified gear of the type was found, return
         # invalid tuple of vales.
         return False, None
+
+    def tournament_rank_ocr(self, region, threshold):
+        """
+        Attempt to parse and retrieve the current rank from the specified region.
+        """
+        return pytesseract.image_to_string(
+            image=self._process(scale=4, threshold=threshold, region=region),
+            config="--psm 7 --oem 0 nobatch digits"
+        ).strip()
+
+    def tournament_user_ocr(self, region):
+        """
+        Attempt to parse and retrieve the current username from the specified region.
+        """
+        return pytesseract.image_to_string(
+            image=self._process(scale=3, region=region),
+            config="--psm 7 --oem 0"
+        ).strip()
+
+    def tournament_stage_ocr(self, region):
+        """
+        Attempt to parse and retrieve the current stage from the specified region.
+        """
+        return pytesseract.image_to_string(
+            image=self._process(scale=5, threshold=150, region=region, invert=True),
+            config="--psm 7 --oem 0 nobatch digits"
+        ).strip()

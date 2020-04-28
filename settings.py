@@ -85,6 +85,8 @@ LOCAL_DATA_DEBUG_DIR = os.path.join(LOCAL_DATA_DIR, "debug")
 LOCAL_DATA_DEBUG_FILE = os.path.join(LOCAL_DATA_DEBUG_DIR, "debug.json")
 # Directory to place our extracted tesseract data in.
 LOCAL_DATA_DEPENDENCIES_DIR = os.path.join(LOCAL_DATA_DIR, "dependencies")
+# Directory to place any screenshots in.
+LOCAL_DATA_SCREENSHOTS_DIR = os.path.join(LOCAL_DATA_DIR, "screenshots")
 # Directory that should be created dynamically when tesseract is extracted.
 LOCAL_DATA_TESSERACT_DEPENDENCY_DIR = os.path.join(LOCAL_DATA_DEPENDENCIES_DIR, "tesseract")
 # Command that is used by bot's to perform character recognition.
@@ -134,7 +136,8 @@ def user_directory():
     """
     for path in [
         LOCAL_DATA_DIR, LOCAL_DATA_DB_DIR, LOCAL_DATA_DB_BACKUP_DIR, LOCAL_DATA_UPDATE_DIR,
-        LOCAL_DATA_BACKUP_DIR, LOCAL_DATA_LOG_DIR, LOCAL_DATA_DEBUG_DIR, LOCAL_DATA_DEPENDENCIES_DIR
+        LOCAL_DATA_BACKUP_DIR, LOCAL_DATA_LOG_DIR, LOCAL_DATA_DEBUG_DIR, LOCAL_DATA_DEPENDENCIES_DIR,
+        LOCAL_DATA_SCREENSHOTS_DIR
     ]:
         # Create the specified local data directory if it does not currently exist.
         if not os.path.exists(path):

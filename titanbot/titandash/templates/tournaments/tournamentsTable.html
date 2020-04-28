@@ -1,0 +1,23 @@
+<table id="tournamentsTable" class="table table-sm table-borderless table-hover table-striped titan-responsive">
+    <thead>
+    <tr>
+        <th>Identifier</th>
+        <th>Finished</th>
+        <th>Participants</th>
+        <th>Your Placing</th>
+        <th>Your Stage</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for tournament in tournaments %}
+        <tr data-identifier="{{ tournament.identifier }}">
+            <td><a href="{{ tournament.url }}">{{ tournament.identifier }}</a></td>
+            <td data-order="{{ tournament.finished.epoch }}">{{ tournament.finished.formatted }}</td>
+            <td>{{ tournament.participants_count }}</td>
+            <td>{{ tournament.user_rank }}</td>
+            <td>{{ tournament.user_stage }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<div id="jsonData" data-json="{{ tournaments_json }}" style="display: none;"></div>
