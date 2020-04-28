@@ -1332,7 +1332,7 @@ class Bot(object):
                         end=self.locs.scroll_bottom_end
                     )
 
-                self.stats.update_ocr()
+                self.stats.update_stats_ocr()
                 self.stats.statistics.bot_statistics.updates += 1
                 self.stats.statistics.bot_statistics.save()
 
