@@ -25,6 +25,7 @@ GAME_STATISTICS_HELP_TEXT = {
     "relics_earned": "How many relics have been earned game overall.",
     "fairies_tapped": "How many fairies have been tapped on in game overall.",
     "daily_achievements": "How many daily achievements have been completed in game overall.",
+    "tournament_points": "How many overall tournaments points have been earned.",
     "instance": "The bot instance associated with these game statistics."
 }
 
@@ -54,6 +55,7 @@ class GameStatistics(models.Model):
     relics_earned = models.CharField(verbose_name="Relics Earned", blank=True, null=True, max_length=255, help_text=GAME_STATISTICS_HELP_TEXT["relics_earned"])
     fairies_tapped = models.CharField(verbose_name="Fairies Tapped", blank=True, null=True, max_length=255, help_text=GAME_STATISTICS_HELP_TEXT["fairies_tapped"])
     daily_achievements = models.CharField(verbose_name="Daily Achievements", blank=True, null=True, max_length=255, help_text=GAME_STATISTICS_HELP_TEXT["daily_achievements"])
+    tournament_points = models.CharField(verbose_name="Tournament Points", blank=True, null=True, max_length=255, help_text=GAME_STATISTICS_HELP_TEXT["tournament_points"])
     instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=GAME_STATISTICS_HELP_TEXT["instance"])
 
     def __str__(self):
@@ -127,7 +129,8 @@ class GameStatistics(models.Model):
             "play_time": self.play_time,
             "relics_earned": self.relics_earned,
             "fairies_tapped": self.fairies_tapped,
-            "daily_achievements": self.daily_achievements
+            "daily_achievements": self.daily_achievements,
+            "tournament_points": self.tournament_points
         }
 
 

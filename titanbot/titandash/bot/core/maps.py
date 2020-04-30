@@ -409,20 +409,21 @@ IMAGES = {
 # All coordinates mapped to their respective resolutions for grabbing
 # each stat image that will be parsed by pytesseract.
 STATS_COORDS = {
-    "highest_stage_reached": (55, 440, 430, 461),
-    "total_pet_level": (55, 461, 430, 481),
-    "gold_earned": (55, 482, 430, 502),
-    "taps": (55, 503, 430, 527),
-    "titans_killed": (55, 525, 430, 545),
-    "bosses_killed": (55, 546, 430, 566),
-    "critical_hits": (55, 568, 430, 587),
-    "chestersons_killed": (55, 589, 430, 609),
-    "prestiges": (55, 611, 430, 632),
-    "days_since_install": (55, 636, 430, 652),
-    "play_time": (55, 653, 430, 674),
-    "relics_earned": (55, 675, 430, 695),
-    "fairies_tapped": (55, 697, 430, 717),
-    "daily_achievements": (55, 716, 430, 739),
+    "highest_stage_reached": (374, 445, 430, 463),
+    "total_pet_level": (371, 467, 430, 485),
+    "gold_earned": (339, 488, 430, 506),
+    "taps": (358, 509, 430, 528),
+    "titans_killed": (367, 530, 430, 548),
+    "bosses_killed": (357, 552, 430, 569),
+    "critical_hits": (357, 572, 430, 590),
+    "chestersons_killed": (357, 593, 430, 613),
+    "prestiges": (357, 614, 430, 634),
+    "days_since_install": (380, 635, 430, 655),
+    "play_time": (307, 657, 430, 676),
+    "relics_earned": (346, 677, 430, 698),
+    "fairies_tapped": (346, 699, 430, 720),
+    "daily_achievements": (370, 720, 430, 741),
+    "tournament_points": (366, 743, 430, 761),
 }
 
 STAGE_COORDS = {

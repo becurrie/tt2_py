@@ -250,75 +250,40 @@ class Stats:
             self.logger.warning("skill was parsed incorrectly, returning level 0.")
             return 0
 
-    def update_ocr(self, test_set=None):
+    def update_stats_ocr(self):
         """
         Update the stats by parsing and extracting the text from the games stats page using the
         tesseract OCR engine to perform text parsing.
 
         Note that the current screen should be the stats page before calling this method.
         """
+        # Create map to determine if keys should be treated as integers
+        # only or not, this will decide whether or not to apply thresholds.
+        integer_map = {
+            "highest_stage_reached",
+            "total_pet_level",
+            "prestiges",
+            "days_since_install",
+        }
+
         for key, region in STATS_COORDS.items():
-            if test_set:
-                image = Image.open(test_set[key])
-            else:
-                image = self._process(region=region, use_current=True)
+            is_integer = key in integer_map
+            # Begin by looping through each key and region
+            # used by our game statistics parsing.
+            text = pytesseract.image_to_string(
+                image=self._process(scale=5, threshold=150 if is_integer else None, region=region, invert=is_integer),
+                config='--psm 7 --oem 0'
+            )
 
-            text = pytesseract.image_to_string(image, config='--psm 7')
-            self.logger.debug("ocr result: {key} -> {text}".format(key=key, text=text))
+            # Ensure our values that are expected to be in an integer
+            # format (digits only) have characters parsed out (if present).
+            if is_integer:
+                text = ''.join(filter(lambda x: x.isdigit(), text))
 
-            # The images do not always parse correctly, so we can attempt to parse out our expected
-            # value from the STATS_COORD tuple being used.
+            self.logger.info("parsing result: {key} -> {text}".format(key=key, text=text))
+            setattr(self.statistics.game_statistics, key, text)
 
-            # Firstly, confirm that a number is present in the text result, if no numbers are present
-            # at all, safe to assume the OCR has failed wonderfully.
-            if not any(char.isdigit() for char in text):
-                self.logger.warning("no digits found in ocr result, skipping key: {key}".format(key=key))
-                continue
-
-            # Otherwise, attempt to parse out the proper value.
-            try:
-                if len(text.split(':')) == 2:
-                    value = text.split(':')[-1].replace(" ", "")
-                else:
-                    if key == "play_time":
-                        value = " ".join(text.split(" ")[-2:])
-                    else:
-                        value = text.split(" ")[-1].replace(" ", "")
-
-                # Finally, a small check to see that a value can successfully made into an
-                # integer, float with either its last character taken off (K, M, %, etc).
-                # This check is not required for the "play_time" key.
-                if not key == "play_time":
-                    try:
-                        if not value[-1].isdigit():
-                            try:
-                                int(value[:-1])
-                            except ValueError:
-                                try:
-                                    float(value[:-1])
-                                except ValueError:
-                                    continue
-
-                        # Last character is a digit, value may be pure digit of some sort?
-                        else:
-                            try:
-                                int(value)
-                            except ValueError:
-                                try:
-                                    float(value)
-                                except ValueError:
-                                    continue
-                    except IndexError:
-                        self.logger.error(
-                            "{key} - {value} could not be accessed parsed properly.".format(key=key, value=value))
-
-                self.logger.info("parsed value: {key} -> {value}".format(key=key, value=value))
-                setattr(self.statistics.game_statistics, key, value)
-                self.statistics.game_statistics.save()
-
-            # Gracefully continuing loop if failure occurs.
-            except ValueError:
-                self.logger.error("could not parse {key}: (ocr result: {text})".format(key=key, text=text))
+        self.statistics.game_statistics.save()
 
     def stage_ocr(self, test_image=None):
         """
