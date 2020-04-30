@@ -416,13 +416,11 @@ class Bot(object):
             if self.ADVANCED_START and stage < self.ADVANCED_START:
                 return
 
-            self.logger.debug("current stage parsed as: {stage}".format(stage=strfnumber(number=stage)))
             self.last_stage = self.props.current_stage
             self.props.current_stage = stage
 
         # ValueError when the parsed stage isn't able to be coerced.
         except ValueError:
-            self.logger.debug("current stage could not be parsed... skipping.")
             pass
 
     @bot_property(queueable=True, reload=True, tooltip="Calculate the enabled minigames as well as the order they are executed.")

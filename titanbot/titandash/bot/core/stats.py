@@ -289,7 +289,6 @@ class Stats:
         """
         Attempt to parse out the current stage in game through an OCR check.
         """
-        self.logger.debug("attempting to parse out the current stage from in game")
         region = STAGE_COORDS["region"]
 
         if test_image:
@@ -298,7 +297,6 @@ class Stats:
             image = self._process(scale=5, threshold=150, region=region, use_current=True, invert=True)
 
         text = pytesseract.image_to_string(image, config='--psm 7 --oem 0 nobatch digits')
-        self.logger.debug("parsed value: {text}".format(text=text))
 
         # Do some light parse work here to make sure only digit like characters are present
         # in the returned 'text' variable retrieved through tesseract.
@@ -451,7 +449,7 @@ class Stats:
 
         We are expecting that the equipment tab is open at this point and at the top of the screen.
         """
-        for gear_locations in EQUIPMENT_COORDS["gear"]:
+        for index, gear_locations in enumerate(EQUIPMENT_COORDS["gear"], start=1):
             gear = {
                 typ: False,
                 "equip": None,
@@ -470,6 +468,12 @@ class Stats:
                 # Store location of equip button for each gear parsed.
                 elif loc == "equip":
                     gear["equip"] = region  # Really a point here.
+
+            self.logger.debug("information gathered about gear piece {index}...".format(index=index))
+            self.logger.debug("type: {typ}: {type}".format(typ=typ, type=gear[typ]))
+            self.logger.debug("equip point: {equip}".format(equip=gear["equip"]))
+            self.logger.debug("locked: {locked}".format(locked=gear["locked"]))
+            self.logger.debug("equipped: {equipped}".format(equipped=gear["equipped"]))
 
             # Gear is not locked, skip this piece...
             if not gear["locked"]:
