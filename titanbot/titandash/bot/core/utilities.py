@@ -411,31 +411,33 @@ def make_logger(instance, log_level="INFO", log_format=LOGGER_FORMAT, log_name=L
     Grab the logging instance that will be used throughout bot runtime.
     """
     log_formatter = logging.Formatter(log_format.format(instance=instance.name))
-    _logger = logging.getLogger("{log_name}.{instance}".format(log_name=log_name, instance=instance.pk))
 
-    if not len(logger.handlers):
-        if not log_file:
-            log_file = generate_log_file_name(instance=instance)
+    # Grab the current timestamp.
+    # We use this to ensure out getLogger call always gets a new logger.
+    # Since we can create and kill instances in the same memory space.
+    # We always want a unique instance to add handlers too.
+    _current = str(datetime.datetime.now().timestamp()).replace(".", "-")
+    _logger = logging.getLogger("{log_name}.{instance}.{current}".format(log_name=log_name, instance=instance.pk, current=_current))
 
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setFormatter(log_formatter)
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(log_formatter)
-        socket_handler = TitanBotLoggingHandler(instance=instance)
-        socket_handler.setFormatter(log_formatter)
+    if not log_file:
+        log_file = generate_log_file_name(instance=instance)
 
-        # We only want ONE of each handler type within the logger for our
-        # instance being setup. Do not add duplicates, being explicit here.
-        _types = [type(handle) for handle in _logger.handlers]
-        if logging.FileHandler not in _types:
-            _logger.addHandler(file_handler)
-        if logging.StreamHandler not in _types:
-            _logger.addHandler(console_handler)
-        if TitanBotLoggingHandler not in _types:
-            _logger.addHandler(socket_handler)
+    fh = logging.FileHandler(log_file)              # File Handler. (log_dir/log_name.log).
+    ch = logging.StreamHandler()                    # Stream/Console Handler.
+    sh = TitanBotLoggingHandler(instance=instance)  # Custom Websocket-Compat Handler.
 
-    _logger.setLevel(log_level)
-    # Return custom formatted and setup logger.
+    # Iter through handles for readability.
+    for _handle in [fh, ch, sh]:
+        # We need to also include the proper formatter
+        # and handler onto each handle and ensure they're added
+        # to our logger correctly.
+        _handle.setFormatter(log_formatter)
+        _logger.addHandler(hdlr=_handle)
+
+    _logger.setLevel(level=log_level)
+
+    # Return our logger for use once it's been initialized and setup
+    # with all of the proper handlers we expect.
     return _logger
 
 

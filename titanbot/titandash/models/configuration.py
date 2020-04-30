@@ -76,9 +76,6 @@ COMPRESSION_KEYS = {
     "enable_stats": 60,
     "update_stats_on_start": 61,
     "update_stats_every_x_minutes": 62,
-    "enable_clan_results_parse": 63,
-    "parse_clan_results_on_start": 64,
-    "parse_clan_results_every_x_minutes": 65,
     "master_level_only_once": 70,
     "enable_prestige_threshold_randomization": 71,
     "prestige_random_min_time": 72,
@@ -125,6 +122,7 @@ COMPRESSION_KEYS = {
     "headgear_swap_on_start": 113,
     "enable_forbidden_contract": 114,
     "enable_summon_dagger": 115,
+    "enable_tournament_parsing": 116,
 }
 
 HELP_TEXT = {
@@ -139,6 +137,7 @@ HELP_TEXT = {
     "enable_clan_crates": "Enable the ability to collect clan crates in game when they are available.",
     "enable_egg_collection": "Enable the ability to collect and hatch eggs in game.",
     "enable_tournaments": "Enable the ability to enter and participate in tournaments.",
+    "enable_tournament_parsing": "Enable the ability to parse out tournament results once tournaments end.",
     "enable_minigames": "Enable the ability to enable/disable different skill minigames that can be executed.",
     "minigames_repeat": "Specify how many times the minigames loop should run when executed.",
     "enable_coordinated_offensive": "Enable coordinated offensive tapping skill minigame.",
@@ -226,9 +225,6 @@ HELP_TEXT = {
     "enable_stats": "Enable the ability to update statistics during game sessions.",
     "update_stats_on_start": "Should stats be updated when a session is started.",
     "update_stats_every_x_minutes": "Determine how many minutes between each stats update in game.",
-    "enable_clan_results_parse": "Enable the ability to have the bot attempt to parse out clan raid results.",
-    "parse_clan_results_on_start": "Should clan results be parsed when a session is started.",
-    "parse_clan_results_every_x_minutes": "Determine how many minutes between each clan results parse attempt."
 }
 
 
@@ -258,6 +254,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
     enable_clan_crates = models.BooleanField(verbose_name="Enable Clan Crates", default=True, help_text=HELP_TEXT["enable_clan_crates"])
     enable_egg_collection = models.BooleanField(verbose_name="Enable Egg Collection", default=True, help_text=HELP_TEXT["enable_egg_collection"])
     enable_tournaments = models.BooleanField(verbose_name="Enable Tournaments", default=True, help_text=HELP_TEXT["enable_tournaments"])
+    enable_tournament_parsing = models.BooleanField(verbose_name="Enable Tournament Parsing", default=True, help_text=HELP_TEXT["enable_tournament_parsing"])
 
     # MINIGAME Settings.
     enable_minigames = models.BooleanField(verbose_name="Enable Skill Minigames", default=False, help_text=HELP_TEXT["enable_minigames"])
@@ -374,11 +371,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
     update_stats_on_start = models.BooleanField(verbose_name="Update Stats On Session Start", default=False, help_text=HELP_TEXT["update_stats_on_start"])
     update_stats_every_x_minutes = models.PositiveIntegerField(verbose_name="Update Stats Every X Minutes", default=60, help_text=HELP_TEXT["update_stats_every_x_minutes"])
 
-    # RAID PARSING Settings.
-    enable_clan_results_parse = models.BooleanField(verbose_name="Enable Clan Results Parsing", default=True, help_text=HELP_TEXT["enable_clan_results_parse"])
-    parse_clan_results_on_start = models.BooleanField(verbose_name="Parse Clan Results On Session Start", default=False, help_text=HELP_TEXT["parse_clan_results_on_start"])
-    parse_clan_results_every_x_minutes = models.PositiveIntegerField(verbose_name="Attempt To Parse Clan Results Every X Minutes", default=300, help_text=HELP_TEXT["parse_clan_results_every_x_minutes"])
-
     def __str__(self):
         return "{name}".format(name=self.name)
 
@@ -492,7 +484,8 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "enable_daily_rewards": self.enable_daily_rewards,
                 "enable_clan_crates": self.enable_clan_crates,
                 "enable_egg_collection": self.enable_egg_collection,
-                "enable_tournaments": self.enable_tournaments
+                "enable_tournaments": self.enable_tournaments,
+                "enable_tournament_parsing": self.enable_tournament_parsing
             },
             "Minigames": {
                 "enable_minigames": self.enable_minigames,
@@ -598,11 +591,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "update_stats_on_start": self.update_stats_on_start,
                 "update_stats_every_x_minutes": self.update_stats_every_x_minutes
             },
-            "Raid Parsing": {
-                "enable_clan_results_parse": self.enable_clan_results_parse,
-                "parse_clan_results_on_start": self.parse_clan_results_on_start,
-                "parse_clan_results_every_x_minutes": self.parse_clan_results_every_x_minutes
-            }
         }
 
         if condense:

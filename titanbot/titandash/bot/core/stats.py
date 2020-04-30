@@ -9,7 +9,7 @@ from titandash.models.prestige import Prestige
 
 from .maps import (
     STATS_COORDS, STAGE_COORDS, GAME_LOCS, PRESTIGE_COORDS,
-    ARTIFACT_MAP, CLAN_COORDS, CLAN_RAID_COORDS, HERO_COORDS, EQUIPMENT_COORDS,
+    ARTIFACT_MAP, CLAN_RAID_COORDS, HERO_COORDS, EQUIPMENT_COORDS,
 )
 from .utilities import convert, delta_from_values, globals
 from .constants import MELEE, SPELL, RANGED
@@ -250,81 +250,45 @@ class Stats:
             self.logger.warning("skill was parsed incorrectly, returning level 0.")
             return 0
 
-    def update_ocr(self, test_set=None):
+    def update_stats_ocr(self):
         """
         Update the stats by parsing and extracting the text from the games stats page using the
         tesseract OCR engine to perform text parsing.
 
         Note that the current screen should be the stats page before calling this method.
         """
+        # Create map to determine if keys should be treated as integers
+        # only or not, this will decide whether or not to apply thresholds.
+        integer_map = {
+            "highest_stage_reached",
+            "total_pet_level",
+            "prestiges",
+            "days_since_install",
+        }
+
         for key, region in STATS_COORDS.items():
-            if test_set:
-                image = Image.open(test_set[key])
-            else:
-                image = self._process(region=region, use_current=True)
+            is_integer = key in integer_map
+            # Begin by looping through each key and region
+            # used by our game statistics parsing.
+            text = pytesseract.image_to_string(
+                image=self._process(scale=5, threshold=150 if is_integer else None, region=region, invert=is_integer),
+                config='--psm 7 --oem 0'
+            )
 
-            text = pytesseract.image_to_string(image, config='--psm 7')
-            self.logger.debug("ocr result: {key} -> {text}".format(key=key, text=text))
+            # Ensure our values that are expected to be in an integer
+            # format (digits only) have characters parsed out (if present).
+            if is_integer:
+                text = ''.join(filter(lambda x: x.isdigit(), text))
 
-            # The images do not always parse correctly, so we can attempt to parse out our expected
-            # value from the STATS_COORD tuple being used.
+            self.logger.info("parsing result: {key} -> {text}".format(key=key, text=text))
+            setattr(self.statistics.game_statistics, key, text)
 
-            # Firstly, confirm that a number is present in the text result, if no numbers are present
-            # at all, safe to assume the OCR has failed wonderfully.
-            if not any(char.isdigit() for char in text):
-                self.logger.warning("no digits found in ocr result, skipping key: {key}".format(key=key))
-                continue
-
-            # Otherwise, attempt to parse out the proper value.
-            try:
-                if len(text.split(':')) == 2:
-                    value = text.split(':')[-1].replace(" ", "")
-                else:
-                    if key == "play_time":
-                        value = " ".join(text.split(" ")[-2:])
-                    else:
-                        value = text.split(" ")[-1].replace(" ", "")
-
-                # Finally, a small check to see that a value can successfully made into an
-                # integer, float with either its last character taken off (K, M, %, etc).
-                # This check is not required for the "play_time" key.
-                if not key == "play_time":
-                    try:
-                        if not value[-1].isdigit():
-                            try:
-                                int(value[:-1])
-                            except ValueError:
-                                try:
-                                    float(value[:-1])
-                                except ValueError:
-                                    continue
-
-                        # Last character is a digit, value may be pure digit of some sort?
-                        else:
-                            try:
-                                int(value)
-                            except ValueError:
-                                try:
-                                    float(value)
-                                except ValueError:
-                                    continue
-                    except IndexError:
-                        self.logger.error(
-                            "{key} - {value} could not be accessed parsed properly.".format(key=key, value=value))
-
-                self.logger.info("parsed value: {key} -> {value}".format(key=key, value=value))
-                setattr(self.statistics.game_statistics, key, value)
-                self.statistics.game_statistics.save()
-
-            # Gracefully continuing loop if failure occurs.
-            except ValueError:
-                self.logger.error("could not parse {key}: (ocr result: {text})".format(key=key, text=text))
+        self.statistics.game_statistics.save()
 
     def stage_ocr(self, test_image=None):
         """
         Attempt to parse out the current stage in game through an OCR check.
         """
-        self.logger.debug("attempting to parse out the current stage from in game")
         region = STAGE_COORDS["region"]
 
         if test_image:
@@ -333,7 +297,6 @@ class Stats:
             image = self._process(scale=5, threshold=150, region=region, use_current=True, invert=True)
 
         text = pytesseract.image_to_string(image, config='--psm 7 --oem 0 nobatch digits')
-        self.logger.debug("parsed value: {text}".format(text=text))
 
         # Do some light parse work here to make sure only digit like characters are present
         # in the returned 'text' variable retrieved through tesseract.
@@ -350,7 +313,7 @@ class Stats:
         region = PRESTIGE_COORDS["event" if globals.events() else "base"]["advance_start"]
 
         if test_image:
-            image = self._process(image=test_image, scale=5, theshold=150, invert=True)
+            image = self._process(image=test_image, scale=5, threshold=150, invert=True)
         else:
             image = self._process(scale=5, threshold=150, region=region, use_current=True, invert=True)
 
@@ -425,28 +388,6 @@ class Stats:
             self.logger.error("error occurred while creating a prestige instance.")
             self.logger.error(str(exc))
 
-    def clan_name_and_code(self, test_images=None):
-        """
-        Parse out the current name and code for the users current clan.
-
-        Assuming that the information panel of their clan is currently open.
-        """
-        self.logger.info("attempting to parse out current clan name and code...")
-        region_name = CLAN_COORDS["info_name"]
-        region_code = CLAN_COORDS["info_code"]
-
-        if test_images:
-            image_name = self._process(image=test_images[0])
-            image_code = self._process(image=test_images[1])
-        else:
-            image_name = self._process(use_current=True, region=region_name)
-            image_code = self._process(use_current=True, region=region_code)
-
-        name = pytesseract.image_to_string(image=image_name, config="--psm 7")
-        code = pytesseract.image_to_string(image=image_code, config="--psm 7")
-
-        return name, code
-
     def get_raid_attacks_reset(self, test_image=None):
         """
         Parse out the current attacks reset value for the current clan raid.
@@ -508,7 +449,7 @@ class Stats:
 
         We are expecting that the equipment tab is open at this point and at the top of the screen.
         """
-        for gear_locations in EQUIPMENT_COORDS["gear"]:
+        for index, gear_locations in enumerate(EQUIPMENT_COORDS["gear"], start=1):
             gear = {
                 typ: False,
                 "equip": None,
@@ -528,6 +469,12 @@ class Stats:
                 elif loc == "equip":
                     gear["equip"] = region  # Really a point here.
 
+            self.logger.debug("information gathered about gear piece {index}...".format(index=index))
+            self.logger.debug("type: {typ}: {type}".format(typ=typ, type=gear[typ]))
+            self.logger.debug("equip point: {equip}".format(equip=gear["equip"]))
+            self.logger.debug("locked: {locked}".format(locked=gear["locked"]))
+            self.logger.debug("equipped: {equipped}".format(equipped=gear["equipped"]))
+
             # Gear is not locked, skip this piece...
             if not gear["locked"]:
                 continue
@@ -542,3 +489,30 @@ class Stats:
         # No specified gear of the type was found, return
         # invalid tuple of vales.
         return False, None
+
+    def tournament_rank_ocr(self, region, threshold):
+        """
+        Attempt to parse and retrieve the current rank from the specified region.
+        """
+        return pytesseract.image_to_string(
+            image=self._process(scale=4, threshold=threshold, region=region),
+            config="--psm 7 --oem 0 nobatch digits"
+        ).strip()
+
+    def tournament_user_ocr(self, region):
+        """
+        Attempt to parse and retrieve the current username from the specified region.
+        """
+        return pytesseract.image_to_string(
+            image=self._process(scale=3, region=region),
+            config="--psm 7 --oem 0"
+        ).strip()
+
+    def tournament_stage_ocr(self, region):
+        """
+        Attempt to parse and retrieve the current stage from the specified region.
+        """
+        return pytesseract.image_to_string(
+            image=self._process(scale=5, threshold=150, region=region, invert=True),
+            config="--psm 7 --oem 0 nobatch digits"
+        ).strip()

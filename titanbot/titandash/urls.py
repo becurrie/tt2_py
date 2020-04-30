@@ -26,9 +26,10 @@ urlpatterns = [
     # SESSIONS.
     path('sessions/', views.sessions, name='sessions'),
     path('sessions/<uuid>/', views.session, name='session'),
-    # RAIDS.
-    path('raids/', views.raids, name='raids'),
-    path('raid/<digest>/', views.raid, name='raid'),
+    # TOURNAMENTS.
+    path('tournaments/', views.tournaments, name='tournaments'),
+    path('tournament/<identifier>/', views.tournament, name='tournament'),
+    path('tournament/delete/<identifier>', views.delete_tournament, name='delete_tournament'),
     # LOGS.
     path('logs/<pk>/', views.log, name='log'),
     # AJAX URLS.

@@ -138,6 +138,13 @@
                     <label class="form-check-label" for="enable_tournaments">Enable Tournaments</label>
                     <p class="text-muted">{{ help.enable_tournaments }}</p>
                 </div>
+
+                <div class="form-check">
+                    {# Enable Tournament Parsing #}
+                    <input {% if config.enable_tournament_parsing %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_tournament_parsing" name="enable_tournament_parsing">
+                    <label class="form-check-label" for="enable_tournament_parsing">Enable Tournament Parsing</label>
+                    <p class="text-muted">{{ help.enable_tournament_parsing }}</p>
+                </div>
             </div>
         </div>
     </div>
@@ -993,42 +1000,6 @@
                     <label for="update_stats_every_x_minutes">Update Stats Every X Minutes:</label>
                     <input value="{{ config.update_stats_every_x_minutes|default_if_none:0 }}" type="number" class="form-control" id="update_stats_every_x_minutes" name="update_stats_every_x_minutes">
                     <p style="padding: 3px;" class="text-muted">{{ help.update_stats_every_x_minutes }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{# Raid Parsing Settings #}
-<div id="accordionRaidParsingSettings">
-    <div class="card">
-        <div class="card-header" id="configurationRaidParsingSettingsHeader">
-            <h5 class="modal-title" id="configurationRaidParsingSettingsTitle">
-                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseRaidParsingSettings">Raid Parsing Settings</button>
-            </h5>
-        </div>
-
-        <div id="collapseRaidParsingSettings" class="collapse show" data-parent="#accordionRaidParsingSettings">
-            <div id="configurationRaidParsingSettingsBody" class="card-body">
-                <div class="form-check">
-                    {# Enable Clan Results Parse #}
-                    <input {% if config.enable_clan_results_parse %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_clan_results_parse" name="enable_clan_results_parse">
-                    <label class="form-check-label" for="enable_clan_results_parse">Enable Clan Results Parsing</label>
-                    <p class="text-muted">{{ help.enable_clan_results_parse }}</p>
-                </div>
-
-                <div class="form-check">
-                    {# Parse Clan Results On Start #}
-                    <input {% if config.parse_clan_results_on_start %}checked{% endif %} type="checkbox" class="form-check-input" id="parse_clan_results_on_start" name="parse_clan_results_on_start">
-                    <label class="form-check-label" for="parse_clan_results_on_start">Parse Clan Results On Session Start</label>
-                    <p class="text-muted">{{ help.parse_clan_results_on_start }}</p>
-                </div>
-
-                <div class="form-group">
-                    {# Parse Clan Results Every X Minutes #}
-                    <label for="parse_clan_results_every_x_minutes">Parse Clan Results Every X Minutes:</label>
-                    <input value="{{ config.parse_clan_results_every_x_minutes|default_if_none:0 }}" type="number" class="form-control" id="parse_clan_results_every_x_minutes" name="parse_clan_results_every_x_minutes">
-                    <p style="padding: 3px;" class="text-muted">{{ help.parse_clan_results_every_x_minutes }}</p>
                 </div>
             </div>
         </div>

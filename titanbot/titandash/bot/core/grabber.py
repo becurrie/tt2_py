@@ -21,10 +21,8 @@ class Grabber:
         an explicit region is specified to use to take a screen-shot with.
         """
         if not region:
-            self.logger.debug("taking snapshot of game screen ({window})".format(window=self.window))
             self.current = self.window.screenshot()
         else:
-            self.logger.debug("taking snapshot of region in game screen region {region} ({window})".format(region=region, window=self.window))
             self.current = self.window.screenshot(region=region)
 
         # Optionally, we can downsize the image grabbed, may improve performance
@@ -47,8 +45,6 @@ class Grabber:
         of the actual screen.
         """
         if not testing:
-            self.logger.debug("searching for {image} in game and returning {bool_or_both}".format(
-                image=image, bool_or_both="bool only" if bool_only else "bool and position"))
             self.snapshot()
 
         found = False
@@ -76,10 +72,8 @@ class Grabber:
             position = imagesearcharea(window=self.window, image=image, **search_kwargs)
 
         if position[0] != -1:
-            self.logger.debug("{image} was successfully found on the screen.".format(image=image))
+            self.logger.debug("{image_name} was successfully found on the screen...".format(image_name=image.split("/")[-1]))
             found = True
-        else:
-            self.logger.debug("{image} was not found on the screen.".format(image=image))
         if bool_only:
             return found
 

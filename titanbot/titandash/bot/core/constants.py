@@ -1,6 +1,5 @@
 from settings import LOG_DIR
 
-import re
 import datetime
 
 # Raid notifications string used to template out the message sent to a user.

@@ -254,6 +254,7 @@ GAME_COLORS = {
     "COLLECT_GREEN": (101, 155, 28),
     "SKILL_CANT_LEVEL": (73, 72, 73),
     "EQUIPMENT_CHOSEN": (66, 64, 68),
+    "TOURNAMENT_USER": (55, 109, 157),
 }
 
 # All images should have their names mapped to the file path within the module.
@@ -367,6 +368,7 @@ IMAGES = {
     "TOURNAMENT": {
         "join": IMAGE_DIR + "/tournament/join.png",
         "collect_prize": IMAGE_DIR + "/tournament/collect_prize.png",
+        "in_top_ten": IMAGE_DIR + "/tournament/in_top_ten.png",
     },
     "CLAN_CRATE": {
         "okay": IMAGE_DIR + "/clan_crate/okay.png",
@@ -407,20 +409,21 @@ IMAGES = {
 # All coordinates mapped to their respective resolutions for grabbing
 # each stat image that will be parsed by pytesseract.
 STATS_COORDS = {
-    "highest_stage_reached": (55, 440, 430, 461),
-    "total_pet_level": (55, 461, 430, 481),
-    "gold_earned": (55, 482, 430, 502),
-    "taps": (55, 503, 430, 527),
-    "titans_killed": (55, 525, 430, 545),
-    "bosses_killed": (55, 546, 430, 566),
-    "critical_hits": (55, 568, 430, 587),
-    "chestersons_killed": (55, 589, 430, 609),
-    "prestiges": (55, 611, 430, 632),
-    "days_since_install": (55, 636, 430, 652),
-    "play_time": (55, 653, 430, 674),
-    "relics_earned": (55, 675, 430, 695),
-    "fairies_tapped": (55, 697, 430, 717),
-    "daily_achievements": (55, 716, 430, 739),
+    "highest_stage_reached": (374, 445, 430, 463),
+    "total_pet_level": (371, 467, 430, 485),
+    "gold_earned": (339, 488, 430, 506),
+    "taps": (358, 509, 430, 528),
+    "titans_killed": (367, 530, 430, 548),
+    "bosses_killed": (357, 552, 430, 569),
+    "critical_hits": (357, 572, 430, 590),
+    "chestersons_killed": (357, 593, 430, 613),
+    "prestiges": (357, 614, 430, 634),
+    "days_since_install": (380, 635, 430, 655),
+    "play_time": (307, 657, 430, 676),
+    "relics_earned": (346, 677, 430, 698),
+    "fairies_tapped": (346, 699, 430, 720),
+    "daily_achievements": (370, 720, 430, 741),
+    "tournament_points": (366, 743, 430, 761),
 }
 
 STAGE_COORDS = {
@@ -436,6 +439,98 @@ PRESTIGE_COORDS = {
         "time_since": (301, 121, 380, 139),
         "advance_start": (138, 567, 191, 588),
     }
+}
+
+TOURNAMENT_COORDS = {
+    "identifier": (133, 772, 362, 787),
+    "in_top_ten": {
+        "stages": [
+            (375, 223, 422, 245),  # 1
+            (375, 261, 422, 280),  # 2
+            (375, 296, 422, 317),  # 3
+            (375, 330, 422, 353),  # 4
+            (375, 366, 422, 388),  # 5
+            (375, 402, 422, 423),  # 6
+            (375, 427, 422, 459),  # 7
+            (375, 471, 422, 495),  # 8
+            (375, 506, 422, 532),  # 9
+        ],
+        "usernames": [
+            (138, 221, 315, 249),  # 1
+            (138, 258, 315, 284),  # 2
+            (138, 292, 315, 319),  # 3
+            (138, 328, 315, 356),  # 4
+            (138, 364, 315, 390),  # 5
+            (138, 400, 315, 425),  # 6
+            (138, 437, 315, 460),  # 7
+            (138, 470, 315, 498),  # 8
+            (138, 505, 315, 533),  # 9
+        ],
+        "ranks": [
+            (45, 223, 80, 246),  # 1
+            (45, 260, 80, 283),  # 2
+            (45, 294, 80, 319),  # 3
+            (45, 329, 80, 355),  # 4
+            (45, 365, 80, 389),  # 5
+            (45, 401, 80, 425),  # 6
+            (45, 436, 80, 461),  # 7
+            (45, 471, 80, 497),  # 8
+            (45, 507, 80, 532),  # 9
+        ],
+        "user_check_points": [
+            (29, 234),  # 1
+            (29, 271),  # 2
+            (29, 306),  # 3
+            (29, 343),  # 4
+            (29, 379),  # 5
+            (29, 412),  # 6
+            (29, 450),  # 7
+            (29, 484),  # 8
+            (29, 519),  # 9
+        ],
+    },
+    "not_in_top_ten": {
+        "stages": [
+            (375, 223, 422, 245),  # 1
+            (375, 261, 422, 280),  # 2
+            (375, 296, 422, 317),  # 3
+            (375, 330, 422, 353),  # 4
+            (375, 366, 422, 388),  # 5
+            (375, 437, 422, 460),  # OTHER
+            (375, 470, 422, 498),  # OTHER
+            (375, 505, 422, 533),  # OTHER
+        ],
+        "usernames": [
+            (138, 221, 315, 249),  # 1
+            (138, 258, 315, 284),  # 2
+            (138, 292, 315, 319),  # 3
+            (138, 328, 315, 356),  # 4
+            (138, 364, 315, 390),  # 5
+            (138, 433, 315, 461),  # OTHER
+            (138, 470, 315, 496),  # OTHER
+            (138, 505, 315, 531),  # OTHER
+        ],
+        "ranks": [
+            (45, 223, 80, 246),  # 1
+            (45, 260, 80, 283),  # 2
+            (45, 294, 80, 319),  # 3
+            (45, 329, 80, 355),  # 4
+            (45, 365, 80, 389),  # 5
+            (45, 436, 80, 461),  # OTHER
+            (45, 472, 80, 495),  # OTHER
+            (45, 506, 80, 532),  # OTHER
+        ],
+        "user_check_points": [
+            (29, 234),  # 1
+            (29, 271),  # 2
+            (29, 306),  # 3
+            (29, 343),  # 4
+            (29, 379),  # 5
+            (29, 447),  # OTHER
+            (29, 484),  # OTHER
+            (29, 517),  # OTHER
+        ],
+    },
 }
 
 PANEL_COORDS = {
