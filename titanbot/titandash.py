@@ -68,6 +68,9 @@ class TitandashApplication(object):
         # Images...
         self.logo = "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"
 
+        # Flags...
+        self.quiet = "--quiet"
+
         logging.info("=============================================================")
         logging.info("{title} Application Initialized...".format(title=self.title))
         logging.info("=============================================================")
@@ -289,6 +292,7 @@ class TitandashApplication(object):
 if __name__ == "__main__":
     # Create initial titandash application instance...
     app = TitandashApplication()
+    args = sys.argv
 
     try:
         # Application is beginning initialize process.
@@ -302,8 +306,14 @@ if __name__ == "__main__":
         # --------------------------------------------------------------------------
         app.finalize()
 
-        logging.debug("Opening Web Application...")
-        webbrowser.open_new_tab(url=settings.TITANDASH_LOADER_URL)
+        if app.quiet not in args:
+            # Opening the application normally".
+            # The quiet flag can be applied to skip this functionality.
+            # Preventing a new tab being opened on startup.
+            logging.debug("Opening Web Application...")
+            webbrowser.open_new_tab(url=settings.TITANDASH_LOADER_URL)
+        else:
+            logging.debug("Opening Application Quietly...")
 
         app.system_tray()
         # We are now blocking forever on our main thread until the user closes the application...
