@@ -280,6 +280,11 @@ class Stats:
             if is_integer:
                 text = ''.join(filter(lambda x: x.isdigit(), text))
 
+                # Using a basic default to ensure integer based values
+                # will at least use a value of zero if parsing fails.
+                if text == "":
+                    text = "0"
+
             self.logger.info("parsing result: {key} -> {text}".format(key=key, text=text))
             setattr(self.statistics.game_statistics, key, text)
 
