@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.http.response import JsonResponse
 
-from titanbootstrap.utils import VersionChecker, purge_dir
+from titanbootstrap.utils import DependencyChecker, VersionChecker, purge_dir, launch_process
 
 import zipfile
 import redis
@@ -13,6 +13,7 @@ import traceback
 import dirsync
 import datetime
 import os
+import io
 
 
 class DependencyError(Exception):
@@ -298,21 +299,15 @@ def _check_tesseract():
     - If tesseract is not currently extracted and present, we do that here once.
     - If tesseract is already extracted and present, we do nothing and move forward with our checks.
     """
-    # Begin by performing some checks to see if the extracted directory
-    # that we expect to contain all tesseract software data is present or not.
     extracted = os.path.exists(path=settings.LOCAL_DATA_TESSERACT_DEPENDENCY_DIR)
 
-    # Determine whether or not we should perform the extraction of our compressed
-    # directory, this only need to happen once unless the directory is removed.
     if not extracted:
         try:
-            with zipfile.ZipFile(file=settings.TESSERACT_COMPRESSED_ZIP, mode="r") as zip_file:
-                # extractall will take all of our content and extract it right into the
-                # proper local data directory.
+            # This should only take place once (unless dir is removed).
+            with zipfile.ZipFile(io.BytesIO(DependencyChecker().retrieve_tesseract().content)) as zip_file:
                 zip_file.extractall(path=settings.LOCAL_DATA_TESSERACT_DEPENDENCY_DIR)
         except Exception as exc:
-            # An error occurred while extracting, exit our process with
-            # a useful error message with some information about the exception.
+            # Error occurred, provide somewhat useful message.
             return _exception_response(
                 title="Dependencies - Tesseract",
                 exception=exc,
@@ -323,29 +318,62 @@ def _check_tesseract():
 
 def _check_redis():
     """
-    Test that the redis server is installed and currently running.
+    Perform our redis checking functionality here, making sure our compressed dependency is present
+    and extracted within the users application directory.
 
-    We unfortunately cannot start it programmatically. But we can very easily report back the exact
-    commands a user will have to enter to start the server.
+    - If redis is not currently extracted and present, we do that here once.
+    - If redis is already extracted and present, we do not need to download any data.
+    - If redis is not currently running, we boot it up here.
+    - If redis is already running, we do nothing and move forward with our checks.
     """
+    extracted = os.path.exists(path=settings.LOCAL_DATA_REDIS_DEPENDENCY_DIR)
+
+    if not extracted:
+        try:
+            # This should only take place once (unless dir is removed).
+            with zipfile.ZipFile(io.BytesIO(DependencyChecker().retrieve_redis().content)) as zip_file:
+                zip_file.extractall(path=settings.LOCAL_DATA_REDIS_DEPENDENCY_DIR)
+        except Exception as exc:
+            # Error occurred, provide somewhat useful message.
+            return _exception_response(
+                title="Dependencies - Redis",
+                exception=exc,
+                as_json=True,
+                extra="An error occurred while attempting to extract redis into your local application data directory."
+            )
+
+    # We now definitely have a directory that contains our redis data.
+    # Check if it's running, and start it if not.
     try:
-        # Using client_list() to just derive connection or not...
-        # Disposing out result.
         redis.Redis("localhost").client_list()
 
-        # If we can check the client list, it's safe to assume that the redis server
-        # is running properly.
+        # Getting past the call above means redis is running
+        # on our localhost properly, no need to perform anything additional.
         return True
 
-    # Catch broadly for errors that occur when trying to establish redis
-    # connection. We can not actually fix this programmatically so we at least send a message.
+    except redis.ConnectionError:
+        # Connection refused, let's just try to start the server
+        # wait very briefly, and attempt to grab the client list again.
+        launch_process(command=settings.REDIS_COMMAND, sleep=2)
+
+        try:
+            redis.Redis("localhost").client_list()
+
+            # Similar to above, getting here means redis is running.
+            return True
+        except Exception as exc:
+            return _exception_response(
+                title="Dependencies - Redis",
+                exception=exc,
+                as_json=True,
+                extra="An error occurred while attempting to check the current status of redis."
+            )
     except Exception as exc:
         return _exception_response(
-            title="Dependencies - Redis Server",
+            title="Dependencies - Redis",
             exception=exc,
             as_json=True,
-            extra="You can run the following command in an ubuntu window to ensure redis is started:<br/>"
-                  "<em>sudo service redis-server restart</em>"
+            extra="An error occurred while attempting to check the current status of redis."
         )
 
 
