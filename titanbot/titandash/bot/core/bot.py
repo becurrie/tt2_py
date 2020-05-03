@@ -73,6 +73,11 @@ class Bot(object):
         self.TERMINATE = False
         self.PAUSE = False
         self.VALID_AUTHENTICATION = True
+        self.PRESTIGE_STAGE_THRESHOLD = 3
+
+        self._threshold_stage = 0
+        self._threshold_max = 0
+        self._threshold_percent = 0
 
         self.last_stage = None
         self.owned_artifacts = None
@@ -555,27 +560,48 @@ class Bot(object):
             elif self.configuration.prestige_at_stage != 0:
                 self.logger.info("prestige at specific stage: {current}/{needed}.".format(current=strfnumber(self.props.current_stage), needed=strfnumber(self.configuration.prestige_at_stage)))
                 if self.props.current_stage >= self.configuration.prestige_at_stage:
-                    self.logger.info("prestige stage has been reached, prestige will happen now.")
-                    ready = True
+                    self._threshold_stage += 1
+                    self.logger.info("prestige at specific stage threshold: {current}/{needed}".format(current=self._threshold_stage, needed=self.PRESTIGE_STAGE_THRESHOLD))
+                    if self._threshold_stage >= self.PRESTIGE_STAGE_THRESHOLD:
+                        self.logger.info("prestige stage has been reached, prestige will happen now.")
+                        ready = True
+                else:
+                    self._threshold_stage = 0
 
             # These conditionals are dependant on the highest stage reached taken
             # from the bot's current game statistics.
             elif self.configuration.prestige_at_max_stage:
                 self.logger.info("prestige at max stage: {current}/{needed}.".format(current=strfnumber(self.props.current_stage), needed=strfnumber(self.stats.highest_stage)))
                 if self.props.current_stage >= self.stats.highest_stage:
-                    self.logger.info("max stage has been reached, prestige will happen now.")
-                    ready = True
+                    self._threshold_max += 1
+                    self.logger.info("prestige at max stage threshold: {current}/{needed}".format(current=self._threshold_max, needed=self.PRESTIGE_STAGE_THRESHOLD))
+                    if self._threshold_max >= self.PRESTIGE_STAGE_THRESHOLD:
+                        self.logger.info("max stage has been reached, prestige will happen now.")
+                        ready = True
+                else:
+                    self._threshold_max = 0
 
             elif self.configuration.prestige_at_max_stage_percent != 0:
                 percent = float(self.configuration.prestige_at_max_stage_percent) / 100
                 threshold = int(self.stats.highest_stage * percent)
                 self.logger.info("prestige at max stage percent ({percent}): {current}/{needed}".format(percent=percent, current=strfnumber(self.props.current_stage), needed=strfnumber(threshold)))
                 if self.props.current_stage >= threshold:
-                    self.logger.info("percent of max stage has been reached, prestige will happen now.")
-                    ready = True
+                    self._threshold_percent += 1
+                    self.logger.info("prestige at max stage percent threshold: {current}/{needed}".format(current=self._threshold_percent, needed=self.PRESTIGE_STAGE_THRESHOLD))
+                    if self._threshold_percent >= self.PRESTIGE_STAGE_THRESHOLD:
+                        self.logger.info("percent of max stage has been reached, prestige will happen now.")
+                        ready = True
+                else:
+                    self._threshold_percent = 0
 
         # Using threshold randomization to ensure that prestiges are quite random.
         if ready:
+            # Ensure we reset our threshold flags back to zero once a prestige
+            # is "ready". Next time we check for prestige, these are back at zero.
+            self._threshold_stage = 0
+            self._threshold_max = 0
+            self._threshold_percent = 0
+
             if self.configuration.enable_prestige_threshold_randomization:
                 jitter = random.randint(self.configuration.prestige_random_min_time, self.configuration.prestige_random_max_time)
                 dt = now + datetime.timedelta(minutes=jitter)
