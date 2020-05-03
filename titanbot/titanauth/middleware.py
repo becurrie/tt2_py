@@ -1,7 +1,6 @@
 from django.shortcuts import redirect
 
 from titanauth.models.user_reference import ExternalAuthReference
-
 from titandash.middleware import TitandashBaseMiddleware
 
 

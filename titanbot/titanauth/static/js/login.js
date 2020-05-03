@@ -22,6 +22,7 @@ function LoginHandler() {
         type: "POST",
         dataType: "JSON"
     };
+    let redirectUrl = "/bootstrap";
 
     // Loader template used to display a moving icon while a request is being processed
     // through an AJAX request.
@@ -107,7 +108,7 @@ function LoginHandler() {
                 elements[elem].fadeOut(50);
 
             // Redirect the user to the main index page.
-            window.location = "/";
+            window.location = redirectUrl;
         }
 
         if (data.status === "error") {

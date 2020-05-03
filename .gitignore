@@ -1,6 +1,7 @@
 .idea/
 logs/
 /titanbot/static/
+/titanbot/dump.rdb
 __pycache__
 titan.sqlite3
 node_modules/
