@@ -29,6 +29,7 @@ class ApplicationSettings(models.Model):
     objects = ApplicationSettingsManager()
     # Place any global application type settings that should be controlled
     # by the application and/or used to remember certain information for later use.
+    port = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return "Application Settings {pk}".format(pk=self.pk)
