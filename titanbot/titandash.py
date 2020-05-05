@@ -5,6 +5,7 @@ import PySimpleGUI as sg
 import PySimpleGUIWx as sgw
 
 import django
+import requests
 import ctypes
 import webbrowser
 import logging
@@ -47,6 +48,10 @@ console.setLevel(logging.INFO)
 logging.getLogger("").addHandler(console)
 
 
+class TitandashAlreadyRunningError(Exception):
+    pass
+
+
 class TitandashApplication(object):
     """
     Titandash Application Container.
@@ -70,6 +75,9 @@ class TitandashApplication(object):
 
         # Flags...
         self.quiet = "--quiet"
+
+        # Urls...
+        self.check_url = "http://localhost:{port}/status"
 
         logging.info("=============================================================")
         logging.info("{title} Application Initialized...".format(title=self.title))
@@ -223,6 +231,44 @@ class TitandashApplication(object):
             logging.debug("WAITING FOR ACCESSIBLE SERVER...")
             continue
 
+    def check_server(self):
+        """
+        Perform a check on the current server based on the current usage of the application settings model.
+        """
+        from titanbootstrap.models.settings import ApplicationSettings
+
+        running = False
+        app_settings = ApplicationSettings.objects.grab()
+        app_port = app_settings.port
+
+        if not app_port:
+            app_port = settings.TITANDASH_PORT
+
+        # Port is derived to check, let's see if the server is already
+        # running for this port.
+        try:
+            running = requests.get(url=self.check_url.format(port=app_port)).ok
+        except requests.ConnectionError:
+            # Server is down. Update app port and continue.
+            app_settings.port = settings.TITANDASH_PORT
+            app_settings.save()
+
+        if running:
+            # Server is already running for the derived port, we should
+            # exit at this point with some information.
+            raise TitandashAlreadyRunningError("Titandash Server Is Already Running (Port {port})...".format(port=app_port))
+
+    @staticmethod
+    def clear_port():
+        """
+        Helper utility to clear our current app settings port and set it back to a none value.
+        """
+        from titanbootstrap.models.settings import ApplicationSettings
+
+        app_settings = ApplicationSettings.objects.grab()
+        app_settings.port = None
+        app_settings.save()
+
     def system_tray(self):
         """
         Build the system trap application and start the main event loop.
@@ -265,6 +311,7 @@ class TitandashApplication(object):
                 tray.ShowMessage(title="Exiting", message="Exiting Application Now")
                 self.uninhibit()
                 self.stop_server()
+                self.clear_port()
 
                 # Break to terminate event loop and stop python process.
                 break
@@ -297,6 +344,7 @@ if __name__ == "__main__":
     try:
         # Application is beginning initialize process.
         app.loading()
+        app.check_server()
         app.stop_server()
         app.start_server()
         app.inhibit()
@@ -330,3 +378,4 @@ if __name__ == "__main__":
     finally:
         app.uninhibit()
         app.stop_server()
+        app.finalize()
