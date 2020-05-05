@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http.response import JsonResponse, HttpResponseRedirect
+from django.http.response import JsonResponse, HttpResponseRedirect, HttpResponse
 from django.core.cache import cache
 from django.conf import settings
 
@@ -29,6 +29,10 @@ import os
 import datetime
 import base64
 import json
+
+
+def status(request):
+    return HttpResponse("ok")
 
 
 def dashboard(request):
