@@ -95,6 +95,7 @@ def import_model_kwargs(export_string, compression_keys=None):
 
     for attribute in export_attrs:
         key, value = attribute.split(VALUE_SEPARATOR)
+        key_found = False
 
         # Initially, we must check if a compression key was used to shorten the key of this value.
         # If so, we'll convert back to the correct value name.
@@ -102,7 +103,13 @@ def import_model_kwargs(export_string, compression_keys=None):
             for c_key, c_val in compression_keys.items():
                 if key == str(c_val):
                     key = c_key
+                    key_found = True
                     break
+
+        # Break if the key wasn't found in our compression keys list.
+        # Since this means the configuration must be old and removed now.
+        if not key_found:
+            continue
 
         # At this point, "key" should be the name of a value available on the model.
         # We now need to parse the value itself...
