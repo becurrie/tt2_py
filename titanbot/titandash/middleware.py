@@ -15,7 +15,6 @@ class TitandashBaseMiddleware(MiddlewareMixin):
             reverse("authenticate"),
             reverse("credentials"),
             #  Titan Bootstrap.
-            reverse("bootstrap"),
             reverse("check_update"),
             reverse("perform_update"),
             reverse("perform_requirements"),

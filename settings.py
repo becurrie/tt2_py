@@ -53,12 +53,6 @@ LOG_DIR = os.path.join(BOT_DIR, "logs")
 DATA_DIR = os.path.join(BOT_DIR, "data")
 # Additional data directories.
 IMAGE_DIR = os.path.join(DATA_DIR, "images")
-DEPENDENCIES_DIR = os.path.join(DATA_DIR, "dependencies")
-
-# Tesseract Dependency Directories And Files.
-# --------------------------------------------
-TESSERACT_DEPENDENCY_DIR = os.path.join(DEPENDENCIES_DIR, "tesseract")
-TESSERACT_COMPRESSED_ZIP = os.path.join(TESSERACT_DEPENDENCY_DIR, "tesseract.zip")
 
 # Scripts.
 PROGRAM_BAT = os.path.join(ROOT_DIR, "titandash.bat")
@@ -89,8 +83,11 @@ LOCAL_DATA_DEPENDENCIES_DIR = os.path.join(LOCAL_DATA_DIR, "dependencies")
 LOCAL_DATA_SCREENSHOTS_DIR = os.path.join(LOCAL_DATA_DIR, "screenshots")
 # Directory that should be created dynamically when tesseract is extracted.
 LOCAL_DATA_TESSERACT_DEPENDENCY_DIR = os.path.join(LOCAL_DATA_DEPENDENCIES_DIR, "tesseract")
+# Directory that should be created dynamically when redis is extracted.
+LOCAL_DATA_REDIS_DEPENDENCY_DIR = os.path.join(LOCAL_DATA_DEPENDENCIES_DIR, "redis")
 # Command that is used by bot's to perform character recognition.
 TESSERACT_COMMAND = os.path.join(LOCAL_DATA_TESSERACT_DEPENDENCY_DIR, "tesseract")
+REDIS_COMMAND = os.path.join(LOCAL_DATA_REDIS_DEPENDENCY_DIR, "redis-server.exe")
 
 # Testing directory.
 TEST_DIR = os.path.join(TITANDASH_DIR, "tests")

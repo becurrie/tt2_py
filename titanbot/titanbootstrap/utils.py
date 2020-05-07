@@ -1,15 +1,29 @@
 from django.conf import settings
 
+from titanauth.models.user_reference import ExternalAuthReference
+
 from pathlib import Path
 
+import subprocess
 import requests
 import zipfile
 import logging
+import time
 import io
 import os
 import shutil
 
 logger = logging.getLogger(__name__)
+
+
+def launch_process(command, shell=True, sleep=None):
+    """
+    Helper utility to launch a new subprocess for the specified command.
+    """
+    subprocess.Popen("start %s" % command, shell=shell)
+
+    if sleep:
+        time.sleep(sleep)
 
 
 def purge_dir(path):
@@ -138,3 +152,42 @@ class VersionChecker(object):
         except Exception:
             logger.error("Error occurred while downloading and extracting newest version package.", exc_info=True)
             raise
+
+
+class DependencyChecker(object):
+    """
+    Create an encapsulated object that may be used to check titandash dependencies and download them if needed.
+    """
+    def __init__(self):
+        self.tesseract_url = 'https://titanauth.herokuapp.com/dependencies/tesseract'
+        self.redis_url = 'https://titanauth.herokuapp.com/dependencies/redis'
+
+    @staticmethod
+    def _credentials():
+        """
+        Return a dictionary with the current external auth reference email and token.
+        """
+        reference = ExternalAuthReference.objects.first()
+
+        return {
+            'email': reference.email,
+            'token': reference.token
+        }
+
+    def retrieve_tesseract(self):
+        """
+        Attempt to grab and download the tesseract dependency zip file from the external backend.
+        """
+        return requests.post(
+            url=self.tesseract_url,
+            data=self._credentials()
+        )
+
+    def retrieve_redis(self):
+        """
+        Attempt to grab and download the redis dependency zip file from the external backend.
+        """
+        return requests.post(
+            url=self.redis_url,
+            data=self._credentials()
+        )

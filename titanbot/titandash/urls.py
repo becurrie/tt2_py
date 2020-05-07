@@ -4,6 +4,7 @@ from . import views
 
 
 urlpatterns = [
+    path('status', views.status, name='status'),
     # MAIN DASHBOARD.
     path('', views.dashboard, name='dashboard'),
     # CONFIGURATIONS.

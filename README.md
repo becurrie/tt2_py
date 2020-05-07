@@ -83,7 +83,6 @@ You can also visit our homepage, [here](https://titandash.net) for more informat
 - Windows 10
 - [Python 3.7](https://www.python.org/downloads/release/python-370/)
 - [Node/NPM](https://nodejs.org/en/)
-- [Redis Server](https://redislabs.com/)
 - [MEmu Emulator 7.0.1](https://drive.google.com/open?id=19WVZleJjRAcoKK4s-2pSnhiv8pKO_t1g)
 
 ## Development
