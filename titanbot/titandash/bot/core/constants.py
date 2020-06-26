@@ -45,6 +45,13 @@ FUNCTION_LOOP_TIMEOUT = 40
 # In which case, we can continue and attempt to up this damage and try again later.
 BOSS_LOOP_TIMEOUT = int(FUNCTION_LOOP_TIMEOUT / 4)
 
+NOX_WINDOW_FILTER = [
+    "nox",
+    "bignox",
+    "noxplayer",
+]
 MEMU_WINDOW_FILTER = [
     "memu"
 ]
+
+WINDOW_FILTER = NOX_WINDOW_FILTER + MEMU_WINDOW_FILTER
