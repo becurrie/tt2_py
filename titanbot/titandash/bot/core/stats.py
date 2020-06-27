@@ -283,7 +283,7 @@ class Stats:
                 # Using a basic default to ensure integer based values
                 # will at least use a value of zero if parsing fails.
                 if text == "":
-                    text = "0"
+                    text = "1"  # Valid default if used in division...
 
             self.logger.info("parsing result: {key} -> {text}".format(key=key, text=text))
             setattr(self.statistics.game_statistics, key, text)

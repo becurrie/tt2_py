@@ -63,7 +63,7 @@ class GameStatistics(models.Model):
 
     def highest_stage(self):
         if self.highest_stage_reached is not None and self.highest_stage_reached != "":
-            return convert(self.highest_stage_reached)
+            return convert(self.highest_stage_reached) or 1  # Ensure 1 is used if non truthy is converted...
         else:
             return None
 

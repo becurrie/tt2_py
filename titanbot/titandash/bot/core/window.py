@@ -1,4 +1,4 @@
-from .constants import MEMU_WINDOW_FILTER
+from .constants import WINDOW_FILTER
 from .utilities import globals
 
 from PIL import Image
@@ -256,7 +256,7 @@ class InvalidHwndValue(Exception):
 class WindowHandler(object):
     """Window handle encapsulates all functionality for handling windows and processes needed."""
     def __init__(self):
-        self.filter_lst = MEMU_WINDOW_FILTER
+        self.filter_lst = WINDOW_FILTER
         self.windows = dict()
 
     def _cb(self, hwnd, extra):
