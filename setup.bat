@@ -6,9 +6,9 @@ call "%WORKON_HOME%/titandash/Scripts/python.exe" -m pip install -U --force-rein
 call "%WORKON_HOME%/titandash/Scripts/pip" install -r "%~dp0%requirements.txt" --no-cache-dir
 
 :: Using new virtual environment, make and migrate.
+call "%WORKON_HOME%/titandash/Scripts/python" "%~dp0%titanbot/manage.py" createcachetable
 call "%WORKON_HOME%/titandash/Scripts/python" "%~dp0%titanbot/manage.py" makemigrations
 call "%WORKON_HOME%/titandash/Scripts/python" "%~dp0%titanbot/manage.py" migrate
-call "%WORKON_HOME%/titandash/Scripts/python" "%~dp0%titanbot/manage.py" createcachetable
 
 :: Install node modules.
 call npm install

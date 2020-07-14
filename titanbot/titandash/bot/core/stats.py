@@ -164,9 +164,7 @@ class Stats:
                 if artifact.artifact.name in _found:
                     continue
 
-                # Get cv2 re-sized version of the artifact image.
-                # We use cv2 because the imagesearch library uses that image module.
-                artifact_image = cv2.imread(ARTIFACT_MAP.get(artifact.artifact.name))
+                artifact_image = ARTIFACT_MAP.get(artifact.artifact.name)
                 if self.grabber.search(image=artifact_image, bool_only=True, im=_image):
                     _local_found.append(artifact.artifact.name)
 

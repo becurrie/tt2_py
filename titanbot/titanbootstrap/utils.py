@@ -20,7 +20,7 @@ def launch_process(command, shell=True, sleep=None):
     """
     Helper utility to launch a new subprocess for the specified command.
     """
-    subprocess.Popen("start %s" % command, shell=shell)
+    subprocess.Popen('"%s"' % command, shell=shell)
 
     if sleep:
         time.sleep(sleep)

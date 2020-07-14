@@ -1,3 +1,5 @@
+from django.contrib.auth.models import User
+
 from .constants import *
 
 from titandash.models.queue import Queue
@@ -151,3 +153,20 @@ def import_model_kwargs(export_string, compression_keys=None):
 
     # We now have the kwargs associated with this exported model.
     return kwargs
+
+
+def get_titan_user():
+    """
+    Retrieve the titan user, if it already exists, we use the existing one, otherwise
+    a new one with proper defaults is created.
+    """
+    try:
+        return User.objects.get(username="titan")
+    except User.DoesNotExist:
+        return User.objects.create_superuser(
+            username="titan",
+            password="titan",
+            first_name="Titan",
+            last_name="Dash",
+            email="titan@dash.com"
+        )
