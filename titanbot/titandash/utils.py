@@ -161,7 +161,7 @@ def get_titan_user():
     a new one with proper defaults is created.
     """
     try:
-        User.objects.get(username="titan")
+        return User.objects.get(username="titan")
     except User.DoesNotExist:
         return User.objects.create_superuser(
             username="titan",
