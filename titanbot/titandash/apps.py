@@ -45,14 +45,6 @@ def migrate_callback(sender, **kwargs):
             cfg.upgrade_owned_tier.add(Tier.objects.get(tier="S"))
             cfg.save()
 
-        if User.objects.filter(username="titan").count() == 0:
-            User.objects.create_superuser(
-                username="titan",
-                password="titan",
-                first_name="Titan",
-                last_name="Dash",
-                email="titan@dash.com")
-
     # TypeError may occur when migrating to 'zero' or if migration does not include
     # the needed models (Artifact, Tier, etc)... Pass in this case and ignore safely.
     except TypeError:

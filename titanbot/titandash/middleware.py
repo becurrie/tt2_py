@@ -2,6 +2,8 @@ from django.contrib.auth.models import User
 from django.utils.deprecation import MiddlewareMixin
 from django.urls import reverse
 
+from titandash.utils import get_titan_user
+
 
 class TitandashBaseMiddleware(MiddlewareMixin):
     """
@@ -34,4 +36,4 @@ class AutoAuthenticationMiddleware(TitandashBaseMiddleware):
     """
     def process_request(self, request):
         if request.path not in self.exceptions:
-            request.user = User.objects.get(username="titan")
+            request.user = get_titan_user()
