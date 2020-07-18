@@ -2256,9 +2256,9 @@ class Bot(object):
         """
         collected = False
         while self.grabber.search(image=[self.images.collect_ad, self.images.watch_ad], bool_only=True):
-            # VIP Unlocked...
+            # VIP/Season Pass Unlocked...
             found = self.find_and_click(
-                image=self.images.collect_ad,
+                image=[self.images.collect_ad, self.images.collect_ad_pass],
                 pause=1
             )
             if found:
