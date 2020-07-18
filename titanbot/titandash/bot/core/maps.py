@@ -267,6 +267,7 @@ IMAGES = {
     },
     "ADS": {
         "collect_ad": IMAGE_DIR + "/ads/collect.png",
+        "collect_ad_pass": IMAGE_DIR + "/ads/collect_pass.png",
         "watch_ad": IMAGE_DIR + "/ads/watch.png",
         "no_thanks": IMAGE_DIR + "/ads/no_thanks.png",
     },
