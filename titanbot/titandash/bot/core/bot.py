@@ -1221,7 +1221,7 @@ class Bot(object):
         # perks present and available.
         if perk == MEGA_BOOST:
             # Do we have our vip option unlocked to activate this perk?
-            if self.grabber.search(image=self.images.perks_vip_watch, bool_only=True):
+            if self.grabber.search(image=[self.images.perks_vip_watch, self.images.perks_pass_watch], bool_only=True):
                 # Just activate the perk.
                 self.logger.info("using {perk} with vip now...".format(perk=perk))
                 self.click(
@@ -2103,8 +2103,8 @@ class Bot(object):
                 # Additionally, check for the vip collection option
                 # for daily achievements.
                 self.find_and_click(
-                    image=self.images.vip_daily_collect,
-                    log="vip daily achievement found, collecting now."
+                    image=[self.images.vip_daily_collect, self.images.pass_daily_collect],
+                    log="vip/season pass daily achievement found, collecting now."
                 )
 
                 # Exiting achievements screen now.
@@ -2255,7 +2255,7 @@ class Bot(object):
            - The other one allows the function to be called directly without decorators added.
         """
         collected = False
-        while self.grabber.search(image=[self.images.collect_ad, self.images.watch_ad], bool_only=True):
+        while self.grabber.search(image=[self.images.collect_ad, self.images.collect_ad_pass, self.images.watch_ad], bool_only=True):
             # VIP/Season Pass Unlocked...
             found = self.find_and_click(
                 image=[self.images.collect_ad, self.images.collect_ad_pass],

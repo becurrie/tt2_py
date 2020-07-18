@@ -263,6 +263,7 @@ IMAGES = {
         "achievements_title": IMAGE_DIR + "/achievements/achievements.png",
         "daily_collect": IMAGE_DIR + "/achievements/daily_collect.png",
         "vip_daily_collect": IMAGE_DIR + "/achievements/vip_collect.png",
+        "pass_daily_collect": IMAGE_DIR + "/achievements/pass_collect.png",
         "daily_watch": IMAGE_DIR + "/achievements/daily_watch.png",
     },
     "ADS": {
@@ -404,6 +405,7 @@ IMAGES = {
         "perks_header": IMAGE_DIR + "/perks/perks_header.png",
         "perk_header": IMAGE_DIR + "/perks/perk_header.png",
         "perks_vip_watch": IMAGE_DIR + "/perks/perks_vip_watch.png",
+        "perks_pass_watch": IMAGE_DIR + "/perks/perks_pass_watch.png",
     }
 }
 
