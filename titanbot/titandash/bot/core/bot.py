@@ -1221,7 +1221,7 @@ class Bot(object):
         # perks present and available.
         if perk == MEGA_BOOST:
             # Do we have our vip option unlocked to activate this perk?
-            if self.grabber.search(image=self.images.perks_vip_watch, bool_only=True):
+            if self.grabber.search(image=[self.images.perks_vip_watch, self.images.perks_pass_watch], bool_only=True):
                 # Just activate the perk.
                 self.logger.info("using {perk} with vip now...".format(perk=perk))
                 self.click(
@@ -1895,33 +1895,34 @@ class Bot(object):
         """
         Collect any daily gifts if they're available.
         """
-        self.logger.info("checking if any daily rewards are currently available to collect.")
-        if not self.ensure_collapsed_closed():
-            return False
+        if self.configuration.enable_daily_rewards:
+            self.logger.info("checking if any daily rewards are currently available to collect.")
+            if not self.ensure_collapsed_closed():
+                return False
 
-        self.click(
-            point=self.locs.open_rewards,
-            pause=0.5
-        )
-        rewards_found = self.grabber.search(self.images.daily_rewards_header, bool_only=True)
-        if rewards_found:
-            self.logger.info("daily rewards are available, collecting!")
             self.click(
-                point=self.locs.collect_rewards,
-                pause=1
+                point=self.locs.open_rewards,
+                pause=0.5
             )
-            self.click(
-                point=self.locs.game_middle,
-                clicks=5,
-                interval=0.5,
-                pause=1
-            )
-            self.click(
-                point=MASTER_LOCS["screen_top"],
-                pause=1
-            )
+            rewards_found = self.grabber.search(self.images.daily_rewards_header, bool_only=True)
+            if rewards_found:
+                self.logger.info("daily rewards are available, collecting!")
+                self.click(
+                    point=self.locs.collect_rewards,
+                    pause=1
+                )
+                self.click(
+                    point=self.locs.game_middle,
+                    clicks=5,
+                    interval=0.5,
+                    pause=1
+                )
+                self.click(
+                    point=MASTER_LOCS["screen_top"],
+                    pause=1
+                )
 
-        return rewards_found
+            return rewards_found
 
     @not_in_transition
     @bot_property(queueable=True, tooltip="Check for eggs in game and hatch them if available.")
@@ -1953,19 +1954,20 @@ class Bot(object):
         """
         Check if a clan crate is currently available and collect it if one is.
         """
-        if not self.ensure_collapsed_closed():
+        if self.configuration.enable_clan_crates:
+            if not self.ensure_collapsed_closed():
+                return False
+
+            for i in range(5):
+                self.click(
+                    point=self.locs.collect_clan_crate,
+                    pause=1
+                )
+                if self.find_and_click(image=self.images.okay):
+                    return True
+
+            # No clan crate was found or collected, return false.
             return False
-
-        for i in range(5):
-            self.click(
-                point=self.locs.collect_clan_crate,
-                pause=1
-            )
-            if self.find_and_click(image=self.images.okay):
-                return True
-
-        # No clan crate was found or collected, return false.
-        return False
 
     @not_in_transition
     @bot_property(queueable=True, tooltip="Open the messages panel in game, and attempt to mark all messages as read.")
@@ -2103,8 +2105,8 @@ class Bot(object):
                 # Additionally, check for the vip collection option
                 # for daily achievements.
                 self.find_and_click(
-                    image=self.images.vip_daily_collect,
-                    log="vip daily achievement found, collecting now."
+                    image=[self.images.vip_daily_collect, self.images.pass_daily_collect],
+                    log="vip/season pass daily achievement found, collecting now."
                 )
 
                 # Exiting achievements screen now.
@@ -2255,10 +2257,10 @@ class Bot(object):
            - The other one allows the function to be called directly without decorators added.
         """
         collected = False
-        while self.grabber.search(image=[self.images.collect_ad, self.images.watch_ad], bool_only=True):
-            # VIP Unlocked...
+        while self.grabber.search(image=[self.images.collect_ad, self.images.collect_ad_pass, self.images.watch_ad], bool_only=True):
+            # VIP/Season Pass Unlocked...
             found = self.find_and_click(
-                image=self.images.collect_ad,
+                image=[self.images.collect_ad, self.images.collect_ad_pass],
                 pause=1
             )
             if found:
