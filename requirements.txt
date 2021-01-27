@@ -6,7 +6,7 @@ PySimpleGUI
 PySimpleGUIWx==0.11.0
 pythonnet==2.4.0
 requests==2.22.0
-Pillow==6.2.0
+Pillow==7.1.0
 opencv-python==4.1.1.26
 numpy==1.17.2
 python3_xlib==0.15
